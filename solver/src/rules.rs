@@ -1,10 +1,12 @@
+use std::fmt::Debug;
+
 use crate::sudoku::Sudoku;
 
-pub trait Rule {
+pub trait Rule: Debug {
     fn updates(&self, sudoku: &Sudoku, index: usize) -> Vec<usize>;
     fn is_legal(&self, sudoku: &Sudoku, index: usize, value: u16) -> bool;
 }
-
+#[derive(Debug)]
 pub struct RowRule;
 
 impl Rule for RowRule {
@@ -22,6 +24,7 @@ impl Rule for RowRule {
     }
 }
 
+#[derive(Debug)]
 pub struct ColumnRule;
 
 impl Rule for ColumnRule {
