@@ -1,4 +1,4 @@
-use crate::sudoku::{self, Sudoku};
+use crate::sudoku::Sudoku;
 
 pub trait Rule {
     fn updates(&self, sudoku: &Sudoku, index: usize) -> Vec<usize>;
