@@ -3,25 +3,17 @@ use std::ops::Range;
 use crate::rules::Rule;
 
 pub struct Sudoku {
-    pub sizex: usize,
-    pub sizey: usize,
+    pub size: usize,
     pub cells: Vec<Cell>,
     pub rules: Vec<Box<dyn Rule>>,
 }
 
 impl Sudoku {
-    pub fn new(sizex: usize, sizey: usize, rules: Vec<Box<dyn Rule>>) -> Self {
-        let range = if sizex == sizey {
-            0..(sizex as u16)
-        } else {
-            todo!("Hvad skal der være i cellerne når jeg ikke kan mat?")
-        };
-
+    pub fn new(size: usize, rules: Vec<Box<dyn Rule>>) -> Self {
         Sudoku {
-            sizex,
-            sizey,
-            cells: (0..sizex * sizey)
-                .map(|_| Cell::new_with_range(range.clone()))
+            size,
+            cells: (0..size * size)
+                .map(|_| Cell::new_with_range(0..(size as u16)))
                 .collect(),
             rules,
         }
