@@ -1,3 +1,8 @@
-fn main() {
+
+mod sudoku;
+
+
+
+fn main() {    
     println!("Hello, world!");
 }
