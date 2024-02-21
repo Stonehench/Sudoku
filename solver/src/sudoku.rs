@@ -1,4 +1,4 @@
-use std::{ops::Range, str::FromStr};
+use std::{num::ParseIntError, ops::Range, str::FromStr};
 
 use crate::rules::{ColumnRule, RowRule, Rule};
 
@@ -18,24 +18,23 @@ impl Sudoku {
             rules,
         }
     }
+    fn set_cell(&mut self, n: u16, index: usize) {}
 }
 
 impl FromStr for Sudoku {
-    type Err = String;
+    type Err = ParseIntError;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
-
         let mut sudoku = Sudoku::new(9, vec![Box::new(RowRule), Box::new(ColumnRule)]);
 
-
-        
-
-        for part in s.split(',') {
-            
+        for (index, part) in s.split(',').enumerate() {
+            let n = part.parse()?;
+            if n != 0 {
+                sudoku.set_cell(n, index);
+            }
         }
 
-
-        todo!()
+        Ok(sudoku)
     }
 }
 
