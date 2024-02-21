@@ -10,7 +10,7 @@ pub struct Sudoku {
 
 impl Sudoku {
     pub fn new(size: usize, rules: Vec<Box<dyn Rule>>) -> Self {
-        Sudoku {
+        Self {
             size,
             cells: (0..size * size)
                 .map(|_| Cell::new_with_range(0..(size as u16)))
