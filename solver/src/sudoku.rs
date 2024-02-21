@@ -21,7 +21,7 @@ impl Sudoku {
 }
 
 pub struct Cell {
-    available: Vec<u16>,
+    pub available: Vec<u16>,
 }
 
 impl Cell {
