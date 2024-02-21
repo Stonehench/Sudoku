@@ -1,6 +1,5 @@
-
 mod sudoku;
-
+mod rules;
 
 
 fn main() {    
