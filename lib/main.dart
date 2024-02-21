@@ -14,10 +14,30 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       home: Scaffold(
-        appBar: AppBar(title: const Text('flutter_rust_bridge quickstart')),
+        appBar: AppBar(title: const Text('Sudoku!')),
         body: Center(
-          child: Text(
-              'Action: Call Rust `greet("Tom")`\nResult: `${greet(name: "Tom")}`'),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              SizedBox(
+                width: 250,
+                child: TextField(
+                  
+                  decoration: InputDecoration(
+                    border: OutlineInputBorder(),
+                    labelText: 'Sudoku size',
+                  ),
+                ),
+              ),
+              TextButton(
+                onPressed: () => print('du har klikket på knappen'),
+                child: Text(
+                  'Create Sudoku'
+                ),
+              ),
+            ],
+          ),
+          
         ),
       ),
     );
