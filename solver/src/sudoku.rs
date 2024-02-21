@@ -1,6 +1,6 @@
-use std::ops::Range;
+use std::{ops::Range, str::FromStr};
 
-use crate::rules::Rule;
+use crate::rules::{ColumnRule, RowRule, Rule};
 
 pub struct Sudoku {
     pub size: usize,
@@ -17,6 +17,25 @@ impl Sudoku {
                 .collect(),
             rules,
         }
+    }
+}
+
+impl FromStr for Sudoku {
+    type Err = String;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+
+        let mut sudoku = Sudoku::new(9, vec![Box::new(RowRule), Box::new(ColumnRule)]);
+
+
+        
+
+        for part in s.split(',') {
+            
+        }
+
+
+        todo!()
     }
 }
 
