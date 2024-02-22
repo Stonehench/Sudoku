@@ -1,4 +1,6 @@
-use std::{fs, num::ParseIntError, ops::Range, process::Command, str::FromStr};
+use std::{num::ParseIntError, ops::Range, str::FromStr};
+
+use priority_queue::PriorityQueue;
 
 use crate::rules::{ColumnRule, RowRule, Rule};
 
@@ -19,11 +21,28 @@ impl Sudoku {
             rules,
         }
     }
+    /// Skal KUN bruges til når man læser en sudoku fra en fil!!
     fn set_cell(&mut self, n: u16, index: usize) {
         self.cells[index] = Cell::single(n);
         for rule in &self.rules {
             for inner_index in rule.updates(&self, index) {
                 self.cells[inner_index].remove(n);
+            }
+        }
+    }
+
+    pub fn solve(&mut self) {
+        let mut priority_queue = PriorityQueue::new();
+
+        for (index, cell) in self.cells.iter().enumerate() {
+            priority_queue.push(index, cell.available.len());
+        }
+
+        while let Some((index, entropy)) = priority_queue.pop() {
+            if entropy == 1 {
+                todo!()
+            } else {
+                return;
             }
         }
     }
@@ -68,7 +87,7 @@ impl Cell {
 
 #[test]
 fn read_file_test() {
-    let file_str = fs::read_to_string("./sudoku2").unwrap();
+    let file_str = std::fs::read_to_string("./sudoku2").unwrap();
     let sudoku: Sudoku = file_str.parse().unwrap();
 
     println!("{sudoku:#?}");
