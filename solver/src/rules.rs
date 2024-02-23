@@ -6,6 +6,27 @@ pub trait Rule: Debug {
     fn updates(&self, sudoku: &Sudoku, index: usize) -> Vec<usize>;
     fn is_legal(&self, sudoku: &Sudoku, index: usize, value: u16) -> bool;
 }
+
+
+#[derive(Debug)]
+pub struct SquareRule;
+
+impl Rule for SquareRule {
+    fn updates(&self, sudoku: &Sudoku, index: usize) -> Vec<usize> {
+        let row = index / sudoku.size;
+
+        (0..sudoku.size)
+            .map(|i| (index - (index % 3)) - (9 * (row % 3)) + (i % 3) + (9 * (i/3)))
+            .filter(|i| *i != index)
+            .collect()
+    }
+
+    fn is_legal(&self, sudoku: &Sudoku, index: usize, value: u16) -> bool {
+        let row = index / sudoku.size;
+        todo!()
+    }
+}
+
 #[derive(Debug)]
 pub struct RowRule;
 

@@ -2,7 +2,7 @@ use std::{num::ParseIntError, ops::Range, str::FromStr};
 
 use priority_queue::PriorityQueue;
 
-use crate::rules::{ColumnRule, RowRule, Rule};
+use crate::rules::{ColumnRule, RowRule,SquareRule, Rule};
 
 #[derive(Debug)]
 pub struct Sudoku {
@@ -52,11 +52,11 @@ impl FromStr for Sudoku {
     type Err = ParseIntError;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
-        let mut sudoku = Sudoku::new(9, vec![Box::new(RowRule), Box::new(ColumnRule)]);
+        let mut sudoku = Sudoku::new(9, vec![Box::new(RowRule), Box::new(ColumnRule), Box::new(SquareRule)]);
 
-        let (uløst, _løsning) = s.split_once("\n\n").unwrap();
+        //let (uløst, _løsning) = s.split_once("\n\n").unwrap();
 
-        for (index, part) in uløst.split(',').map(str::trim).enumerate() {
+        for (index, part) in s.split(',').map(str::trim).enumerate() {
             let n = part.parse()?;
             if n != 0 {
                 sudoku.set_cell(n, index);
@@ -87,7 +87,7 @@ impl Cell {
 
 #[test]
 fn read_file_test() {
-    let file_str = std::fs::read_to_string("./sudoku2").unwrap();
+    let file_str = std::fs::read_to_string("./sudokuUløst").unwrap();
     let sudoku: Sudoku = file_str.parse().unwrap();
 
     println!("{sudoku:#?}");
