@@ -1,4 +1,3 @@
-use core::num;
 use std::fmt::Debug;
 
 use integer_sqrt::IntegerSquareRoot;
