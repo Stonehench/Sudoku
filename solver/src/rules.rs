@@ -1,4 +1,7 @@
+use core::num;
 use std::fmt::Debug;
+
+use integer_sqrt::IntegerSquareRoot;
 
 use crate::sudoku::Sudoku;
 
@@ -7,16 +10,23 @@ pub trait Rule: Debug {
     fn is_legal(&self, sudoku: &Sudoku, index: usize, value: u16) -> bool;
 }
 
-
 #[derive(Debug)]
 pub struct SquareRule;
 
 impl Rule for SquareRule {
     fn updates(&self, sudoku: &Sudoku, index: usize) -> Vec<usize> {
+
+        //Burde gerne være ok med arbitær størrelse?
         let row = index / sudoku.size;
+        let size = sudoku.size;
+        let sub_size = sudoku.size.integer_sqrt();
 
         (0..sudoku.size)
-            .map(|i| (index - (index % 3)) - (9 * (row % 3)) + (i % 3) + (9 * (i/3)))
+            .map(|i| {
+                (index - (index % sub_size)) - (size * (row % sub_size))
+                    + (i % sub_size)
+                    + (size * (i / sub_size))
+            })
             .filter(|i| *i != index)
             .collect()
     }
