@@ -83,3 +83,14 @@ fn column_test() {
 
     assert_eq!(indexes, vec![2, 20, 29, 38, 47, 56, 65, 74])
 }
+
+#[test]
+fn square_test() {
+    let sudoku = Sudoku::new(9, vec![]);
+
+    let squarerule = SquareRule;
+    let indexes = squarerule.updates(&sudoku, 11);
+    println!("{indexes:?}");
+
+    assert_eq!(indexes, vec![0, 1, 2, 9, 10, 18, 19, 20])
+}
