@@ -77,7 +77,7 @@ impl Sudoku {
     // Man har brug for (solver) self.pop_q_and_update() og pop_branch / push_branch.
 
     pub fn solve(&mut self) {
-        //Dette er en lokal struct som kun bruges siden det gør denne opgave en lille smule mere "convenient"
+        //Dette er en lokal struct som kun bruges siden det gør denne opgave en lille smule mere "convenient". Nok faktisk helt ligegylddigt. Fjern måske
         // <'s> er en "lifetime", som siger at referencen "&'s mut Sudoku" skal leve længere, eller lige som lang tid som solver Objektet.
         // Siden Sudoku instancen er i live mindst lige så lang tid som solve funktionen kører er dette ikke et problem. Det er rust compileren enig med siden det compiler :)
         struct Solver<'s> {
