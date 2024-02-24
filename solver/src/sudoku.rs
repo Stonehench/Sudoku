@@ -1,4 +1,9 @@
-use std::{num::ParseIntError, ops::Range, str::FromStr};
+use std::{
+    fmt::{Display, Write},
+    num::ParseIntError,
+    ops::Range,
+    str::FromStr,
+};
 
 use priority_queue::PriorityQueue;
 
@@ -9,6 +14,31 @@ pub struct Sudoku {
     pub size: usize,
     pub cells: Vec<Cell>,
     pub rules: Vec<Box<dyn Rule>>,
+}
+
+//Det her er ret fucked, men siden vi skal have den laveste entropy ud af vores priority queue skal den være sammenligne omvendt
+// siden priority_queue tager den med størst priority lol
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+struct Entropy(usize);
+
+//Sammenligning ift større / mindre men reversed
+impl PartialOrd for Entropy {
+    fn partial_cmp(&self, other: &Self) -> Option<std::cmp::Ordering> {
+        other.0.partial_cmp(&self.0)
+        //self.0.partial_cmp(&other.0)
+    }
+}
+
+impl Ord for Entropy {
+    fn cmp(&self, other: &Self) -> std::cmp::Ordering {
+        self.partial_cmp(&other).unwrap()
+    }
+}
+
+impl Display for Entropy {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}", self.0)
+    }
 }
 
 impl Sudoku {
@@ -23,7 +53,7 @@ impl Sudoku {
     }
 
     fn set_cell(&mut self, n: u16, index: usize) {
-        self.cells[index] = Cell::single(n, true);
+        self.cells[index] = Cell::single(n);
         for rule in &self.rules {
             for inner_index in rule.updates(&self, index) {
                 self.cells[inner_index].remove(n);
@@ -31,85 +61,99 @@ impl Sudoku {
         }
     }
 
-    fn update_cell(&mut self, n: u16, index: usize, queue: &mut PriorityQueue<usize, usize>) {
-        self.cells[index] = Cell::single(n, false);
+    fn update_cell(&mut self, n: u16, index: usize, queue: &mut PriorityQueue<usize, Entropy>) {
+        self.cells[index] = Cell::single(n);
         for rule in &self.rules {
             for inner_index in rule.updates(&self, index) {
                 let cell = &mut self.cells[inner_index];
                 cell.remove(n);
-                queue.change_priority(&inner_index, cell.available.len());
+                queue.change_priority(&inner_index, Entropy(cell.available.len()));
             }
         }
     }
 
     // Dette skal gøres om, siden det er blevet til et clusterfuck
-    // Eventuel lav en "solver" struct som har metoder til ting som 
+    // Eventuel lav en "solver" struct som har metoder til ting som
     // Man har brug for (solver) self.pop_q_and_update() og pop_branch / push_branch.
 
-
     pub fn solve(&mut self) {
-        let mut priority_queue = PriorityQueue::new();
+        //Dette er en lokal struct som kun bruges siden det gør denne opgave en lille smule mere "convenient"
+        // <'s> er en "lifetime", som siger at referencen "&'s mut Sudoku" skal leve længere, eller lige som lang tid som solver Objektet.
+        // Siden Sudoku instancen er i live mindst lige så lang tid som solve funktionen kører er dette ikke et problem. Det er rust compileren enig med siden det compiler :)
+        struct Solver<'s> {
+            sudoku: &'s mut Sudoku,
+            pri_queue: PriorityQueue<usize, Entropy>,
+            branch_stack: Vec<(Vec<Cell>, PriorityQueue<usize, Entropy>)>,
+        }
 
-        type Branch = (Vec<Cell>, PriorityQueue<usize, usize>, usize);
-        let mut branch_stack: Vec<Branch> = vec![];
-        let mut just_popped_index = None;
+        impl<'s> Solver<'s> {
+            fn new(sudoku: &'s mut Sudoku) -> Self {
+                let mut pri_queue = PriorityQueue::new();
+                for (index, cell) in sudoku.cells.iter().enumerate() {
+                    if !cell.locked_in {
+                        pri_queue.push(index, Entropy(cell.available.len()));
+                    }
+                }
 
-        for (index, cell) in self.cells.iter().enumerate() {
-            if !cell.from_file {
-                priority_queue.push(index, cell.available.len());
+                Self {
+                    sudoku,
+                    pri_queue,
+                    branch_stack: vec![],
+                }
+            }
+
+            fn solve_index(&mut self, index: usize, entropy: Entropy) {
+                match entropy.0 {
+                    0 => {
+                        //Der er ingen løsning på den nuværende branch. Derfor popper vi en branch og løser den i stedet
+                        let Some((cells, pri_queue)) = self.branch_stack.pop() else {
+                            panic!("No Solution. Failed to pop branch queue when entropy was 0 in cell {index}");
+                        };
+
+                        self.sudoku.cells = cells;
+                        self.pri_queue = pri_queue;
+
+                        println!(
+                            "{index} has entropy 0, popping into branch at depth {}",
+                            self.branch_stack.len()
+                        );
+                    }
+                    1 => self.sudoku.update_cell(
+                        self.sudoku.cells[index].available[0],
+                        index,
+                        &mut self.pri_queue,
+                    ),
+                    _ => {
+                        //Der er flere muligheder for hvad der kan vælges. Derfor pushes state på branch stacken og der vælges en mulighed
+                        //Den vælger altid den sidste
+                        let n = self.sudoku.cells[index].available[0];
+
+                        let mut cell_clone = self.sudoku.cells.clone();
+                        cell_clone[index].available.remove(0); //Jaja whatever den fjerner i fronten.
+                                                               //Fjern n fra cell clone så den ikke kan blive valgt igen!
+                        let mut clone_queue = self.pri_queue.clone();
+                        clone_queue.change_priority(&index, Entropy(entropy.0 - 1));
+                        self.branch_stack.push((cell_clone, clone_queue));
+
+                        println!(
+                            "Branching on {index} with {:?} ({n}) at depth {}",
+                            self.sudoku.cells[index].available,
+                            self.branch_stack.len()
+                        );
+
+                        self.sudoku.update_cell(n, index, &mut self.pri_queue);
+                    }
+                }
             }
         }
 
-        while let Some((index, entropy)) = priority_queue.pop() {
-            if entropy == 0 {
-                //Vi er nået til at der er ingen løsning
-                if let Some((popped_cells, popped_queue, prev_branch_index)) = branch_stack.pop() {
-                    self.cells = popped_cells;
-                    priority_queue = popped_queue;
-                    just_popped_index = Some(prev_branch_index + 1);
-                    continue;
-                }
-                panic!("Der er ingen løsning til denne sudoku. Der var ingen løsning med den har ikke branched");
-            } else if entropy == 1 {
-                let n = self.cells[index].available[0];
-                self.update_cell(n, index, &mut priority_queue);
-            } else {
-                let branch_choice_index = just_popped_index.take().unwrap_or(0);
+        let mut solver = Solver::new(self);
 
-                println!(
-                    "Brancher på dybde {}, og vælger {branch_choice_index}",
-                    branch_stack.len()
-                );
-
-                //Hvis alle branches er blevet prøvet og den ikke har kunne
-                //finde en løsning i nogen af dem
-                if branch_choice_index >= entropy {
-                    //Vi bliver nødt til at poppe dybere :(
-                    let Some((popped_cells, popped_queue, prev_branch_index)) = branch_stack.pop()
-                    else {
-                        panic!("Der er ingen løsning til denne sudoku. Der var ingen løsning med den har ikke branched");
-                    };
-                    self.cells = popped_cells;
-                    priority_queue = popped_queue;
-                    just_popped_index = Some(prev_branch_index + 1);
-                    continue;
-                }
-
-                branch_stack.push((
-                    self.cells.clone(),
-                    priority_queue.clone(),
-                    branch_choice_index,
-                ));
-
-                let n = self.cells[index].available[branch_choice_index];
-
-                self.update_cell(n, index, &mut priority_queue);
-
-                //todo!("Bliver nødt til at gætte. Kan ikke komme videre indtil videre")
-            }
+        while let Some((index, entropy)) = solver.pri_queue.pop() {
+            println!("Solving {index} with entropy {entropy}");
+            solver.solve_index(index, entropy);
+            println!("queue len: {}", solver.pri_queue.len());
         }
-        //Enten er den solved ellers skal den poppe branch stack.
-        //Ved ikke helt endnu
     }
 }
 
@@ -138,29 +182,46 @@ impl FromStr for Sudoku {
         Ok(sudoku)
     }
 }
+
+impl Display for Sudoku {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        for (index, cell) in self.cells.iter().enumerate() {
+            if index % self.size == 0 {
+                f.write_char('\n')?;
+            }
+            write!(f, "{:?},", cell.available)?;
+        }
+
+        Ok(())
+    }
+}
+
 #[derive(Debug, Clone)]
 pub struct Cell {
     available: Vec<u16>,
 
     //Hvis den ikke er udledt. Men det er i starten af banen.
-    from_file: bool,
+    locked_in: bool,
 }
 
 impl Cell {
-    fn single(n: u16, from_file: bool) -> Self {
+    fn single(n: u16) -> Self {
         Self {
             available: vec![n],
-            from_file,
+            locked_in: true,
         }
     }
     fn new_with_range(range: Range<u16>) -> Self {
         Self {
             available: range.collect(),
-            from_file: false,
+            locked_in: false,
         }
     }
     fn remove(&mut self, n: u16) {
         self.available.retain(|i| *i != n);
+        if self.locked_in && self.available.len() == 0 {
+            panic!("Something went seriously wrong. Removed the only value in a locked cell");
+        }
     }
 }
 
@@ -177,7 +238,9 @@ fn solve_test() {
     let file_str = std::fs::read_to_string("./sudokuUløst").unwrap();
     let mut sudoku: Sudoku = file_str.parse().unwrap();
 
+    println!("{sudoku}");
+
     sudoku.solve();
 
-    println!("{sudoku:#?}");
+    println!("{sudoku}");
 }
