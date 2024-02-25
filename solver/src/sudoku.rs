@@ -69,6 +69,11 @@ impl Sudoku {
     }
 
     pub fn solve(&mut self) {
+        #[cfg(debug_assertions)]
+        let mut branch_count = 0;
+        #[cfg(debug_assertions)]
+        let mut backtracks = 0;
+
         let mut pri_queue = PriorityQueue::new();
         for (index, cell) in self.cells.iter().enumerate() {
             if !cell.locked_in {
@@ -88,6 +93,11 @@ impl Sudoku {
 
                     self.cells = cells;
                     pri_queue = new_pri_queue;
+
+                    #[cfg(debug_assertions)]
+                    {
+                        backtracks += 1;
+                    }
                 }
                 1 => self.update_cell(self.cells[index].available[0], index, &mut pri_queue),
                 _ => {
@@ -112,8 +122,19 @@ impl Sudoku {
                     branch_stack.push((cloned_cells, cloned_queue));
 
                     self.update_cell(n, index, &mut pri_queue);
+
+                    #[cfg(debug_assertions)]
+                    {
+                        branch_count += 1;
+                    }
                 }
             }
+        }
+
+        #[cfg(debug_assertions)]
+        {
+            println!("branch count: {branch_count}");
+            println!("backtracks: {backtracks}");
         }
     }
 }
