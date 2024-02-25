@@ -171,8 +171,8 @@ impl Cell {
             panic!("Something went seriously wrong. Removed the only value in a locked cell");
         }
     }
-    pub fn contains(&self, n: u16) -> bool {
-        self.available.contains(&n)
+    pub fn is_single_eq(&self, n: u16) -> bool {
+        &self.available == &[n]
     }
 }
 

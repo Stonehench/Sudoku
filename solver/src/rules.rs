@@ -11,7 +11,7 @@ pub trait Rule: Debug {
             .updates(sudoku, index)
             .iter()
             .map(|i| &sudoku.cells[*i])
-            .any(|c| c.contains(value))
+            .any(|c| c.is_single_eq(value))
     }
 }
 
