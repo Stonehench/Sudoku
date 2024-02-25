@@ -16,7 +16,7 @@ pub struct Sudoku {
     pub rules: Vec<Box<dyn Rule>>,
 }
 
-//Det her er ret fucked, men siden vi skal have den laveste entropy ud af vores priority queue skal den være sammenligne omvendt
+//Det her er ret fucked, men siden vi skal have den laveste entropy ud af vores priority queue skal den sammenligne omvendt
 // siden priority_queue tager den med størst priority lol
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 struct Entropy(usize);
@@ -90,17 +90,20 @@ impl Sudoku {
                 1 => self.update_cell(self.cells[index].available[0], index, &mut pri_queue),
                 _ => {
                     //Der er flere muligheder for hvad der kan vælges. Derfor pushes state på branch stacken og der vælges en mulighed
-                    //Den vælger altid den sidste
+                    // Den vælger altid den forreste i listen
+                    // Det kan køre en lille bitte smule hurtigere hvis den vælger den sidste i stedet men whatever
                     let n = self.cells[index].available[0];
 
-                    let mut cell_clone = self.cells.clone();
-                    cell_clone[index].available.remove(0); //Jaja whatever den fjerner i fronten.
-                                                           //Fjern n fra cell clone så den ikke kan blive valgt igen!
+                    let mut cloned_cells = self.cells.clone();
 
-                    let mut clone_queue = pri_queue.clone();
+                    //Fjern n fra cloned_cells så den ikke kan blive valgt igen!
+                    cloned_cells[index].available.remove(0);
+
+                    let mut cloned_queue = pri_queue.clone();
                     //Siden den allerede er poppet i den nuværende queue skal den indsættes igen
-                    clone_queue.push(index, Entropy(entropy.0 - 1));
-                    branch_stack.push((cell_clone, clone_queue));
+                    // i den cloned queue. Ellers vil clonen aldrig løse index cellen.
+                    cloned_queue.push(index, Entropy(entropy.0 - 1));
+                    branch_stack.push((cloned_cells, cloned_queue));
 
                     self.update_cell(n, index, &mut pri_queue);
                 }
@@ -121,8 +124,6 @@ impl FromStr for Sudoku {
                 Box::new(SquareRule),
             ],
         );
-
-        //let (uløst, _løsning) = s.split_once("\n\n").unwrap();
 
         for (index, part) in s.split(',').map(str::trim).enumerate() {
             let n = part.parse()?;
@@ -198,19 +199,13 @@ fn solve_test() {
         let filename = file.file_name().to_string_lossy().to_string();
         let sudoku_name;
 
-        let is_solution;
+        let mut sudoku: Sudoku = fs::read_to_string(file.path()).unwrap().parse().unwrap();
 
         if filename.contains("Løsning") {
-            is_solution = true;
             sudoku_name = filename.split_whitespace().next().unwrap().to_string();
         } else {
-            is_solution = false;
-            sudoku_name = filename;
-        }
-
-        let mut sudoku: Sudoku = fs::read_to_string(file.path()).unwrap().parse().unwrap();
-        if !is_solution {
             sudoku.solve();
+            sudoku_name = filename;
         }
 
         let solution = sudoku.to_string();
