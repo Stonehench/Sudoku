@@ -42,7 +42,7 @@ app.*.map.json
 /android/app/profile
 /android/app/release
 
-
+target
 ./target
 ./windows
 ./linux

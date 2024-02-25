@@ -8,3 +8,4 @@ edition = "2021"
 [dependencies]
 priority-queue = "*"
 integer-sqrt = "0.1.5"
+rand = "*"
