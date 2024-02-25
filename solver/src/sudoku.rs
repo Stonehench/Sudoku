@@ -172,7 +172,7 @@ impl Cell {
         }
     }
     pub fn is_single_eq(&self, n: u16) -> bool {
-        &self.available == &[n]
+        self.available == [n]
     }
 }
 
