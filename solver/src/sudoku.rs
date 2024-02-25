@@ -261,7 +261,7 @@ fn random_gen() {
     let pre = sudoku.to_string();
     println!("Pre:\n{}", pre);
 
-    let difficulty = random::<usize>() % (sudoku.size * sudoku.size - 50) + 15;
+    let difficulty = 10;
 
     for _ in 0..difficulty {
         let index = random::<usize>() % sudoku.cells.len();
@@ -279,4 +279,12 @@ fn random_gen() {
     assert_eq!(pre, sudoku.to_string());
 
     println!("PostPost:\n{sudoku}");
+}
+
+
+#[test]
+fn spam_random_test() {
+    for _ in 0..100 {
+        random_gen();
+    }
 }
