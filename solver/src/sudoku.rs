@@ -1,8 +1,13 @@
 use std::{
-    cmp::Ordering, fmt::{Display, Write}, num::ParseIntError, ops::Range, str::FromStr
+    cmp::Ordering,
+    fmt::{Display, Write},
+    num::ParseIntError,
+    ops::Range,
+    str::FromStr,
 };
 
 use priority_queue::PriorityQueue;
+use rand::random;
 
 use crate::rules::{ColumnRule, RowRule, Rule, SquareRule};
 
@@ -89,12 +94,16 @@ impl Sudoku {
                     //Der er flere muligheder for hvad der kan vælges. Derfor pushes state på branch stacken og der vælges en mulighed
                     // Den vælger altid den forreste i listen
                     // Det kan køre en lille bitte smule hurtigere hvis den vælger den sidste i stedet men whatever
-                    let n = self.cells[index].available[0];
+
+                    //Vælg random
+                    let choice = random::<usize>() % entropy.0;
+
+                    let n = self.cells[index].available[choice];
 
                     let mut cloned_cells = self.cells.clone();
 
                     //Fjern n fra cloned_cells så den ikke kan blive valgt igen!
-                    cloned_cells[index].available.remove(0);
+                    cloned_cells[index].available.remove(choice);
 
                     let mut cloned_queue = pri_queue.clone();
                     //Siden den allerede er poppet i den nuværende queue skal den indsættes igen
@@ -217,4 +226,34 @@ fn solve_test() {
     for (key, value) in solutions {
         println!("{key}: {value}");
     }
+}
+
+#[test]
+fn random_gen() {
+    let mut sudoku = Sudoku::new(
+        9,
+        vec![
+            Box::new(RowRule),
+            Box::new(ColumnRule),
+            Box::new(SquareRule),
+        ],
+    );
+    sudoku.solve();
+    let pre = sudoku.to_string();
+    println!("Pre:\n{}", pre);
+
+    let difficulty = random::<usize>() % (sudoku.size * sudoku.size - 20) + 20;
+
+    for _ in 0..difficulty {
+        let index = random::<usize>() % sudoku.cells.len();
+        sudoku.cells[index] = Cell::new_with_range(1..(sudoku.size as u16 + 1))
+    }
+    let post = sudoku.to_string();
+    println!("Post:\n{}", post);
+    sudoku.solve();
+
+
+    //Hmm det her crasher af en eller anden grund
+
+    assert_eq!(pre, sudoku.to_string());
 }
