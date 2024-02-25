@@ -35,12 +35,6 @@ impl Ord for Entropy {
     }
 }
 
-impl Display for Entropy {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{}", self.0)
-    }
-}
-
 impl Sudoku {
     pub fn new(size: usize, rules: Vec<Box<dyn Rule>>) -> Self {
         Self {
