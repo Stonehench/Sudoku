@@ -149,8 +149,6 @@ impl Display for Sudoku {
 #[derive(Debug, Clone)]
 pub struct Cell {
     available: Vec<u16>,
-
-    //Hvis den ikke er udledt. Men det er i starten af banen.
     locked_in: bool,
 }
 
@@ -172,6 +170,9 @@ impl Cell {
         if self.locked_in && self.available.len() == 0 {
             panic!("Something went seriously wrong. Removed the only value in a locked cell");
         }
+    }
+    pub fn contains(&self, n: u16) -> bool {
+        self.available.contains(&n)
     }
 }
 

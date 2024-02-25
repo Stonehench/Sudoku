@@ -6,7 +6,13 @@ use crate::sudoku::Sudoku;
 
 pub trait Rule: Debug {
     fn updates(&self, sudoku: &Sudoku, index: usize) -> Vec<usize>;
-    fn is_legal(&self, sudoku: &Sudoku, index: usize, value: u16) -> bool;
+    fn is_legal(&self, sudoku: &Sudoku, index: usize, value: u16) -> bool {
+        !self
+            .updates(sudoku, index)
+            .iter()
+            .map(|i| &sudoku.cells[*i])
+            .any(|c| c.contains(value))
+    }
 }
 
 #[derive(Debug)]
@@ -14,7 +20,6 @@ pub struct SquareRule;
 
 impl Rule for SquareRule {
     fn updates(&self, sudoku: &Sudoku, index: usize) -> Vec<usize> {
-
         //Burde gerne være ok med arbitær størrelse?
         let row = index / sudoku.size;
         let size = sudoku.size;
@@ -29,11 +34,6 @@ impl Rule for SquareRule {
             .filter(|i| *i != index)
             .collect()
     }
-
-    fn is_legal(&self, sudoku: &Sudoku, index: usize, value: u16) -> bool {
-        let row = index / sudoku.size;
-        todo!()
-    }
 }
 
 #[derive(Debug)]
@@ -47,11 +47,6 @@ impl Rule for RowRule {
             .filter(|i| *i != index)
             .collect()
     }
-
-    fn is_legal(&self, sudoku: &Sudoku, index: usize, value: u16) -> bool {
-        let column = index / sudoku.size;
-        todo!()
-    }
 }
 
 #[derive(Debug)]
@@ -64,10 +59,6 @@ impl Rule for ColumnRule {
             .map(|i| i * sudoku.size + row)
             .filter(|i| *i != index)
             .collect()
-    }
-
-    fn is_legal(&self, sudoku: &Sudoku, index: usize, value: u16) -> bool {
-        todo!()
     }
 }
 
