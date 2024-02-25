@@ -102,9 +102,6 @@ impl Sudoku {
                 1 => self.update_cell(self.cells[index].available[0], index, &mut pri_queue),
                 _ => {
                     //Der er flere muligheder for hvad der kan vælges. Derfor pushes state på branch stacken og der vælges en mulighed
-                    // Den vælger altid den forreste i listen
-                    // Det kan køre en lille bitte smule hurtigere hvis den vælger den sidste i stedet men whatever
-
                     //Vælg random
                     let choice = random::<usize>() % entropy.0;
 
@@ -239,6 +236,7 @@ fn solve_test() {
         let solution = sudoku.to_string();
         if let Some(other_solution) = solutions.get(&sudoku_name) {
             assert_eq!(solution, *other_solution);
+            println!("{sudoku_name} solved correctly");
         } else {
             solutions.insert(sudoku_name, solution);
         }
