@@ -242,18 +242,22 @@ fn random_gen() {
     let pre = sudoku.to_string();
     println!("Pre:\n{}", pre);
 
-    let difficulty = random::<usize>() % (sudoku.size * sudoku.size - 20) + 20;
+    let difficulty = random::<usize>() % (sudoku.size * sudoku.size - 50) + 15;
 
     for _ in 0..difficulty {
         let index = random::<usize>() % sudoku.cells.len();
         sudoku.cells[index] = Cell::new_with_range(1..(sudoku.size as u16 + 1))
     }
+    for cell in &mut sudoku.cells {
+        cell.locked_in = false;
+    }
+
     let post = sudoku.to_string();
     println!("Post:\n{}", post);
+
     sudoku.solve();
 
-
-    //Hmm det her crasher af en eller anden grund
-
     assert_eq!(pre, sudoku.to_string());
+
+    println!("PostPost:\n{sudoku}");
 }
