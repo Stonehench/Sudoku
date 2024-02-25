@@ -72,77 +72,45 @@ impl Sudoku {
         }
     }
 
-    // Dette skal gøres om, siden det er blevet til et clusterfuck
-    // Eventuel lav en "solver" struct som har metoder til ting som
-    // Man har brug for (solver) self.pop_q_and_update() og pop_branch / push_branch.
-
     pub fn solve(&mut self) {
-        //Dette er en lokal struct som kun bruges siden det gør denne opgave en lille smule mere "convenient". Nok faktisk helt ligegylddigt. Fjern måske
-        // <'s> er en "lifetime", som siger at referencen "&'s mut Sudoku" skal leve længere, eller lige som lang tid som solver Objektet.
-        // Siden Sudoku instancen er i live mindst lige så lang tid som solve funktionen kører er dette ikke et problem. Det er rust compileren enig med siden det compiler :)
-        struct Solver<'s> {
-            sudoku: &'s mut Sudoku,
-            pri_queue: PriorityQueue<usize, Entropy>,
-            branch_stack: Vec<(Vec<Cell>, PriorityQueue<usize, Entropy>)>,
-        }
-
-        impl<'s> Solver<'s> {
-            fn new(sudoku: &'s mut Sudoku) -> Self {
-                let mut pri_queue = PriorityQueue::new();
-                for (index, cell) in sudoku.cells.iter().enumerate() {
-                    if !cell.locked_in {
-                        pri_queue.push(index, Entropy(cell.available.len()));
-                    }
-                }
-
-                Self {
-                    sudoku,
-                    pri_queue,
-                    branch_stack: vec![],
-                }
-            }
-
-            fn solve_index(&mut self, index: usize, entropy: Entropy) {
-                match entropy.0 {
-                    0 => {
-                        //Der er ingen løsning på den nuværende branch. Derfor popper vi en branch og løser den i stedet
-                        let Some((cells, pri_queue)) = self.branch_stack.pop() else {
-                            panic!("No Solution. Failed to pop branch queue when entropy was 0 in cell {index}");
-                        };
-
-                        self.sudoku.cells = cells;
-                        self.pri_queue = pri_queue;
-                    }
-                    1 => self.sudoku.update_cell(
-                        self.sudoku.cells[index].available[0],
-                        index,
-                        &mut self.pri_queue,
-                    ),
-                    _ => {
-                        //Der er flere muligheder for hvad der kan vælges. Derfor pushes state på branch stacken og der vælges en mulighed
-                        //Den vælger altid den sidste
-                        let n = self.sudoku.cells[index].available[0];
-
-                        let mut cell_clone = self.sudoku.cells.clone();
-                        cell_clone[index].available.remove(0); //Jaja whatever den fjerner i fronten.
-                                                               //Fjern n fra cell clone så den ikke kan blive valgt igen!
-
-                        let mut clone_queue = self.pri_queue.clone();
-                        //Siden den allerede er poppet i den nuværende queue skal den indsættes igen
-                        clone_queue.push(index, Entropy(entropy.0 - 1));
-                        self.branch_stack.push((cell_clone, clone_queue));
-
-
-                        self.sudoku.update_cell(n, index, &mut self.pri_queue);
-                    }
-                }
+        let mut pri_queue = PriorityQueue::new();
+        for (index, cell) in self.cells.iter().enumerate() {
+            if !cell.locked_in {
+                pri_queue.push(index, Entropy(cell.available.len()));
             }
         }
 
-        let mut solver = Solver::new(self);
+        let mut branch_stack: Vec<(Vec<Cell>, PriorityQueue<usize, Entropy>)> = vec![];
 
-        while let Some((index, entropy)) = solver.pri_queue.pop() {
-            solver.solve_index(index, entropy);
+        while let Some((index, entropy)) = pri_queue.pop() {
+            match entropy.0 {
+                0 => {
+                    //Der er ingen løsning på den nuværende branch. Derfor popper vi en branch og løser den i stedet
+                    let Some((cells, new_pri_queue)) = branch_stack.pop() else {
+                        panic!("No Solution. Failed to pop branch queue when entropy was 0 in cell {index}");
+                    };
+
+                    self.cells = cells;
+                    pri_queue = new_pri_queue;
+                }
+                1 => self.update_cell(self.cells[index].available[0], index, &mut pri_queue),
+                _ => {
+                    //Der er flere muligheder for hvad der kan vælges. Derfor pushes state på branch stacken og der vælges en mulighed
+                    //Den vælger altid den sidste
+                    let n = self.cells[index].available[0];
+
+                    let mut cell_clone = self.cells.clone();
+                    cell_clone[index].available.remove(0); //Jaja whatever den fjerner i fronten.
+                                                           //Fjern n fra cell clone så den ikke kan blive valgt igen!
+
+                    let mut clone_queue = pri_queue.clone();
+                    //Siden den allerede er poppet i den nuværende queue skal den indsættes igen
+                    clone_queue.push(index, Entropy(entropy.0 - 1));
+                    branch_stack.push((cell_clone, clone_queue));
+
+                    self.update_cell(n, index, &mut pri_queue);
+                }
+            }
         }
     }
 }
@@ -225,12 +193,41 @@ fn read_file_test() {
 
 #[test]
 fn solve_test() {
-    let file_str = std::fs::read_to_string("./sudokuUløst").unwrap();
-    let mut sudoku: Sudoku = file_str.parse().unwrap();
+    use std::collections::HashMap;
+    use std::fs;
 
-    println!("{sudoku}");
+    let sudokus = fs::read_dir("./tests").unwrap();
 
-    sudoku.solve();
+    let mut solutions = HashMap::<String, String>::new();
 
-    println!("{sudoku}");
+    for file in sudokus.map(Result::unwrap) {
+        let filename = file.file_name().to_string_lossy().to_string();
+        let sudoku_name;
+
+        let is_solution;
+
+        if filename.contains("Løsning") {
+            is_solution = true;
+            sudoku_name = filename.split_whitespace().next().unwrap().to_string();
+        } else {
+            is_solution = false;
+            sudoku_name = filename;
+        }
+
+        let mut sudoku: Sudoku = fs::read_to_string(file.path()).unwrap().parse().unwrap();
+        if !is_solution {
+            sudoku.solve();
+        }
+
+        let solution = sudoku.to_string();
+        if let Some(other_solution) = solutions.get(&sudoku_name) {
+            assert_eq!(solution, *other_solution);
+        } else {
+            solutions.insert(sudoku_name, solution);
+        }
+    }
+
+    for (key, value) in solutions {
+        println!("{key}: {value}");
+    }
 }
