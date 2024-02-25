@@ -112,11 +112,6 @@ impl Sudoku {
 
                         self.sudoku.cells = cells;
                         self.pri_queue = pri_queue;
-
-                        println!(
-                            "{index} has entropy 0, popping into branch at depth {}",
-                            self.branch_stack.len()
-                        );
                     }
                     1 => self.sudoku.update_cell(
                         self.sudoku.cells[index].available[0],
@@ -131,15 +126,12 @@ impl Sudoku {
                         let mut cell_clone = self.sudoku.cells.clone();
                         cell_clone[index].available.remove(0); //Jaja whatever den fjerner i fronten.
                                                                //Fjern n fra cell clone så den ikke kan blive valgt igen!
+
                         let mut clone_queue = self.pri_queue.clone();
-                        clone_queue.change_priority(&index, Entropy(entropy.0 - 1));
+                        //Siden den allerede er poppet i den nuværende queue skal den indsættes igen
+                        clone_queue.push(index, Entropy(entropy.0 - 1));
                         self.branch_stack.push((cell_clone, clone_queue));
 
-                        println!(
-                            "Branching on {index} with {:?} ({n}) at depth {}",
-                            self.sudoku.cells[index].available,
-                            self.branch_stack.len()
-                        );
 
                         self.sudoku.update_cell(n, index, &mut self.pri_queue);
                     }
@@ -150,9 +142,7 @@ impl Sudoku {
         let mut solver = Solver::new(self);
 
         while let Some((index, entropy)) = solver.pri_queue.pop() {
-            println!("Solving {index} with entropy {entropy}");
             solver.solve_index(index, entropy);
-            println!("queue len: {}", solver.pri_queue.len());
         }
     }
 }
@@ -230,7 +220,7 @@ fn read_file_test() {
     let file_str = std::fs::read_to_string("./sudokuUløst").unwrap();
     let sudoku: Sudoku = file_str.parse().unwrap();
 
-    println!("{sudoku:#?}");
+    println!("{sudoku}");
 }
 
 #[test]
