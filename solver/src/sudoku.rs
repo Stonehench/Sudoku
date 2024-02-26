@@ -121,6 +121,7 @@ impl FromStr for Sudoku {
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         let mut sudoku = Sudoku::new(
             9,
+            //16,
             vec![
                 Box::new(RowRule),
                 Box::new(ColumnRule),
@@ -188,6 +189,19 @@ fn read_file_test() {
     let file_str = std::fs::read_to_string("./sudokuUløst").unwrap();
     let sudoku: Sudoku = file_str.parse().unwrap();
 
+    println!("{sudoku}");
+}
+
+#[test]
+fn solve_big_sudoku() {
+    // to run this test remember to set the sudoku size to 16
+    // hopefully this will be changed in the future to be automatic
+
+    let file_str = std::fs::read_to_string("./sudoku16").unwrap();
+    let mut sudoku: Sudoku = file_str.parse().unwrap();
+
+    println!("{sudoku}");
+    sudoku.solve();
     println!("{sudoku}");
 }
 
