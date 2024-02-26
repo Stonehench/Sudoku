@@ -297,7 +297,9 @@ fn spam_random_test() {
 #[test]
 fn solve_16x_test() {
     let file_str = std::fs::read_to_string("./sudoku16x16").unwrap();
-    let sudoku: Sudoku = file_str.parse().unwrap();
+    let mut sudoku: Sudoku = file_str.parse().unwrap();
+
+    sudoku.solve();
 
     println!("{sudoku}");
 }
