@@ -6,6 +6,7 @@ use std::{
     str::FromStr,
 };
 
+use integer_sqrt::IntegerSquareRoot;
 use priority_queue::PriorityQueue;
 use rand::random;
 
@@ -140,8 +141,13 @@ impl FromStr for Sudoku {
     type Err = ParseIntError;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
+        let size = s.split(',').count().integer_sqrt();
+
+        #[cfg(debug_assertions)]
+        println!("parsing size: {size}");
+
         let mut sudoku = Sudoku::new(
-            9,
+            size,
             vec![
                 Box::new(RowRule),
                 Box::new(ColumnRule),
@@ -287,4 +293,11 @@ fn spam_random_test() {
     for _ in 0..100 {
         random_gen();
     }
+}
+#[test]
+fn solve_16x_test() {
+    let file_str = std::fs::read_to_string("./sudoku16x16").unwrap();
+    let sudoku: Sudoku = file_str.parse().unwrap();
+
+    println!("{sudoku}");
 }

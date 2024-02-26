@@ -19,10 +19,15 @@ fn main() {
     let post_read = pre_read.elapsed();
 
     let pre_parse = Instant::now();
-    let Ok(mut sudoku): Result<Sudoku, _> = file_source.parse() else {
-        println!("Failed to parse file");
-        return;
+
+    let mut sudoku: Sudoku = match file_source.parse() {
+        Ok(sudoku) => sudoku,
+        Err(err) => {
+            println!("Failed to parse file {err}");
+        return;    
+        },
     };
+    
     let post_parse = pre_parse.elapsed();
 
     let pre_solve = Instant::now();
