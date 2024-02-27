@@ -201,7 +201,7 @@ impl Cell {
     fn remove(&mut self, n: u16) {
         self.available.retain(|i| *i != n);
         if self.locked_in && self.available.len() == 0 {
-            panic!("Something went seriously wrong. Removed the only value in a locked cell");
+            panic!("Something went seriously wrong. Removed the only value in a locked cell\nThis indicates either an unsolveable sudoku or a bug in the rules.");
         }
     }
     pub fn is_single_eq(&self, n: u16) -> bool {
@@ -286,7 +286,6 @@ fn random_gen() {
 
     println!("PostPost:\n{sudoku}");
 }
-
 
 #[test]
 fn spam_random_test() {
