@@ -4,16 +4,21 @@ use std::fmt::Debug;
 use crate::sudoku::Sudoku;
 
 pub trait Rule: Debug {
-    fn updates(&self, sudoku: &Sudoku, index: usize) -> Vec<usize>;
-    fn is_legal(&self, sudoku: &Sudoku, index: usize, value: u16) -> bool {
+    fn updates<'buf>(
+        &self,
+        sudoku: &Sudoku,
+        index: usize,
+        buffer: &'buf mut Vec<usize>,
+    ) -> &'buf [usize];
+    fn is_legal(&self, sudoku: &Sudoku, index: usize, value: u16, buffer: &mut Vec<usize>) -> bool {
         !self
-            .updates(sudoku, index)
+            .updates(sudoku, index, buffer)
             .iter()
             .map(|i| &sudoku.cells[*i])
             .any(|c| c.is_single_eq(value))
     }
 
-    fn hidden_singles(&self, sudoku: &Sudoku) -> Option<(u16, usize)>;
+    fn hidden_singles(&self, sudoku: &Sudoku, buffer: &mut Vec<usize>) -> Option<(u16, usize)>;
     fn boxed_clone(&self) -> Box<dyn Rule>;
 }
 
@@ -21,7 +26,12 @@ pub trait Rule: Debug {
 pub struct SquareRule;
 
 impl Rule for SquareRule {
-    fn updates(&self, sudoku: &Sudoku, index: usize) -> Vec<usize> {
+    fn updates<'buf>(
+        &self,
+        sudoku: &Sudoku,
+        index: usize,
+        buffer: &'buf mut Vec<usize>,
+    ) -> &'buf [usize] {
         //Burde gerne være ok med arbitær størrelse?
         let row = index / sudoku.size;
         let size = sudoku.size;
@@ -33,10 +43,11 @@ impl Rule for SquareRule {
                     + (i % sub_size)
                     + (size * (i / sub_size))
             })
-            .collect()
+            .for_each(|i| buffer.push(i));
+        buffer
     }
 
-    fn hidden_singles(&self, _sudoku: &Sudoku) -> Option<(u16, usize)> {
+    fn hidden_singles(&self, _sudoku: &Sudoku, buffer: &mut Vec<usize>) -> Option<(u16, usize)> {
         return None;
         /*
         let sub_size = sudoku.size.integer_sqrt();
@@ -79,19 +90,26 @@ impl Rule for SquareRule {
 pub struct RowRule;
 
 impl Rule for RowRule {
-    fn updates(&self, sudoku: &Sudoku, index: usize) -> Vec<usize> {
+    fn updates<'buf>(
+        &self,
+        sudoku: &Sudoku,
+        index: usize,
+        buffer: &'buf mut Vec<usize>,
+    ) -> &'buf [usize] {
+        buffer.clear();
         let row = index / sudoku.size;
-        (0..sudoku.size).map(|i| i + row * sudoku.size).collect()
+        (0..sudoku.size)
+            .map(|i| i + row * sudoku.size)
+            .for_each(|i| buffer.push(i));
+        buffer
     }
 
-    fn hidden_singles(&self, sudoku: &Sudoku) -> Option<(u16, usize)> {
-        let rows = (0..sudoku.size).map(|i| self.updates(sudoku, i * sudoku.size));
-        for (row_number, row) in rows.enumerate() {
+    fn hidden_singles(&self, sudoku: &Sudoku, buffer: &mut Vec<usize>) -> Option<(u16, usize)> {
+        for row_number in 0..sudoku.size {
+            let row = self.updates(sudoku, row_number * sudoku.size, buffer);
             for value in 1..=sudoku.size as u16 {
                 let cells = row.iter().map(|i| &sudoku.cells[*i]);
-                let count = cells
-                    .filter(|cell| cell.available.contains(&value))
-                    .count();
+                let count = cells.filter(|cell| cell.available.contains(&value)).count();
 
                 if count == 1 {
                     let mut cells = row.iter().map(|i| &sudoku.cells[*i]);
@@ -116,20 +134,25 @@ impl Rule for RowRule {
 pub struct ColumnRule;
 
 impl Rule for ColumnRule {
-    fn updates(&self, sudoku: &Sudoku, index: usize) -> Vec<usize> {
+    fn updates<'buf>(
+        &self,
+        sudoku: &Sudoku,
+        index: usize,
+        buffer: &'buf mut Vec<usize>,
+    ) -> &'buf [usize] {
         let column = index % sudoku.size;
-        (0..sudoku.size).map(|i| i * sudoku.size + column).collect()
+        (0..sudoku.size)
+            .map(|i| i * sudoku.size + column)
+            .for_each(|i| buffer.push(i));
+        buffer
     }
 
-    fn hidden_singles(&self, sudoku: &Sudoku) -> Option<(u16, usize)> {
-        let columns = (0..sudoku.size).map(|index| self.updates(sudoku, index));
-
-        for (column_number, column) in columns.enumerate() {
+    fn hidden_singles(&self, sudoku: &Sudoku, buffer: &mut Vec<usize>) -> Option<(u16, usize)> {
+        for column_number in 0..sudoku.size {
+            let column = self.updates(sudoku, column_number, buffer);
             for value in 1..=sudoku.size as u16 {
                 let cells = column.iter().map(|i| &sudoku.cells[*i]);
-                let count = cells
-                    .filter(|cell| cell.available.contains(&value))
-                    .count();
+                let count = cells.filter(|cell| cell.available.contains(&value)).count();
                 if count == 1 {
                     let mut cells = column.iter().map(|i| &sudoku.cells[*i]);
                     let position = cells
@@ -156,7 +179,8 @@ fn row_test() {
     let sudoku = Sudoku::new(9, vec![]);
 
     let rowrule = RowRule;
-    let indexes = rowrule.updates(&sudoku, 11);
+    let mut buffer = vec![];
+    let indexes = rowrule.updates(&sudoku, 11, &mut buffer);
     println!("{indexes:?}");
 
     assert_eq!(indexes, vec![9, 10, 11, 12, 13, 14, 15, 16, 17])
@@ -167,7 +191,8 @@ fn column_test() {
     let sudoku = Sudoku::new(9, vec![]);
 
     let columnrule = ColumnRule;
-    let indexes = columnrule.updates(&sudoku, 11);
+    let mut buffer = vec![];
+    let indexes = columnrule.updates(&sudoku, 11, &mut buffer);
     println!("{indexes:?}");
 
     assert_eq!(indexes, vec![2, 11, 20, 29, 38, 47, 56, 65, 74])
@@ -178,7 +203,8 @@ fn square_test() {
     let sudoku = Sudoku::new(9, vec![]);
 
     let squarerule = SquareRule;
-    let indexes = squarerule.updates(&sudoku, 11);
+    let mut buffer = vec![];
+    let indexes = squarerule.updates(&sudoku, 11, &mut buffer);
     println!("{indexes:?}");
 
     assert_eq!(indexes, vec![0, 1, 2, 9, 10, 11, 18, 19, 20])
@@ -203,7 +229,8 @@ fn row_hidden_math_test() {
     println!("{sudoku}");
 
     let rowrule = RowRule;
-    let res = rowrule.hidden_singles(&sudoku);
+    let mut buffer = vec![];
+    let res = rowrule.hidden_singles(&sudoku, &mut buffer);
     assert_eq!(res, Some((1, 0)))
 }
 
@@ -226,7 +253,8 @@ fn column_hidden_math_test() {
     println!("\n\n{sudoku}");
 
     let columnrule = ColumnRule;
-    let res = columnrule.hidden_singles(&sudoku);
+    let mut buffer = vec![];
+    let res = columnrule.hidden_singles(&sudoku, &mut buffer);
     assert_eq!(res, Some((1, 0)))
 }
 
@@ -249,6 +277,7 @@ fn square_hidden_math_test() {
     println!("{sudoku}");
 
     let squarerule = SquareRule;
-    let res = squarerule.hidden_singles(&sudoku);
+    let mut buffer = vec![];
+    let res = squarerule.hidden_singles(&sudoku, &mut buffer);
     assert_eq!(res, Some((1, 20)))
 }

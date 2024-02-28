@@ -50,27 +50,34 @@ impl Sudoku {
     }
 
     pub fn set_cell(&mut self, n: u16, index: usize) {
+        let mut ret_buffer = vec![];
         self.cells[index] = Cell::single(n);
         for rule in &self.rules {
             for inner_index in rule
-                .updates(&self, index)
+                .updates(&self, index, &mut ret_buffer)
                 .into_iter()
-                .filter(|i| *i != index)
+                .filter(|i| **i != index)
             {
-                self.cells[inner_index].remove(n);
+                self.cells[*inner_index].remove(n);
             }
         }
     }
 
-    fn update_cell(&mut self, n: u16, index: usize, queue: &mut PriorityQueue<usize, Entropy>) {
+    fn update_cell(
+        &mut self,
+        n: u16,
+        index: usize,
+        queue: &mut PriorityQueue<usize, Entropy>,
+        ret_buffer: &mut Vec<usize>,
+    ) {
         self.cells[index] = Cell::single(n);
         for rule in &self.rules {
             for inner_index in rule
-                .updates(&self, index)
+                .updates(&self, index, ret_buffer)
                 .into_iter()
-                .filter(|i| *i != index)
+                .filter(|i| **i != index)
             {
-                let cell = &mut self.cells[inner_index];
+                let cell = &mut self.cells[*inner_index];
                 cell.remove(n);
                 queue.change_priority(&inner_index, Entropy(cell.available.len()));
             }
@@ -91,6 +98,7 @@ impl Sudoku {
         }
 
         let mut branch_stack: Vec<(Vec<Cell>, PriorityQueue<usize, Entropy>)> = vec![];
+        let mut ret_buffer = vec![];
 
         'main: while let Some((index, entropy)) = pri_queue.pop() {
             match entropy.0 {
@@ -108,17 +116,23 @@ impl Sudoku {
                         backtracks += 1;
                     }
                 }
-                1 => self.update_cell(self.cells[index].available[0], index, &mut pri_queue),
+                1 => self.update_cell(
+                    self.cells[index].available[0],
+                    index,
+                    &mut pri_queue,
+                    &mut ret_buffer,
+                ),
                 _ => {
                     // Der er ikke flere naked singles, så der tjekkes for hidden singles
 
                     for rule in &self.rules {
-                        if let Some((n, hidden_index)) = rule.hidden_singles(self) {
+                        if let Some((n, hidden_index)) = rule.hidden_singles(self, &mut ret_buffer)
+                        {
                             //Put nuværende cell tilbage i priority queue
 
                             pri_queue.push(index, entropy);
                             pri_queue.remove(&hidden_index);
-                            self.update_cell(n, hidden_index, &mut pri_queue);
+                            self.update_cell(n, hidden_index, &mut pri_queue, &mut ret_buffer);
 
                             continue 'main;
                         }
@@ -141,7 +155,7 @@ impl Sudoku {
                     cloned_queue.push(index, Entropy(entropy.0 - 1));
                     branch_stack.push((cloned_cells, cloned_queue));
 
-                    self.update_cell(n, index, &mut pri_queue);
+                    self.update_cell(n, index, &mut pri_queue, &mut ret_buffer);
 
                     #[cfg(debug_assertions)]
                     {
