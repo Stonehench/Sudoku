@@ -70,5 +70,5 @@ fn benchmark() {
         sudoku.solve();
     }
     let avg_time = timer.elapsed() / COUNT;
-    println!("Avg solve time: {avg_time:?}");
+    println!("Avg solve time for {COUNT} solves: {avg_time:?}");
 }
