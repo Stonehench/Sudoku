@@ -4,12 +4,6 @@ use std::fmt::Debug;
 use crate::sudoku::Sudoku;
 
 pub trait Rule: Debug {
-    fn update_inclusive(&self, sudoku: &Sudoku, index: usize) -> Vec<usize> {
-        let mut updates = self.updates(sudoku, index);
-        let mut new = vec![index];
-        new.append(&mut updates);
-        new
-    }
     fn updates(&self, sudoku: &Sudoku, index: usize) -> Vec<usize>;
     fn is_legal(&self, sudoku: &Sudoku, index: usize, value: u16) -> bool {
         !self
@@ -39,7 +33,6 @@ impl Rule for SquareRule {
                     + (i % sub_size)
                     + (size * (i / sub_size))
             })
-            .filter(|i| *i != index)
             .collect()
     }
 
@@ -83,14 +76,23 @@ impl Rule for SquareRule {
     }
 }
 #[derive(Debug, Clone)]
-pub struct RowRule;
+pub struct RowRule {
+    buffer: Vec<usize>,
+}
+
+impl RowRule {
+    pub fn new() -> RowRule {
+        Self {
+            buffer: Vec::with_capacity(9),
+        }
+    }
+}
 
 impl Rule for RowRule {
     fn updates(&self, sudoku: &Sudoku, index: usize) -> Vec<usize> {
         let row = index / sudoku.size;
         (0..sudoku.size)
             .map(|i| i + row * sudoku.size)
-            .filter(|i| *i != index)
             .collect()
     }
 
@@ -129,12 +131,11 @@ impl Rule for ColumnRule {
         let column = index % sudoku.size;
         (0..sudoku.size)
             .map(|i| i * sudoku.size + column)
-            .filter(|i| *i != index)
             .collect()
     }
 
     fn hidden_singles(&self, sudoku: &Sudoku) -> Option<(u16, usize)> {
-        let columns = (0..sudoku.size).map(|index| self.update_inclusive(sudoku, index));
+        let columns = (0..sudoku.size).map(|index| self.updates(sudoku, index));
 
         for (column_number, column) in columns.enumerate() {
             for value in 1..=sudoku.size as u16 {
@@ -169,7 +170,7 @@ impl Rule for ColumnRule {
 fn row_test() {
     let sudoku = Sudoku::new(9, vec![]);
 
-    let rowrule = RowRule;
+    let rowrule = RowRule::new();
     let indexes = rowrule.updates(&sudoku, 11);
     println!("{indexes:?}");
 
@@ -203,7 +204,7 @@ fn row_hidden_math_test() {
     let mut sudoku = Sudoku::new(
         9,
         vec![
-            Box::new(RowRule),
+            Box::new(RowRule::new()),
             Box::new(ColumnRule),
             Box::new(SquareRule),
         ],
@@ -216,7 +217,7 @@ fn row_hidden_math_test() {
 
     println!("{sudoku}");
 
-    let rowrule = RowRule;
+    let rowrule = RowRule::new();
     let res = rowrule.hidden_singles(&sudoku);
     assert_eq!(res, Some((1, 0)))
 }
@@ -226,7 +227,7 @@ fn column_hidden_math_test() {
     let mut sudoku = Sudoku::new(
         9,
         vec![
-            Box::new(RowRule),
+            Box::new(RowRule::new()),
             Box::new(ColumnRule),
             Box::new(SquareRule),
         ],
@@ -249,7 +250,7 @@ fn square_hidden_math_test() {
     let mut sudoku = Sudoku::new(
         9,
         vec![
-            Box::new(RowRule),
+            Box::new(RowRule::new()),
             Box::new(ColumnRule),
             Box::new(SquareRule),
         ],

@@ -52,7 +52,11 @@ impl Sudoku {
     pub fn set_cell(&mut self, n: u16, index: usize) {
         self.cells[index] = Cell::single(n);
         for rule in &self.rules {
-            for inner_index in rule.updates(&self, index) {
+            for inner_index in rule
+                .updates(&self, index)
+                .into_iter()
+                .filter(|i| *i != index)
+            {
                 self.cells[inner_index].remove(n);
             }
         }
@@ -61,7 +65,11 @@ impl Sudoku {
     fn update_cell(&mut self, n: u16, index: usize, queue: &mut PriorityQueue<usize, Entropy>) {
         self.cells[index] = Cell::single(n);
         for rule in &self.rules {
-            for inner_index in rule.updates(&self, index) {
+            for inner_index in rule
+                .updates(&self, index)
+                .into_iter()
+                .filter(|i| *i != index)
+            {
                 let cell = &mut self.cells[inner_index];
                 cell.remove(n);
                 queue.change_priority(&inner_index, Entropy(cell.available.len()));
@@ -165,7 +173,7 @@ impl FromStr for Sudoku {
         let mut sudoku = Sudoku::new(
             size,
             vec![
-                Box::new(RowRule),
+                Box::new(RowRule::new()),
                 Box::new(ColumnRule),
                 Box::new(SquareRule),
             ],
@@ -297,7 +305,7 @@ fn random_gen() {
     let mut sudoku = Sudoku::new(
         9,
         vec![
-            Box::new(RowRule),
+            Box::new(RowRule::new()),
             Box::new(ColumnRule),
             Box::new(SquareRule),
         ],
