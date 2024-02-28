@@ -24,10 +24,10 @@ fn main() {
         Ok(sudoku) => sudoku,
         Err(err) => {
             println!("Failed to parse file {err}");
-        return;    
-        },
+            return;
+        }
     };
-    
+
     let post_parse = pre_parse.elapsed();
 
     let pre_solve = Instant::now();
