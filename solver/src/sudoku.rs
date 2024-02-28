@@ -84,7 +84,7 @@ impl Sudoku {
 
         let mut branch_stack: Vec<(Vec<Cell>, PriorityQueue<usize, Entropy>)> = vec![];
 
-        while let Some((index, entropy)) = pri_queue.pop() {
+        'main: while let Some((index, entropy)) = pri_queue.pop() {
             match entropy.0 {
                 0 => {
                     //Der er ingen løsning på den nuværende branch. Derfor popper vi en branch og løser den i stedet
@@ -104,6 +104,19 @@ impl Sudoku {
                 _ => {
                     // Der er ikke flere naked singles, så der tjekkes for hidden singles
 
+                    //Jaer det her er lidt fucked men nogengange skal man gør det på den
+                    // besværlige måde
+                    for rule in &self.rules {
+                        if let Some((n, hidden_index)) = rule.hidden_singles(self) {
+                            //Put nuværende cell tilbage i priority queue
+
+                            pri_queue.push(index, entropy);
+                            pri_queue.remove(&hidden_index);
+                            self.update_cell(n, hidden_index, &mut pri_queue);
+
+                            continue 'main;
+                        }
+                    }
 
                     //Der er flere muligheder for hvad der kan vælges. Derfor pushes state på branch stacken og der vælges en mulighed
                     //Vælg random
@@ -185,7 +198,7 @@ impl Display for Sudoku {
 #[derive(Debug, Clone)]
 pub struct Cell {
     pub available: Vec<u16>,
-    locked_in: bool,
+    pub locked_in: bool,
 }
 
 impl Cell {

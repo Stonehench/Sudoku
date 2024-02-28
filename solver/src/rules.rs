@@ -1,10 +1,16 @@
-use std::{cell, fmt::Debug};
+use std::fmt::Debug;
 
 use integer_sqrt::IntegerSquareRoot;
 
-use crate::sudoku::{self, Sudoku};
+use crate::sudoku::Sudoku;
 
 pub trait Rule: Debug {
+    fn update_inclusive(&self, sudoku: &Sudoku, index: usize) -> Vec<usize> {
+        let mut updates = self.updates(sudoku, index);
+        let mut new = vec![index];
+        new.append(&mut updates);
+        new
+    }
     fn updates(&self, sudoku: &Sudoku, index: usize) -> Vec<usize>;
     fn is_legal(&self, sudoku: &Sudoku, index: usize, value: u16) -> bool {
         !self
@@ -37,12 +43,14 @@ impl Rule for SquareRule {
             .collect()
     }
 
-    fn hidden_singles(&self, sudoku: &Sudoku) -> Option<(u16, usize)> {
+    fn hidden_singles(&self, _sudoku: &Sudoku) -> Option<(u16, usize)> {
+        return None;
+        /*
         let sub_size = sudoku.size.integer_sqrt();
 
         let indexes = (0..sudoku.size)
             .map(|index| index * sub_size + (index / sub_size) * sudoku.size * (sub_size - 1))
-            .map(|index| self.updates(sudoku, index));
+            .map(|index| self.update_inclusive(sudoku, index));
 
         for (square_number, square) in indexes.enumerate() {
             for value in 1..=sudoku.size as u16 {
@@ -57,17 +65,18 @@ impl Rule for SquareRule {
                         .map(|index| &sudoku.cells[index])
                         .position(|cell| cell.available.contains(&value))
                         .unwrap();
-                    return Some((
-                        value,
-                        (square_number * sub_size
-                            + (square_number / sub_size) * sudoku.size * (sub_size - 1))
-                            + (position + (position / sub_size) * sub_size * (sub_size - 1)),
-                    ));
+                    let real_position = (square_number * sub_size
+                        + (square_number / sub_size) * sudoku.size * (sub_size - 1))
+                        + (position + (position / sub_size) * sub_size * (sub_size - 1));
+                    if !sudoku.cells[real_position].locked_in {
+                        return Some((value, real_position));
+                    }
                 }
             }
         }
 
         None
+         */
     }
 }
 
@@ -95,7 +104,10 @@ impl Rule for RowRule {
                         .iter()
                         .position(|cell| cell.available.contains(&value))
                         .unwrap();
-                    return Some((value, row * sudoku.size + position));
+                    let real_position = row * sudoku.size + position;
+                    if !sudoku.cells[real_position].locked_in {
+                        return Some((value, real_position));
+                    }
                 }
             }
         }
@@ -117,9 +129,9 @@ impl Rule for ColumnRule {
     }
 
     fn hidden_singles(&self, sudoku: &Sudoku) -> Option<(u16, usize)> {
-        let indexes = (0..sudoku.size).map(|index| self.updates(sudoku, index));
+        let columns = (0..sudoku.size).map(|index| self.update_inclusive(sudoku, index));
 
-        for (column_number, column) in indexes.enumerate() {
+        for (column_number, column) in columns.enumerate() {
             for value in 1..=sudoku.size as u16 {
                 let count = column
                     .iter()
@@ -132,7 +144,11 @@ impl Rule for ColumnRule {
                         .map(|i| &sudoku.cells[*i])
                         .position(|cell| cell.available.contains(&value))
                         .unwrap();
-                    return Some((value, column_number + position*sudoku.size));
+
+                    let real_position = column_number + position * sudoku.size;
+                    if !sudoku.cells[real_position].locked_in {
+                        return Some((value, real_position));
+                    }
                 }
             }
         }
@@ -208,12 +224,12 @@ fn column_hidden_math_test() {
         ],
     );
 
-    sudoku.set_cell(2, 3);
+    sudoku.set_cell(2, 9);
     sudoku.set_cell(1, 24);
     sudoku.set_cell(1, 28);
     sudoku.set_cell(1, 56);
 
-    println!("{sudoku}");
+    println!("\n\n{sudoku}");
 
     let columnrule = ColumnRule;
     let res = columnrule.hidden_singles(&sudoku);
