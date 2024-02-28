@@ -2,56 +2,26 @@ import 'dart:math';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:sudoku/menu.dart';
 import 'package:sudoku/src/rust/frb_generated.dart';
+import 'board.dart';
 
 Future<void> main() async {
   await RustLib.init();
-  runApp(MyApp());
+  runApp(SudokuApp());
 }
 
-class MyApp extends StatelessWidget {
-  MyApp({super.key});
-
-  final myController = TextEditingController();
+class SudokuApp extends StatelessWidget {
+  SudokuApp({super.key});
 
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      home: Scaffold(
-        appBar: AppBar(title: const Text('Sudoku!')),
-        body: Center(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              SizedBox(
-                width: 250,
-                child: TextField(
-                  controller: myController,
-                  keyboardType: TextInputType.number,
-                  inputFormatters: <TextInputFormatter>[
-                    FilteringTextInputFormatter.digitsOnly],
-                  decoration: InputDecoration(
-                    border: OutlineInputBorder(),
-                    labelText: 'Sudoku size',
-                  ),
-                ),
-              ),
-              myController.text.isNotEmpty ? Text('This results in ' + pow(int.parse(myController.text),3).toString()) : Text(''),
-              // Skal laves til en stateful widget så vidt jeg husker før man kan opdatere UI'en
-              TextButton(
-                onPressed: () => {
-                  print('du har klikket på knappen med værdien ' + myController.text),
-                  myController.clear()
-                  },
-                child: Text(
-                  'Create Sudoku'
-                ),
-              ),
-            ],
-          ),
-          
-        ),
-      ),
+      initialRoute: '/menu',
+      routes: {
+        '/menu': (context) => Menu(),
+        '/board': (context) => Board(),
+      },
     );
   }
 }
