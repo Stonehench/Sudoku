@@ -1,1 +1,1 @@
-valgrind --tool=callgrind ./target/release/solver ./solver/sudokuUløst
+valgrind --tool=callgrind ./target/release/solver --benchmark
