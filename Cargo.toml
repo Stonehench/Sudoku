@@ -1,2 +1,7 @@
 [workspace]
 members = ["rust", "solver"]
+
+
+[profile.release]
+debug=true
+strip="none"
