@@ -32,6 +32,7 @@ impl Rule for SquareRule {
         index: usize,
         buffer: &'buf mut Vec<usize>,
     ) -> &'buf [usize] {
+        buffer.clear();
         //Burde gerne være ok med arbitær størrelse?
         let row = index / sudoku.size;
         let size = sudoku.size;
@@ -140,6 +141,7 @@ impl Rule for ColumnRule {
         index: usize,
         buffer: &'buf mut Vec<usize>,
     ) -> &'buf [usize] {
+        buffer.clear();
         let column = index % sudoku.size;
         (0..sudoku.size)
             .map(|i| i * sudoku.size + column)
