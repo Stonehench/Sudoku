@@ -225,6 +225,16 @@ impl Cell {
     }
 }
 
+impl Clone for Sudoku {
+    fn clone(&self) -> Self {
+        Self {
+            size: self.size.clone(),
+            cells: self.cells.clone(),
+            rules: self.rules.iter().map(|r| r.boxed_clone()).collect(),
+        }
+    }
+}
+
 #[test]
 fn read_file_test() {
     let file_str = std::fs::read_to_string("./sudokuUløst").unwrap();

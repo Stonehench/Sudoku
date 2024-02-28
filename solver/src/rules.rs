@@ -1,6 +1,5 @@
-use std::fmt::Debug;
-
 use integer_sqrt::IntegerSquareRoot;
+use std::fmt::Debug;
 
 use crate::sudoku::Sudoku;
 
@@ -21,9 +20,10 @@ pub trait Rule: Debug {
     }
 
     fn hidden_singles(&self, sudoku: &Sudoku) -> Option<(u16, usize)>;
+    fn boxed_clone(&self) -> Box<dyn Rule>;
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct SquareRule;
 
 impl Rule for SquareRule {
@@ -78,9 +78,11 @@ impl Rule for SquareRule {
         None
          */
     }
+    fn boxed_clone(&self) -> Box<dyn Rule> {
+        Box::new(self.clone())
+    }
 }
-
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct RowRule;
 
 impl Rule for RowRule {
@@ -114,9 +116,12 @@ impl Rule for RowRule {
 
         None
     }
+    fn boxed_clone(&self) -> Box<dyn Rule> {
+        Box::new(self.clone())
+    }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct ColumnRule;
 
 impl Rule for ColumnRule {
@@ -155,6 +160,9 @@ impl Rule for ColumnRule {
 
         None
     }
+    fn boxed_clone(&self) -> Box<dyn Rule> {
+        Box::new(self.clone())
+    }
 }
 
 #[test]
@@ -183,7 +191,7 @@ fn column_test() {
 fn square_test() {
     let sudoku = Sudoku::new(9, vec![]);
 
-    let squarerule = SquareRule;
+    let squarerule = SquareRule {};
     let indexes = squarerule.updates(&sudoku, 11);
     println!("{indexes:?}");
 
