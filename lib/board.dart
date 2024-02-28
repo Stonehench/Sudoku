@@ -11,12 +11,13 @@ class _BoardState extends State<Board> {
     return Scaffold(
       body: Center(
         child: SizedBox(
-          height: 420,
+          height: 384,
           width: 420,
           child: Stack(
             children: [
               Container(color: Color.fromARGB(255, 19, 22, 54)),
               GridView.builder(
+                padding: EdgeInsets.zero,
                 gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
                     crossAxisCount: 3, crossAxisSpacing: 2, mainAxisSpacing: 2),
                 itemBuilder: (context, index) {
@@ -26,6 +27,7 @@ class _BoardState extends State<Board> {
                 },
               ),
               GridView.builder(
+                padding: EdgeInsets.zero,
                 itemCount: 81,
                 gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
                     crossAxisCount: 9, crossAxisSpacing: 2, mainAxisSpacing: 2),
