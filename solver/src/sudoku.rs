@@ -49,7 +49,7 @@ impl Sudoku {
         }
     }
 
-    fn set_cell(&mut self, n: u16, index: usize) {
+    pub fn set_cell(&mut self, n: u16, index: usize) {
         self.cells[index] = Cell::single(n);
         for rule in &self.rules {
             for inner_index in rule.updates(&self, index) {
@@ -102,6 +102,9 @@ impl Sudoku {
                 }
                 1 => self.update_cell(self.cells[index].available[0], index, &mut pri_queue),
                 _ => {
+                    // Der er ikke flere naked singles, så der tjekkes for hidden singles
+
+
                     //Der er flere muligheder for hvad der kan vælges. Derfor pushes state på branch stacken og der vælges en mulighed
                     //Vælg random
                     let choice = random::<usize>() % entropy.0;
@@ -181,7 +184,7 @@ impl Display for Sudoku {
 
 #[derive(Debug, Clone)]
 pub struct Cell {
-    available: Vec<u16>,
+    pub available: Vec<u16>,
     locked_in: bool,
 }
 
