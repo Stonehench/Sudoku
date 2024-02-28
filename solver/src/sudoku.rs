@@ -112,8 +112,6 @@ impl Sudoku {
                 _ => {
                     // Der er ikke flere naked singles, så der tjekkes for hidden singles
 
-                    //Jaer det her er lidt fucked men nogengange skal man gør det på den
-                    // besværlige måde
                     for rule in &self.rules {
                         if let Some((n, hidden_index)) = rule.hidden_singles(self) {
                             //Put nuværende cell tilbage i priority queue
@@ -173,7 +171,7 @@ impl FromStr for Sudoku {
         let mut sudoku = Sudoku::new(
             size,
             vec![
-                Box::new(RowRule::new()),
+                Box::new(RowRule),
                 Box::new(ColumnRule),
                 Box::new(SquareRule),
             ],
@@ -245,7 +243,7 @@ impl Clone for Sudoku {
 
 #[test]
 fn read_file_test() {
-    let file_str = std::fs::read_to_string("./sudokuUløst").unwrap();
+    let file_str = std::fs::read_to_string("./sudokuBenchmark").unwrap();
     let sudoku: Sudoku = file_str.parse().unwrap();
 
     println!("{sudoku}");
@@ -305,7 +303,7 @@ fn random_gen() {
     let mut sudoku = Sudoku::new(
         9,
         vec![
-            Box::new(RowRule::new()),
+            Box::new(RowRule),
             Box::new(ColumnRule),
             Box::new(SquareRule),
         ],
