@@ -226,6 +226,7 @@ impl Cell {
             panic!("Something went seriously wrong. Removed the only value in a locked cell\nThis indicates either an unsolveable sudoku or a bug in the rules.");
         }
     }
+    #[allow(unused)]
     pub fn is_single_eq(&self, n: u16) -> bool {
         self.available == [n]
     }
