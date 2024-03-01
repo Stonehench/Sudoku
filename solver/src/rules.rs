@@ -26,7 +26,7 @@ pub trait Rule: Debug {
 pub struct SquareRule;
 
 impl SquareRule {
-    fn updates_iter(&self, sudoku: &Sudoku, index: usize) -> impl Iterator<Item = usize> + Clone {
+    fn updates_iter(&self, sudoku: &Sudoku, index: usize) -> impl Iterator<Item = usize> {
         //Burde gerne være ok med arbitær størrelse?
         let row = index / sudoku.size;
         let size = sudoku.size;
@@ -87,6 +87,14 @@ impl Rule for SquareRule {
 #[derive(Debug, Clone)]
 pub struct RowRule;
 
+impl RowRule {
+    fn updates_iter(&self, sudoku: &Sudoku, index: usize) -> impl Iterator<Item = usize> {
+        let row = index / sudoku.size;
+        let size = sudoku.size;
+        (0..sudoku.size).map(move |i| i + row * size)
+    }
+}
+
 impl Rule for RowRule {
     fn updates<'buf>(
         &self,
@@ -95,31 +103,27 @@ impl Rule for RowRule {
         buffer: &'buf mut Vec<usize>,
     ) -> &'buf [usize] {
         buffer.clear();
-        let row = index / sudoku.size;
-        (0..sudoku.size)
-            .map(|i| i + row * sudoku.size)
+
+        self.updates_iter(sudoku, index)
             .for_each(|i| buffer.push(i));
         buffer
     }
 
     fn hidden_singles(&self, sudoku: &Sudoku) -> Option<(u16, usize)> {
-        let mut buffer = vec![];
-        let buffer = &mut buffer;
         for row_number in 0..sudoku.size {
-            let row = self.updates(sudoku, row_number * sudoku.size, buffer);
-            for value in 1..=sudoku.size as u16 {
-                let cells = row.iter().map(|i| &sudoku.cells[*i]);
-                let count = cells.filter(|cell| cell.available.contains(&value)).count();
-
-                if count == 1 {
-                    let mut cells = row.iter().map(|i| &sudoku.cells[*i]);
-                    let position = cells
-                        .position(|cell| cell.available.contains(&value))
-                        .unwrap();
-                    let real_position = row_number * sudoku.size + position;
-                    if !sudoku.cells[real_position].locked_in {
-                        //println!("Found Hidden {value} in row {row_number}");
-                        return Some((value, real_position));
+            'value: for value in 1..=sudoku.size as u16 {
+                let mut found_position = None;
+                for position in self.updates_iter(sudoku, row_number) {
+                    if sudoku.cells[position].available.contains(&value) {
+                        if found_position.is_some() {
+                            continue 'value;
+                        }
+                        found_position = Some(position);
+                    }
+                }
+                if let Some(position) = found_position {
+                    if !sudoku.cells[position].locked_in {
+                        return Some((value, position));
                     }
                 }
             }
