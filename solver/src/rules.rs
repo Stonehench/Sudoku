@@ -49,8 +49,9 @@ impl Rule for SquareRule {
         buffer: &'buf mut Vec<usize>,
     ) -> &'buf [usize] {
         buffer.clear();
-
-        self.updates_iter(size, index).for_each(|i| buffer.push(i));
+        for i in self.updates_iter(size, index) {
+            buffer.push(i)
+        }
         buffer
     }
 
@@ -104,7 +105,9 @@ impl Rule for RowRule {
         buffer: &'buf mut Vec<usize>,
     ) -> &'buf [usize] {
         buffer.clear();
-        self.updates_iter(size, index).for_each(|i| buffer.push(i));
+        for i in self.updates_iter(size, index) {
+            buffer.push(i)
+        }
         buffer
     }
 
@@ -155,7 +158,9 @@ impl Rule for ColumnRule {
         buffer: &'buf mut Vec<usize>,
     ) -> &'buf [usize] {
         buffer.clear();
-        self.updates_iter(size, index).for_each(|i| buffer.push(i));
+        for i in self.updates_iter(size, index) {
+            buffer.push(i)
+        }
         buffer
     }
 
@@ -291,4 +296,20 @@ fn square_hidden_math_test() {
     let res = squarerule.hidden_singles(&sudoku);
     println!("{res:?}");
     assert_eq!(res, Some((1, 20)))
+}
+
+#[test]
+fn size_test() {
+    println!(
+        "Row: {}",
+        std::mem::size_of_val(&RowRule.updates_iter(9, 0))
+    );
+    println!(
+        "Column: {}",
+        std::mem::size_of_val(&ColumnRule.updates_iter(9, 0))
+    );
+    println!(
+        "Square: {}",
+        std::mem::size_of_val(&SquareRule.updates_iter(9, 0))
+    );
 }
