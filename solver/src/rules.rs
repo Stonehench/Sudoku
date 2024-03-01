@@ -37,6 +37,7 @@ impl Rule for SquareRule {
     }
 
     fn hidden_singles(&self, sudoku: &Sudoku) -> Option<(u16, usize)> {
+
         let sub_size = sudoku.size.integer_sqrt();
         let squares = (0..sudoku.size)
             .map(|index| index * sub_size + (index / sub_size) * sudoku.size * (sub_size - 1))
@@ -60,6 +61,7 @@ impl Rule for SquareRule {
                         + (sudoku.size * (position / sub_size));
 
                     if !sudoku.cells[real_position].locked_in {
+                        //println!("Found Hidden {value} in square {square_number}");
                         return Some((value, real_position));
                     }
                 }
@@ -97,6 +99,7 @@ impl Rule for RowRule {
                         .unwrap();
                     let real_position = row_number * sudoku.size + position;
                     if !sudoku.cells[real_position].locked_in {
+                        //println!("Found Hidden {value} in row {row_number}");
                         return Some((value, real_position));
                     }
                 }
@@ -135,6 +138,7 @@ impl Rule for ColumnRule {
 
                     let real_position = column_number + position * sudoku.size;
                     if !sudoku.cells[real_position].locked_in {
+                        //println!("Found Hidden {value} in column {column_number}");
                         return Some((value, real_position));
                     }
                 }
