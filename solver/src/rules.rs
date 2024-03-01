@@ -115,7 +115,7 @@ impl Rule for RowRule {
         for row_number in 0..sudoku.size {
             'value: for value in 1..=sudoku.size as u16 {
                 let mut found_position = None;
-                for position in Self::updates_iter(sudoku.size, row_number) {
+                for position in (0..sudoku.size).map( |i| i + row_number * sudoku.size) {
                     if sudoku.cells[position].available.contains(&value) {
                         if found_position.is_some() {
                             continue 'value;
@@ -169,7 +169,7 @@ impl Rule for ColumnRule {
             'value: for value in 1..=sudoku.size as u16 {
                 let mut found_position = None;
 
-                for position in Self::updates_iter(sudoku.size, column_number) {
+                for position in (0..sudoku.size).map(|i| i * sudoku.size + column_number) {
                     if sudoku.cells[position].available.contains(&value) {
                         if found_position.is_some() {
                             continue 'value;
