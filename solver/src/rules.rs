@@ -60,7 +60,35 @@ impl Rule for SquareRule {
             .map(|index| index * sub_size + (index / sub_size) * sudoku.size * (sub_size - 1));
 
         for square_entry_index in squares {
-            for value in 1..=sudoku.size as u16 {
+            'value: for value in 1..=sudoku.size as u16 {
+                let mut position = None;
+                for (relative_position, cell) in self
+                    .updates_iter(sudoku, square_entry_index)
+                    .map(|i| &sudoku.cells[i])
+                    .enumerate()
+                {
+                    if cell.available.contains(&value) {
+                        if position.is_some() {
+                            // Der er allerede fundet en anden i denne square som har value.
+                            continue 'value;
+                        }
+                        position = Some(relative_position);
+                    }
+                }
+                if let Some(position) = position {
+                    let real_position = self
+                        .updates_iter(sudoku, square_entry_index)
+                        .nth(0)
+                        .unwrap()
+                        + (position % sub_size)
+                        + (sudoku.size * (position / sub_size));
+                    if !sudoku.cells[real_position].locked_in {
+                        //println!("Found Hidden {value} in square {square_number}");
+                        return Some((value, real_position));
+                    }
+                }
+
+                /*
                 let cells = self
                     .updates_iter(sudoku, square_entry_index)
                     .map(|i| &sudoku.cells[i]);
@@ -86,6 +114,7 @@ impl Rule for SquareRule {
                         return Some((value, real_position));
                     }
                 }
+                 */
             }
         }
         None
