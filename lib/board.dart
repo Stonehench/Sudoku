@@ -1,12 +1,11 @@
-import 'dart:ffi';
 
 import 'package:flutter/material.dart';
 import 'package:sudoku/cell.dart';
 
 class Board extends StatefulWidget {
-  String boardString;
+  final String boardString;
 
-  Board(this.boardString);
+  const Board(this.boardString, {super.key});
 
   @override
   State<StatefulWidget> createState() => _BoardState();
@@ -23,14 +22,14 @@ class _BoardState extends State<Board> {
           width: 420,
           child: Stack(
             children: [
-              Container(color: Color.fromARGB(255, 19, 22, 54)),
+              Container(color: const Color.fromARGB(255, 19, 22, 54)),
               GridView.builder(
                 padding: EdgeInsets.zero,
                 gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
                     crossAxisCount: 3, crossAxisSpacing: 2, mainAxisSpacing: 2),
                 itemBuilder: (context, index) {
                   return Container(
-                    color: Color.fromARGB(255, 127, 132, 177),
+                    color: const Color.fromARGB(255, 127, 132, 177),
                   );
                 },
               ),
