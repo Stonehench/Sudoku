@@ -89,14 +89,6 @@ impl Rule for SquareRule {
 #[derive(Debug, Clone)]
 pub struct RowRule;
 
-impl RowRule {
-    #[inline]
-    fn updates_iter(size: usize, index: usize) -> impl Iterator<Item = usize> {
-        let row = index / size;
-        (0..size).map(move |i| i + row * size)
-    }
-}
-
 impl Rule for RowRule {
     fn updates<'buf>(
         &self,
@@ -105,7 +97,9 @@ impl Rule for RowRule {
         buffer: &'buf mut Vec<usize>,
     ) -> &'buf [usize] {
         buffer.clear();
-        for i in Self::updates_iter(size, index) {
+        let row = index / size;
+
+        for i in (0..size).map(|i| i + row * size) {
             buffer.push(i)
         }
         buffer
@@ -141,15 +135,6 @@ impl Rule for RowRule {
 #[derive(Debug, Clone)]
 pub struct ColumnRule;
 
-impl ColumnRule {
-    #[inline]
-    fn updates_iter(size: usize, index: usize) -> impl Iterator<Item = usize> {
-        let column = index % size;
-        let size = size;
-        (0..size).map(move |i| i * size + column)
-    }
-}
-
 impl Rule for ColumnRule {
     fn updates<'buf>(
         &self,
@@ -158,7 +143,10 @@ impl Rule for ColumnRule {
         buffer: &'buf mut Vec<usize>,
     ) -> &'buf [usize] {
         buffer.clear();
-        for i in Self::updates_iter(size, index) {
+        let column = index % size;
+        let size = size;
+
+        for i in (0..size).map(|i| i * size + column) {
             buffer.push(i)
         }
         buffer
