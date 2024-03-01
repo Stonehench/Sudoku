@@ -18,12 +18,26 @@ pub trait Rule: Debug {
             .any(|c| c.is_single_eq(value))
     }
 
-    fn hidden_singles(&self, sudoku: &Sudoku, buffer: &mut Vec<usize>) -> Option<(u16, usize)>;
+    fn hidden_singles(&self, sudoku: &Sudoku) -> Option<(u16, usize)>;
     fn boxed_clone(&self) -> Box<dyn Rule>;
 }
 
 #[derive(Debug, Clone)]
 pub struct SquareRule;
+
+impl SquareRule {
+    fn updates_iter(&self, sudoku: &Sudoku, index: usize) -> impl Iterator<Item = usize> {
+        let row = index / sudoku.size;
+        let size = sudoku.size;
+        let sub_size = sudoku.size.integer_sqrt();
+
+        (0..sudoku.size).map(move |i| {
+            (index - (index % sub_size)) - (size * (row % sub_size))
+                + (i % sub_size)
+                + (size * (i / sub_size))
+        })
+    }
+}
 
 impl Rule for SquareRule {
     fn updates<'buf>(
@@ -38,50 +52,40 @@ impl Rule for SquareRule {
         let size = sudoku.size;
         let sub_size = sudoku.size.integer_sqrt();
 
-        (0..sudoku.size)
-            .map(|i| {
-                (index - (index % sub_size)) - (size * (row % sub_size))
-                    + (i % sub_size)
-                    + (size * (i / sub_size))
-            })
+        self.updates_iter(sudoku, index)
             .for_each(|i| buffer.push(i));
         buffer
     }
 
-    fn hidden_singles(&self, _sudoku: &Sudoku, buffer: &mut Vec<usize>) -> Option<(u16, usize)> {
-        return None;
-        /*
+    fn hidden_singles(&self, sudoku: &Sudoku) -> Option<(u16, usize)> {
         let sub_size = sudoku.size.integer_sqrt();
-
-        let indexes = (0..sudoku.size)
+        let squares = (0..sudoku.size)
             .map(|index| index * sub_size + (index / sub_size) * sudoku.size * (sub_size - 1))
-            .map(|index| self.update_inclusive(sudoku, index));
+            .map(|index| self.updates_iter(sudoku, index));
 
-        for (square_number, square) in indexes.enumerate() {
+        for (square_number, square_idecies) in squares.enumerate() {
             for value in 1..=sudoku.size as u16 {
-                let count = square
-                    .iter()
-                    .map(|index| &sudoku.cells[*index])
-                    .filter(|cell| cell.available.contains(&value))
-                    .count();
+                let cells = square_idecies.map(|i| &sudoku.cells[i]);
+                let count = cells.filter(|cell| cell.available.contains(&value)).count();
+
                 if count == 1 {
-                    let position = square
-                        .into_iter()
-                        .map(|index| &sudoku.cells[index])
+                    let mut cells = square_idecies.map(|i| &sudoku.cells[i]);
+                    let position = cells
                         .position(|cell| cell.available.contains(&value))
                         .unwrap();
-                    let real_position = (square_number * sub_size
-                        + (square_number / sub_size) * sudoku.size * (sub_size - 1))
-                        + (position + (position / sub_size) * sub_size * (sub_size - 1));
+
+                    let real_position = square_idecies.nth(0).unwrap()
+                        + (position % sub_size)
+                        + (sudoku.size * (position / sub_size));
+
                     if !sudoku.cells[real_position].locked_in {
+                        //println!("Found Hidden {value} in square {square_number}");
                         return Some((value, real_position));
                     }
                 }
             }
         }
-
         None
-         */
     }
     fn boxed_clone(&self) -> Box<dyn Rule> {
         Box::new(self.clone())
@@ -119,6 +123,7 @@ impl Rule for RowRule {
                         .unwrap();
                     let real_position = row_number * sudoku.size + position;
                     if !sudoku.cells[real_position].locked_in {
+                        //println!("Found Hidden {value} in row {row_number}");
                         return Some((value, real_position));
                     }
                 }
@@ -163,6 +168,7 @@ impl Rule for ColumnRule {
 
                     let real_position = column_number + position * sudoku.size;
                     if !sudoku.cells[real_position].locked_in {
+                        //println!("Found Hidden {value} in column {column_number}");
                         return Some((value, real_position));
                     }
                 }
@@ -274,12 +280,12 @@ fn square_hidden_math_test() {
     sudoku.set_cell(1, 27);
     sudoku.set_cell(1, 55);
     sudoku.set_cell(1, 8);
-    sudoku.set_cell(4, 5);
+    sudoku.set_cell(1, 12);
 
     println!("{sudoku}");
 
     let squarerule = SquareRule;
-    let mut buffer = vec![];
-    let res = squarerule.hidden_singles(&sudoku, &mut buffer);
+    let res = squarerule.hidden_singles(&sudoku);
+    println!("{res:?}");
     assert_eq!(res, Some((1, 20)))
 }
