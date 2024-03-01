@@ -19,7 +19,7 @@ class _BoardState extends State<Board> {
     return Scaffold(
       body: Center(
         child: SizedBox(
-          height: 384,
+          height: 420,
           width: 420,
           child: Stack(
             children: [
