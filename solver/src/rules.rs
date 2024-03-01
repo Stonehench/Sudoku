@@ -56,6 +56,35 @@ impl Rule for SquareRule {
     }
 
     fn hidden_singles(&self, sudoku: &Sudoku) -> Option<(u16, usize)> {
+        let sub_s = sudoku.size.integer_sqrt();
+        for sq_y in 0..sub_s {
+            for sq_x in 0..sub_s {
+                'value: for value in 1..=sudoku.size as u16 {
+                    let mut found_position = None;
+                    for l_y in 0..sub_s {
+                        for l_x in 0..sub_s {
+                            let x = l_x + sq_x * sub_s;
+                            let y = l_y + sq_y * sub_s;
+                            let i = x + y * sudoku.size;
+                            if sudoku.cells[i].available.contains(&value) {
+                                if found_position.is_some() {
+                                    continue 'value;
+                                } else {
+                                    found_position = Some(i);
+                                }
+                            }
+                        }
+                    }
+                    if let Some(position) = found_position {
+                        if !sudoku.cells[position].locked_in {
+                            return Some((value, position));
+                        }
+                    }
+                }
+            }
+        }
+
+        /*
         let sub_size = sudoku.size.integer_sqrt();
         let squares = (0..sudoku.size)
             .map(|index| index * sub_size + (index / sub_size) * sudoku.size * (sub_size - 1));
@@ -80,6 +109,7 @@ impl Rule for SquareRule {
                 }
             }
         }
+        */
         None
     }
     fn boxed_clone(&self) -> Box<dyn Rule> {
@@ -115,7 +145,7 @@ impl Rule for RowRule {
         for row_number in 0..sudoku.size {
             'value: for value in 1..=sudoku.size as u16 {
                 let mut found_position = None;
-                for position in (0..sudoku.size).map( |i| i + row_number * sudoku.size) {
+                for position in (0..sudoku.size).map(|i| i + row_number * sudoku.size) {
                     if sudoku.cells[position].available.contains(&value) {
                         if found_position.is_some() {
                             continue 'value;
@@ -299,17 +329,21 @@ fn square_hidden_math_test() {
 }
 
 #[test]
-fn size_test() {
-    println!(
-        "Row: {}",
-        std::mem::size_of_val(&RowRule::updates_iter(9, 0))
-    );
-    println!(
-        "Column: {}",
-        std::mem::size_of_val(&ColumnRule::updates_iter(9, 0))
-    );
-    println!(
-        "Square: {}",
-        std::mem::size_of_val(&SquareRule::updates_iter(9, 0))
-    );
+fn square_test_2() {
+    const SIZE: usize = 9;
+    let sub_s = SIZE.integer_sqrt();
+    for sq_y in 0..sub_s {
+        for sq_x in 0..sub_s {
+            for l_y in 0..sub_s {
+                for l_x in 0..sub_s {
+                    let x = l_x + sq_x * sub_s;
+                    let y = l_y + sq_y * sub_s;
+                    let i = x + y * SIZE;
+                    print!("{} ", i);
+                }
+                println!("");
+            }
+            println!("\n");
+        }
+    }
 }
