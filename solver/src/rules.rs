@@ -6,13 +6,13 @@ use crate::sudoku::Sudoku;
 pub trait Rule: Debug {
     fn updates<'buf>(
         &self,
-        sudoku: &Sudoku,
+        size: usize,
         index: usize,
         buffer: &'buf mut Vec<usize>,
     ) -> &'buf [usize];
     fn is_legal(&self, sudoku: &Sudoku, index: usize, value: u16, buffer: &mut Vec<usize>) -> bool {
         !self
-            .updates(sudoku, index, buffer)
+            .updates(sudoku.size, index, buffer)
             .iter()
             .map(|i| &sudoku.cells[*i])
             .any(|c| c.is_single_eq(value))
@@ -26,13 +26,14 @@ pub trait Rule: Debug {
 pub struct SquareRule;
 
 impl SquareRule {
-    fn updates_iter(&self, sudoku: &Sudoku, index: usize) -> impl Iterator<Item = usize> {
+    #[inline]
+    fn updates_iter(&self, size: usize, index: usize) -> impl Iterator<Item = usize> {
         //Burde gerne være ok med arbitær størrelse?
-        let row = index / sudoku.size;
-        let size = sudoku.size;
-        let sub_size = sudoku.size.integer_sqrt();
+        let row = index / size;
 
-        (0..sudoku.size).map(move |i| {
+        let sub_size = size.integer_sqrt();
+
+        (0..size).map(move |i| {
             (index - (index % sub_size)) - (size * (row % sub_size))
                 + (i % sub_size)
                 + (size * (i / sub_size))
@@ -43,14 +44,13 @@ impl SquareRule {
 impl Rule for SquareRule {
     fn updates<'buf>(
         &self,
-        sudoku: &Sudoku,
+        size: usize,
         index: usize,
         buffer: &'buf mut Vec<usize>,
     ) -> &'buf [usize] {
         buffer.clear();
 
-        self.updates_iter(sudoku, index)
-            .for_each(|i| buffer.push(i));
+        self.updates_iter(size, index).for_each(|i| buffer.push(i));
         buffer
     }
 
@@ -62,7 +62,7 @@ impl Rule for SquareRule {
         for square_entry_index in squares {
             'value: for value in 1..=sudoku.size as u16 {
                 let mut found_position = None;
-                for position in self.updates_iter(sudoku, square_entry_index) {
+                for position in self.updates_iter(sudoku.size, square_entry_index) {
                     if sudoku.cells[position].available.contains(&value) {
                         if found_position.is_some() {
                             // Der er allerede fundet en anden i denne square som har value.
@@ -89,24 +89,22 @@ impl Rule for SquareRule {
 pub struct RowRule;
 
 impl RowRule {
-    fn updates_iter(&self, sudoku: &Sudoku, index: usize) -> impl Iterator<Item = usize> {
-        let row = index / sudoku.size;
-        let size = sudoku.size;
-        (0..sudoku.size).map(move |i| i + row * size)
+    #[inline]
+    fn updates_iter(&self, size: usize, index: usize) -> impl Iterator<Item = usize> {
+        let row = index / size;
+        (0..size).map(move |i| i + row * size)
     }
 }
 
 impl Rule for RowRule {
     fn updates<'buf>(
         &self,
-        sudoku: &Sudoku,
+        size: usize,
         index: usize,
         buffer: &'buf mut Vec<usize>,
     ) -> &'buf [usize] {
         buffer.clear();
-
-        self.updates_iter(sudoku, index)
-            .for_each(|i| buffer.push(i));
+        self.updates_iter(size, index).for_each(|i| buffer.push(i));
         buffer
     }
 
@@ -114,7 +112,7 @@ impl Rule for RowRule {
         for row_number in 0..sudoku.size {
             'value: for value in 1..=sudoku.size as u16 {
                 let mut found_position = None;
-                for position in self.updates_iter(sudoku, row_number) {
+                for position in self.updates_iter(sudoku.size, row_number) {
                     if sudoku.cells[position].available.contains(&value) {
                         if found_position.is_some() {
                             continue 'value;
@@ -141,23 +139,23 @@ impl Rule for RowRule {
 pub struct ColumnRule;
 
 impl ColumnRule {
-    fn updates_iter(&self, sudoku: &Sudoku, index: usize) -> impl Iterator<Item = usize> {
-        let column = index % sudoku.size;
-        let size = sudoku.size;
-        (0..sudoku.size).map(move |i| i * size + column)
+    #[inline]
+    fn updates_iter(&self, size: usize, index: usize) -> impl Iterator<Item = usize> {
+        let column = index % size;
+        let size = size;
+        (0..size).map(move |i| i * size + column)
     }
 }
 
 impl Rule for ColumnRule {
     fn updates<'buf>(
         &self,
-        sudoku: &Sudoku,
+        size: usize,
         index: usize,
         buffer: &'buf mut Vec<usize>,
     ) -> &'buf [usize] {
         buffer.clear();
-        self.updates_iter(sudoku, index)
-            .for_each(|i| buffer.push(i));
+        self.updates_iter(size, index).for_each(|i| buffer.push(i));
         buffer
     }
 
@@ -166,7 +164,7 @@ impl Rule for ColumnRule {
             'value: for value in 1..=sudoku.size as u16 {
                 let mut found_position = None;
 
-                for position in self.updates_iter(sudoku, column_number) {
+                for position in self.updates_iter(sudoku.size, column_number) {
                     if sudoku.cells[position].available.contains(&value) {
                         if found_position.is_some() {
                             continue 'value;
@@ -195,7 +193,7 @@ fn row_test() {
 
     let rowrule = RowRule;
     let mut buffer = vec![];
-    let indexes = rowrule.updates(&sudoku, 11, &mut buffer);
+    let indexes = rowrule.updates(sudoku.size, 11, &mut buffer);
     println!("{indexes:?}");
 
     assert_eq!(indexes, vec![9, 10, 11, 12, 13, 14, 15, 16, 17])
@@ -207,7 +205,7 @@ fn column_test() {
 
     let columnrule = ColumnRule;
     let mut buffer = vec![];
-    let indexes = columnrule.updates(&sudoku, 11, &mut buffer);
+    let indexes = columnrule.updates(sudoku.size, 11, &mut buffer);
     println!("{indexes:?}");
 
     assert_eq!(indexes, vec![2, 11, 20, 29, 38, 47, 56, 65, 74])
@@ -219,7 +217,7 @@ fn square_test() {
 
     let squarerule = SquareRule;
     let mut buffer = vec![];
-    let indexes = squarerule.updates(&sudoku, 11, &mut buffer);
+    let indexes = squarerule.updates(sudoku.size, 11, &mut buffer);
     println!("{indexes:?}");
 
     assert_eq!(indexes, vec![0, 1, 2, 9, 10, 11, 18, 19, 20])

@@ -54,7 +54,7 @@ impl Sudoku {
         self.cells[index] = Cell::single(n);
         for rule in &self.rules {
             for inner_index in rule
-                .updates(&self, index, &mut ret_buffer)
+                .updates(self.size, index, &mut ret_buffer)
                 .into_iter()
                 .filter(|i| **i != index)
             {
@@ -73,7 +73,7 @@ impl Sudoku {
         self.cells[index] = Cell::single(n);
         for rule in &self.rules {
             for inner_index in rule
-                .updates(&self, index, ret_buffer)
+                .updates(self.size, index, ret_buffer)
                 .into_iter()
                 .filter(|i| **i != index)
             {
@@ -126,8 +126,7 @@ impl Sudoku {
                     // Der er ikke flere naked singles, så der tjekkes for hidden singles
 
                     for rule in &self.rules {
-                        if let Some((n, hidden_index)) = rule.hidden_singles(self)
-                        {
+                        if let Some((n, hidden_index)) = rule.hidden_singles(self) {
                             //Put nuværende cell tilbage i priority queue
 
                             pri_queue.push(index, entropy);
