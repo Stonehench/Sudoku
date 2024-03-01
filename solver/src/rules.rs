@@ -27,7 +27,7 @@ pub struct SquareRule;
 
 impl SquareRule {
     #[inline]
-    fn updates_iter(&self, size: usize, index: usize) -> impl Iterator<Item = usize> {
+    fn updates_iter(size: usize, index: usize) -> impl Iterator<Item = usize> {
         //Burde gerne være ok med arbitær størrelse?
         let row = index / size;
 
@@ -49,7 +49,7 @@ impl Rule for SquareRule {
         buffer: &'buf mut Vec<usize>,
     ) -> &'buf [usize] {
         buffer.clear();
-        for i in self.updates_iter(size, index) {
+        for i in Self::updates_iter(size, index) {
             buffer.push(i)
         }
         buffer
@@ -63,7 +63,7 @@ impl Rule for SquareRule {
         for square_entry_index in squares {
             'value: for value in 1..=sudoku.size as u16 {
                 let mut found_position = None;
-                for position in self.updates_iter(sudoku.size, square_entry_index) {
+                for position in Self::updates_iter(sudoku.size, square_entry_index) {
                     if sudoku.cells[position].available.contains(&value) {
                         if found_position.is_some() {
                             // Der er allerede fundet en anden i denne square som har value.
@@ -91,7 +91,7 @@ pub struct RowRule;
 
 impl RowRule {
     #[inline]
-    fn updates_iter(&self, size: usize, index: usize) -> impl Iterator<Item = usize> {
+    fn updates_iter(size: usize, index: usize) -> impl Iterator<Item = usize> {
         let row = index / size;
         (0..size).map(move |i| i + row * size)
     }
@@ -105,7 +105,7 @@ impl Rule for RowRule {
         buffer: &'buf mut Vec<usize>,
     ) -> &'buf [usize] {
         buffer.clear();
-        for i in self.updates_iter(size, index) {
+        for i in Self::updates_iter(size, index) {
             buffer.push(i)
         }
         buffer
@@ -115,7 +115,7 @@ impl Rule for RowRule {
         for row_number in 0..sudoku.size {
             'value: for value in 1..=sudoku.size as u16 {
                 let mut found_position = None;
-                for position in self.updates_iter(sudoku.size, row_number) {
+                for position in Self::updates_iter(sudoku.size, row_number) {
                     if sudoku.cells[position].available.contains(&value) {
                         if found_position.is_some() {
                             continue 'value;
@@ -143,7 +143,7 @@ pub struct ColumnRule;
 
 impl ColumnRule {
     #[inline]
-    fn updates_iter(&self, size: usize, index: usize) -> impl Iterator<Item = usize> {
+    fn updates_iter(size: usize, index: usize) -> impl Iterator<Item = usize> {
         let column = index % size;
         let size = size;
         (0..size).map(move |i| i * size + column)
@@ -158,7 +158,7 @@ impl Rule for ColumnRule {
         buffer: &'buf mut Vec<usize>,
     ) -> &'buf [usize] {
         buffer.clear();
-        for i in self.updates_iter(size, index) {
+        for i in Self::updates_iter(size, index) {
             buffer.push(i)
         }
         buffer
@@ -169,7 +169,7 @@ impl Rule for ColumnRule {
             'value: for value in 1..=sudoku.size as u16 {
                 let mut found_position = None;
 
-                for position in self.updates_iter(sudoku.size, column_number) {
+                for position in Self::updates_iter(sudoku.size, column_number) {
                     if sudoku.cells[position].available.contains(&value) {
                         if found_position.is_some() {
                             continue 'value;
@@ -302,14 +302,14 @@ fn square_hidden_math_test() {
 fn size_test() {
     println!(
         "Row: {}",
-        std::mem::size_of_val(&RowRule.updates_iter(9, 0))
+        std::mem::size_of_val(&RowRule::updates_iter(9, 0))
     );
     println!(
         "Column: {}",
-        std::mem::size_of_val(&ColumnRule.updates_iter(9, 0))
+        std::mem::size_of_val(&ColumnRule::updates_iter(9, 0))
     );
     println!(
         "Square: {}",
-        std::mem::size_of_val(&SquareRule.updates_iter(9, 0))
+        std::mem::size_of_val(&SquareRule::updates_iter(9, 0))
     );
 }
