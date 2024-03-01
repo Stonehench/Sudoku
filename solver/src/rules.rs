@@ -26,7 +26,8 @@ pub trait Rule: Debug {
 pub struct SquareRule;
 
 impl SquareRule {
-    fn updates_iter(&self, sudoku: &Sudoku, index: usize) -> impl Iterator<Item = usize> {
+    fn updates_iter(&self, sudoku: &Sudoku, index: usize) -> impl Iterator<Item = usize> + Clone {
+        //Burde gerne være ok med arbitær størrelse?
         let row = index / sudoku.size;
         let size = sudoku.size;
         let sub_size = sudoku.size.integer_sqrt();
@@ -47,10 +48,6 @@ impl Rule for SquareRule {
         buffer: &'buf mut Vec<usize>,
     ) -> &'buf [usize] {
         buffer.clear();
-        //Burde gerne være ok med arbitær størrelse?
-        let row = index / sudoku.size;
-        let size = sudoku.size;
-        let sub_size = sudoku.size.integer_sqrt();
 
         self.updates_iter(sudoku, index)
             .for_each(|i| buffer.push(i));
@@ -60,21 +57,27 @@ impl Rule for SquareRule {
     fn hidden_singles(&self, sudoku: &Sudoku) -> Option<(u16, usize)> {
         let sub_size = sudoku.size.integer_sqrt();
         let squares = (0..sudoku.size)
-            .map(|index| index * sub_size + (index / sub_size) * sudoku.size * (sub_size - 1))
-            .map(|index| self.updates_iter(sudoku, index));
+            .map(|index| index * sub_size + (index / sub_size) * sudoku.size * (sub_size - 1));
 
-        for (square_number, square_idecies) in squares.enumerate() {
+        for square_entry_index in squares {
             for value in 1..=sudoku.size as u16 {
-                let cells = square_idecies.map(|i| &sudoku.cells[i]);
+                let cells = self
+                    .updates_iter(sudoku, square_entry_index)
+                    .map(|i| &sudoku.cells[i]);
                 let count = cells.filter(|cell| cell.available.contains(&value)).count();
 
                 if count == 1 {
-                    let mut cells = square_idecies.map(|i| &sudoku.cells[i]);
+                    let mut cells = self
+                        .updates_iter(sudoku, square_entry_index)
+                        .map(|i| &sudoku.cells[i]);
                     let position = cells
                         .position(|cell| cell.available.contains(&value))
                         .unwrap();
 
-                    let real_position = square_idecies.nth(0).unwrap()
+                    let real_position = self
+                        .updates_iter(sudoku, square_entry_index)
+                        .nth(0)
+                        .unwrap()
                         + (position % sub_size)
                         + (sudoku.size * (position / sub_size));
 
@@ -109,7 +112,9 @@ impl Rule for RowRule {
         buffer
     }
 
-    fn hidden_singles(&self, sudoku: &Sudoku, buffer: &mut Vec<usize>) -> Option<(u16, usize)> {
+    fn hidden_singles(&self, sudoku: &Sudoku) -> Option<(u16, usize)> {
+        let mut buffer = vec![];
+        let buffer = &mut buffer;
         for row_number in 0..sudoku.size {
             let row = self.updates(sudoku, row_number * sudoku.size, buffer);
             for value in 1..=sudoku.size as u16 {
@@ -154,7 +159,9 @@ impl Rule for ColumnRule {
         buffer
     }
 
-    fn hidden_singles(&self, sudoku: &Sudoku, buffer: &mut Vec<usize>) -> Option<(u16, usize)> {
+    fn hidden_singles(&self, sudoku: &Sudoku) -> Option<(u16, usize)> {
+        let mut buffer = vec![];
+        let buffer = &mut buffer;
         for column_number in 0..sudoku.size {
             let column = self.updates(sudoku, column_number, buffer);
             for value in 1..=sudoku.size as u16 {
@@ -237,8 +244,7 @@ fn row_hidden_math_test() {
     println!("{sudoku}");
 
     let rowrule = RowRule;
-    let mut buffer = vec![];
-    let res = rowrule.hidden_singles(&sudoku, &mut buffer);
+    let res = rowrule.hidden_singles(&sudoku);
     assert_eq!(res, Some((1, 0)))
 }
 
@@ -261,8 +267,7 @@ fn column_hidden_math_test() {
     println!("\n\n{sudoku}");
 
     let columnrule = ColumnRule;
-    let mut buffer = vec![];
-    let res = columnrule.hidden_singles(&sudoku, &mut buffer);
+    let res = columnrule.hidden_singles(&sudoku);
     assert_eq!(res, Some((1, 0)))
 }
 

@@ -126,7 +126,7 @@ impl Sudoku {
                     // Der er ikke flere naked singles, så der tjekkes for hidden singles
 
                     for rule in &self.rules {
-                        if let Some((n, hidden_index)) = rule.hidden_singles(self, &mut ret_buffer)
+                        if let Some((n, hidden_index)) = rule.hidden_singles(self)
                         {
                             //Put nuværende cell tilbage i priority queue
 
