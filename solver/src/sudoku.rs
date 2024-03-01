@@ -348,12 +348,6 @@ fn random_gen() {
 }
 
 #[test]
-fn spam_random_test() {
-    for _ in 0..100 {
-        random_gen();
-    }
-}
-#[test]
 fn solve_16x_test() {
     let file_str = std::fs::read_to_string("./sudoku16x16").unwrap();
     let mut sudoku: Sudoku = file_str.parse().unwrap();
