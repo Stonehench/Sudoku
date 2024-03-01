@@ -49,10 +49,14 @@ impl Sudoku {
         }
     }
 
-    fn set_cell(&mut self, n: u16, index: usize) {
+    pub fn set_cell(&mut self, n: u16, index: usize) {
         self.cells[index] = Cell::single(n);
         for rule in &self.rules {
-            for inner_index in rule.updates(&self, index) {
+            for inner_index in rule
+                .updates(&self, index)
+                .into_iter()
+                .filter(|i| *i != index)
+            {
                 self.cells[inner_index].remove(n);
             }
         }
@@ -61,7 +65,11 @@ impl Sudoku {
     fn update_cell(&mut self, n: u16, index: usize, queue: &mut PriorityQueue<usize, Entropy>) {
         self.cells[index] = Cell::single(n);
         for rule in &self.rules {
-            for inner_index in rule.updates(&self, index) {
+            for inner_index in rule
+                .updates(&self, index)
+                .into_iter()
+                .filter(|i| *i != index)
+            {
                 let cell = &mut self.cells[inner_index];
                 cell.remove(n);
                 queue.change_priority(&inner_index, Entropy(cell.available.len()));
@@ -84,7 +92,7 @@ impl Sudoku {
 
         let mut branch_stack: Vec<(Vec<Cell>, PriorityQueue<usize, Entropy>)> = vec![];
 
-        while let Some((index, entropy)) = pri_queue.pop() {
+        'main: while let Some((index, entropy)) = pri_queue.pop() {
             match entropy.0 {
                 0 => {
                     //Der er ingen løsning på den nuværende branch. Derfor popper vi en branch og løser den i stedet
@@ -102,6 +110,20 @@ impl Sudoku {
                 }
                 1 => self.update_cell(self.cells[index].available[0], index, &mut pri_queue),
                 _ => {
+                    // Der er ikke flere naked singles, så der tjekkes for hidden singles
+
+                    for rule in &self.rules {
+                        if let Some((n, hidden_index)) = rule.hidden_singles(self) {
+                            //Put nuværende cell tilbage i priority queue
+
+                            pri_queue.push(index, entropy);
+                            pri_queue.remove(&hidden_index);
+                            self.update_cell(n, hidden_index, &mut pri_queue);
+
+                            continue 'main;
+                        }
+                    }
+
                     //Der er flere muligheder for hvad der kan vælges. Derfor pushes state på branch stacken og der vælges en mulighed
                     //Vælg random
                     let choice = random::<usize>() % entropy.0;
@@ -181,8 +203,8 @@ impl Display for Sudoku {
 
 #[derive(Debug, Clone)]
 pub struct Cell {
-    available: Vec<u16>,
-    locked_in: bool,
+    pub available: Vec<u16>,
+    pub locked_in: bool,
 }
 
 impl Cell {
@@ -204,16 +226,40 @@ impl Cell {
             panic!("Something went seriously wrong. Removed the only value in a locked cell\nThis indicates either an unsolveable sudoku or a bug in the rules.");
         }
     }
+    #[allow(unused)]
     pub fn is_single_eq(&self, n: u16) -> bool {
         self.available == [n]
     }
 }
 
+impl Clone for Sudoku {
+    fn clone(&self) -> Self {
+        Self {
+            size: self.size.clone(),
+            cells: self.cells.clone(),
+            rules: self.rules.iter().map(|r| r.boxed_clone()).collect(),
+        }
+    }
+}
+
 #[test]
 fn read_file_test() {
-    let file_str = std::fs::read_to_string("./sudokuUløst").unwrap();
+    let file_str = std::fs::read_to_string("./sudokuBenchmark").unwrap();
     let sudoku: Sudoku = file_str.parse().unwrap();
 
+    println!("{sudoku}");
+}
+
+#[test]
+fn solve_big_sudoku() {
+    // to run this test remember to set the sudoku size to 16
+    // hopefully this will be changed in the future to be automatic
+
+    let file_str = std::fs::read_to_string("./sudoku16").unwrap();
+    let mut sudoku: Sudoku = file_str.parse().unwrap();
+
+    println!("{sudoku}");
+    sudoku.solve();
     println!("{sudoku}");
 }
 

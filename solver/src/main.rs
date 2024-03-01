@@ -1,4 +1,8 @@
-use std::{env::args, fs, time::Instant};
+use std::{
+    env::{self, args},
+    fs,
+    time::Instant,
+};
 
 use sudoku::Sudoku;
 
@@ -11,6 +15,11 @@ fn main() {
         println!("Needs filename as arg");
         return;
     };
+    if input_filename == "--benchmark" {
+        benchmark();
+        return;
+    }
+
     let Ok(file_source) = fs::read_to_string(&input_filename) else {
         println!("Failed to read file");
         return;
@@ -24,10 +33,10 @@ fn main() {
         Ok(sudoku) => sudoku,
         Err(err) => {
             println!("Failed to parse file {err}");
-        return;    
-        },
+            return;
+        }
     };
-    
+
     let post_parse = pre_parse.elapsed();
 
     let pre_solve = Instant::now();
@@ -40,4 +49,26 @@ fn main() {
     println!("Read file in {post_read:?}");
     println!("parsed file in {post_parse:?}");
     println!("Solved in {solve_time:?}");
+}
+
+fn benchmark() {
+    let mut path = env::current_dir().unwrap();
+    if !path.ends_with("solver") {
+        path.push("solver");
+    }
+    path.push("./sudokuBenchmark");
+    let source = fs::read_to_string(path).unwrap();
+
+    let sudoku: Sudoku = source.parse().unwrap();
+
+    const COUNT: u32 = 1000;
+
+    let clones: Vec<_> = (0..COUNT).map(|_| sudoku.clone()).collect();
+
+    let timer = Instant::now();
+    for mut sudoku in clones {
+        sudoku.solve();
+    }
+    let avg_time = timer.elapsed() / COUNT;
+    println!("Avg solve time for {COUNT} solves: {avg_time:?}");
 }

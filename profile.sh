@@ -1,0 +1,1 @@
+valgrind --tool=callgrind ./target/release/solver --benchmark
