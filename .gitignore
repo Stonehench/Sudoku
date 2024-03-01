@@ -46,3 +46,4 @@ target
 ./target
 ./windows
 ./linux
+target/.rustc_info.json
