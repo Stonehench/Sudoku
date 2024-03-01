@@ -61,60 +61,21 @@ impl Rule for SquareRule {
 
         for square_entry_index in squares {
             'value: for value in 1..=sudoku.size as u16 {
-                let mut position = None;
-                for (relative_position, cell) in self
-                    .updates_iter(sudoku, square_entry_index)
-                    .map(|i| &sudoku.cells[i])
-                    .enumerate()
-                {
-                    if cell.available.contains(&value) {
-                        if position.is_some() {
+                let mut found_position = None;
+                for position in self.updates_iter(sudoku, square_entry_index) {
+                    if sudoku.cells[position].available.contains(&value) {
+                        if found_position.is_some() {
                             // Der er allerede fundet en anden i denne square som har value.
                             continue 'value;
                         }
-                        position = Some(relative_position);
+                        found_position = Some(position);
                     }
                 }
-                if let Some(position) = position {
-                    let real_position = self
-                        .updates_iter(sudoku, square_entry_index)
-                        .nth(0)
-                        .unwrap()
-                        + (position % sub_size)
-                        + (sudoku.size * (position / sub_size));
-                    if !sudoku.cells[real_position].locked_in {
-                        //println!("Found Hidden {value} in square {square_number}");
-                        return Some((value, real_position));
+                if let Some(position) = found_position {
+                    if !sudoku.cells[position].locked_in {
+                        return Some((value, position));
                     }
                 }
-
-                /*
-                let cells = self
-                    .updates_iter(sudoku, square_entry_index)
-                    .map(|i| &sudoku.cells[i]);
-                let count = cells.filter(|cell| cell.available.contains(&value)).count();
-
-                if count == 1 {
-                    let mut cells = self
-                        .updates_iter(sudoku, square_entry_index)
-                        .map(|i| &sudoku.cells[i]);
-                    let position = cells
-                        .position(|cell| cell.available.contains(&value))
-                        .unwrap();
-
-                    let real_position = self
-                        .updates_iter(sudoku, square_entry_index)
-                        .nth(0)
-                        .unwrap()
-                        + (position % sub_size)
-                        + (sudoku.size * (position / sub_size));
-
-                    if !sudoku.cells[real_position].locked_in {
-                        //println!("Found Hidden {value} in square {square_number}");
-                        return Some((value, real_position));
-                    }
-                }
-                 */
             }
         }
         None
