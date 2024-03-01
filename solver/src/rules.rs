@@ -25,22 +25,6 @@ pub trait Rule: Debug {
 #[derive(Debug, Clone)]
 pub struct SquareRule;
 
-impl SquareRule {
-    #[inline]
-    fn updates_iter(size: usize, index: usize) -> impl Iterator<Item = usize> {
-        //Burde gerne være ok med arbitær størrelse?
-        let row = index / size;
-
-        let sub_size = size.integer_sqrt();
-
-        (0..size).map(move |i| {
-            (index - (index % sub_size)) - (size * (row % sub_size))
-                + (i % sub_size)
-                + (size * (i / sub_size))
-        })
-    }
-}
-
 impl Rule for SquareRule {
     fn updates<'buf>(
         &self,
@@ -49,8 +33,21 @@ impl Rule for SquareRule {
         buffer: &'buf mut Vec<usize>,
     ) -> &'buf [usize] {
         buffer.clear();
-        for i in Self::updates_iter(size, index) {
-            buffer.push(i)
+
+        let sub_s = size.integer_sqrt();
+
+        let target_x = index % size;
+        let target_y = index / size;
+        let sq_x = target_x / sub_s;
+        let sq_y = target_y / sub_s;
+
+        for l_y in 0..sub_s {
+            for l_x in 0..sub_s {
+                let x = l_x + sq_x * sub_s;
+                let y = l_y + sq_y * sub_s;
+                let i = x + y * size;
+                buffer.push(i);
+            }
         }
         buffer
     }
@@ -83,33 +80,6 @@ impl Rule for SquareRule {
                 }
             }
         }
-
-        /*
-        let sub_size = sudoku.size.integer_sqrt();
-        let squares = (0..sudoku.size)
-            .map(|index| index * sub_size + (index / sub_size) * sudoku.size * (sub_size - 1));
-
-        for square_entry_index in squares {
-            'value: for value in 1..=sudoku.size as u16 {
-                let mut found_position = None;
-                for position in Self::updates_iter(sudoku.size, square_entry_index) {
-                    if sudoku.cells[position].available.contains(&value) {
-                        if found_position.is_some() {
-                            // Der er allerede fundet en anden i denne square som har value.
-                            continue 'value;
-                        } else {
-                            found_position = Some(position);
-                        }
-                    }
-                }
-                if let Some(position) = found_position {
-                    if !sudoku.cells[position].locked_in {
-                        return Some((value, position));
-                    }
-                }
-            }
-        }
-        */
         None
     }
     fn boxed_clone(&self) -> Box<dyn Rule> {
@@ -326,24 +296,4 @@ fn square_hidden_math_test() {
     let res = squarerule.hidden_singles(&sudoku);
     println!("{res:?}");
     assert_eq!(res, Some((1, 20)))
-}
-
-#[test]
-fn square_test_2() {
-    const SIZE: usize = 9;
-    let sub_s = SIZE.integer_sqrt();
-    for sq_y in 0..sub_s {
-        for sq_x in 0..sub_s {
-            for l_y in 0..sub_s {
-                for l_x in 0..sub_s {
-                    let x = l_x + sq_x * sub_s;
-                    let y = l_y + sq_y * sub_s;
-                    let i = x + y * SIZE;
-                    print!("{} ", i);
-                }
-                println!("");
-            }
-            println!("\n");
-        }
-    }
 }
