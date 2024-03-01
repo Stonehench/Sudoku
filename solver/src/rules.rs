@@ -25,22 +25,6 @@ pub trait Rule: Debug {
 #[derive(Debug, Clone)]
 pub struct SquareRule;
 
-impl SquareRule {
-    #[inline]
-    fn updates_iter(size: usize, index: usize) -> impl Iterator<Item = usize> {
-        //Burde gerne være ok med arbitær størrelse?
-        let row = index / size;
-
-        let sub_size = size.integer_sqrt();
-
-        (0..size).map(move |i| {
-            (index - (index % sub_size)) - (size * (row % sub_size))
-                + (i % sub_size)
-                + (size * (i / sub_size))
-        })
-    }
-}
-
 impl Rule for SquareRule {
     fn updates<'buf>(
         &self,
@@ -49,33 +33,49 @@ impl Rule for SquareRule {
         buffer: &'buf mut Vec<usize>,
     ) -> &'buf [usize] {
         buffer.clear();
-        for i in Self::updates_iter(size, index) {
-            buffer.push(i)
+
+        let sub_s = size.integer_sqrt();
+
+        let target_x = index % size;
+        let target_y = index / size;
+        let sq_x = target_x / sub_s;
+        let sq_y = target_y / sub_s;
+
+        for l_y in 0..sub_s {
+            for l_x in 0..sub_s {
+                let x = l_x + sq_x * sub_s;
+                let y = l_y + sq_y * sub_s;
+                let i = x + y * size;
+                buffer.push(i);
+            }
         }
         buffer
     }
 
     fn hidden_singles(&self, sudoku: &Sudoku) -> Option<(u16, usize)> {
-        let sub_size = sudoku.size.integer_sqrt();
-        let squares = (0..sudoku.size)
-            .map(|index| index * sub_size + (index / sub_size) * sudoku.size * (sub_size - 1));
-
-        for square_entry_index in squares {
-            'value: for value in 1..=sudoku.size as u16 {
-                let mut found_position = None;
-                for position in Self::updates_iter(sudoku.size, square_entry_index) {
-                    if sudoku.cells[position].available.contains(&value) {
-                        if found_position.is_some() {
-                            // Der er allerede fundet en anden i denne square som har value.
-                            continue 'value;
-                        } else {
-                            found_position = Some(position);
+        let sub_s = sudoku.size.integer_sqrt();
+        for sq_y in 0..sub_s {
+            for sq_x in 0..sub_s {
+                'value: for value in 1..=sudoku.size as u16 {
+                    let mut found_position = None;
+                    for l_y in 0..sub_s {
+                        for l_x in 0..sub_s {
+                            let x = l_x + sq_x * sub_s;
+                            let y = l_y + sq_y * sub_s;
+                            let i = x + y * sudoku.size;
+                            if sudoku.cells[i].available.contains(&value) {
+                                if found_position.is_some() {
+                                    continue 'value;
+                                } else {
+                                    found_position = Some(i);
+                                }
+                            }
                         }
                     }
-                }
-                if let Some(position) = found_position {
-                    if !sudoku.cells[position].locked_in {
-                        return Some((value, position));
+                    if let Some(position) = found_position {
+                        if !sudoku.cells[position].locked_in {
+                            return Some((value, position));
+                        }
                     }
                 }
             }
@@ -89,14 +89,6 @@ impl Rule for SquareRule {
 #[derive(Debug, Clone)]
 pub struct RowRule;
 
-impl RowRule {
-    #[inline]
-    fn updates_iter(size: usize, index: usize) -> impl Iterator<Item = usize> {
-        let row = index / size;
-        (0..size).map(move |i| i + row * size)
-    }
-}
-
 impl Rule for RowRule {
     fn updates<'buf>(
         &self,
@@ -105,7 +97,9 @@ impl Rule for RowRule {
         buffer: &'buf mut Vec<usize>,
     ) -> &'buf [usize] {
         buffer.clear();
-        for i in Self::updates_iter(size, index) {
+        let row = index / size;
+
+        for i in (0..size).map(|i| i + row * size) {
             buffer.push(i)
         }
         buffer
@@ -115,7 +109,7 @@ impl Rule for RowRule {
         for row_number in 0..sudoku.size {
             'value: for value in 1..=sudoku.size as u16 {
                 let mut found_position = None;
-                for position in Self::updates_iter(sudoku.size, row_number) {
+                for position in (0..sudoku.size).map(|i| i + row_number * sudoku.size) {
                     if sudoku.cells[position].available.contains(&value) {
                         if found_position.is_some() {
                             continue 'value;
@@ -141,15 +135,6 @@ impl Rule for RowRule {
 #[derive(Debug, Clone)]
 pub struct ColumnRule;
 
-impl ColumnRule {
-    #[inline]
-    fn updates_iter(size: usize, index: usize) -> impl Iterator<Item = usize> {
-        let column = index % size;
-        let size = size;
-        (0..size).map(move |i| i * size + column)
-    }
-}
-
 impl Rule for ColumnRule {
     fn updates<'buf>(
         &self,
@@ -158,7 +143,10 @@ impl Rule for ColumnRule {
         buffer: &'buf mut Vec<usize>,
     ) -> &'buf [usize] {
         buffer.clear();
-        for i in Self::updates_iter(size, index) {
+        let column = index % size;
+        let size = size;
+
+        for i in (0..size).map(|i| i * size + column) {
             buffer.push(i)
         }
         buffer
@@ -169,7 +157,7 @@ impl Rule for ColumnRule {
             'value: for value in 1..=sudoku.size as u16 {
                 let mut found_position = None;
 
-                for position in Self::updates_iter(sudoku.size, column_number) {
+                for position in (0..sudoku.size).map(|i| i * sudoku.size + column_number) {
                     if sudoku.cells[position].available.contains(&value) {
                         if found_position.is_some() {
                             continue 'value;
@@ -296,20 +284,4 @@ fn square_hidden_math_test() {
     let res = squarerule.hidden_singles(&sudoku);
     println!("{res:?}");
     assert_eq!(res, Some((1, 20)))
-}
-
-#[test]
-fn size_test() {
-    println!(
-        "Row: {}",
-        std::mem::size_of_val(&RowRule::updates_iter(9, 0))
-    );
-    println!(
-        "Column: {}",
-        std::mem::size_of_val(&ColumnRule::updates_iter(9, 0))
-    );
-    println!(
-        "Square: {}",
-        std::mem::size_of_val(&SquareRule::updates_iter(9, 0))
-    );
 }
