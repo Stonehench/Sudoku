@@ -227,10 +227,10 @@ fn row_hidden_math_test() {
         ],
     );
 
-    sudoku.set_cell(2, 1);
-    sudoku.set_cell(1, 56);
-    sudoku.set_cell(1, 12);
-    sudoku.set_cell(1, 24);
+    sudoku.set_cell(2, 1).unwrap();
+    sudoku.set_cell(1, 56).unwrap();
+    sudoku.set_cell(1, 12).unwrap();
+    sudoku.set_cell(1, 24).unwrap();
 
     println!("{sudoku}");
 
@@ -250,10 +250,10 @@ fn column_hidden_math_test() {
         ],
     );
 
-    sudoku.set_cell(2, 9);
-    sudoku.set_cell(1, 24);
-    sudoku.set_cell(1, 28);
-    sudoku.set_cell(1, 56);
+    sudoku.set_cell(2, 9).unwrap();
+    sudoku.set_cell(1, 24).unwrap();
+    sudoku.set_cell(1, 28).unwrap();
+    sudoku.set_cell(1, 56).unwrap();
 
     println!("\n\n{sudoku}");
 
@@ -273,10 +273,10 @@ fn square_hidden_math_test() {
         ],
     );
 
-    sudoku.set_cell(1, 27);
-    sudoku.set_cell(1, 55);
-    sudoku.set_cell(1, 8);
-    sudoku.set_cell(1, 12);
+    sudoku.set_cell(1, 27).unwrap();
+    sudoku.set_cell(1, 55).unwrap();
+    sudoku.set_cell(1, 8).unwrap();
+    sudoku.set_cell(1, 12).unwrap();
 
     println!("{sudoku}");
 

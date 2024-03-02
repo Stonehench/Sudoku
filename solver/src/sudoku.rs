@@ -37,6 +37,20 @@ impl Ord for Entropy {
         self.partial_cmp(&other).unwrap()
     }
 }
+#[derive(Debug, Clone, Copy)]
+pub enum SudokuSolveError {
+    UnsolveableError,
+    RemovedLockedValue,
+}
+
+impl Display for SudokuSolveError {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            SudokuSolveError::UnsolveableError => write!(f, "No Solution. Failed to pop branch queue when entropy was 0 in cell"),
+            SudokuSolveError::RemovedLockedValue => write!(f, "Something went seriously wrong. Removed the only value in a locked cell\nThis indicates either an unsolveable sudoku or a bug in the rules."),
+        }
+    }
+}
 
 impl Sudoku {
     pub fn new(size: usize, rules: Vec<Box<dyn Rule>>) -> Self {
@@ -49,7 +63,7 @@ impl Sudoku {
         }
     }
 
-    pub fn set_cell(&mut self, n: u16, index: usize) {
+    pub fn set_cell(&mut self, n: u16, index: usize) -> Result<(), SudokuSolveError> {
         let mut ret_buffer = vec![];
         self.cells[index] = Cell::single(n);
         for rule in &self.rules {
@@ -58,9 +72,10 @@ impl Sudoku {
                 .into_iter()
                 .filter(|i| **i != index)
             {
-                self.cells[*inner_index].remove(n);
+                self.cells[*inner_index].remove(n)?;
             }
         }
+        Ok(())
     }
 
     fn update_cell(
@@ -69,7 +84,7 @@ impl Sudoku {
         index: usize,
         queue: &mut PriorityQueue<usize, Entropy>,
         ret_buffer: &mut Vec<usize>,
-    ) {
+    ) -> Result<(), SudokuSolveError> {
         self.cells[index] = Cell::single(n);
         for rule in &self.rules {
             for inner_index in rule
@@ -78,13 +93,14 @@ impl Sudoku {
                 .filter(|i| **i != index)
             {
                 let cell = &mut self.cells[*inner_index];
-                cell.remove(n);
+                cell.remove(n)?;
                 queue.change_priority(&inner_index, Entropy(cell.available.len()));
             }
         }
+        Ok(())
     }
 
-    pub fn solve(&mut self) {
+    pub fn solve(&mut self) -> Result<(), SudokuSolveError> {
         #[cfg(debug_assertions)]
         let mut branch_count = 0;
         #[cfg(debug_assertions)]
@@ -105,7 +121,7 @@ impl Sudoku {
                 0 => {
                     //Der er ingen løsning på den nuværende branch. Derfor popper vi en branch og løser den i stedet
                     let Some((cells, new_pri_queue)) = branch_stack.pop() else {
-                        panic!("No Solution. Failed to pop branch queue when entropy was 0 in cell {index}");
+                        return Err(SudokuSolveError::UnsolveableError);
                     };
 
                     self.cells = cells;
@@ -121,7 +137,7 @@ impl Sudoku {
                     index,
                     &mut pri_queue,
                     &mut ret_buffer,
-                ),
+                )?,
                 _ => {
                     // Der er ikke flere naked singles, så der tjekkes for hidden singles
 
@@ -131,7 +147,7 @@ impl Sudoku {
 
                             pri_queue.push(index, entropy);
                             pri_queue.remove(&hidden_index);
-                            self.update_cell(n, hidden_index, &mut pri_queue, &mut ret_buffer);
+                            self.update_cell(n, hidden_index, &mut pri_queue, &mut ret_buffer)?;
 
                             continue 'main;
                         }
@@ -154,7 +170,7 @@ impl Sudoku {
                     cloned_queue.push(index, Entropy(entropy.0 - 1));
                     branch_stack.push((cloned_cells, cloned_queue));
 
-                    self.update_cell(n, index, &mut pri_queue, &mut ret_buffer);
+                    self.update_cell(n, index, &mut pri_queue, &mut ret_buffer)?;
 
                     #[cfg(debug_assertions)]
                     {
@@ -169,14 +185,32 @@ impl Sudoku {
             println!("branch count: {branch_count}");
             println!("backtracks: {backtracks}");
         }
+        Ok(())
+    }
+}
+
+#[derive(Debug, Clone)]
+pub enum ParseSudokuError {
+    ParseIntError(ParseIntError),
+    InvalidSizeError(usize),
+    UnsolveableError,
+}
+
+impl Display for ParseSudokuError {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{self:?}")
     }
 }
 
 impl FromStr for Sudoku {
-    type Err = ParseIntError;
+    type Err = ParseSudokuError;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         let size = s.split(',').count().integer_sqrt();
+        let sub_size = size.integer_sqrt();
+        if sub_size * sub_size != size {
+            return Err(ParseSudokuError::InvalidSizeError(size));
+        }
 
         #[cfg(debug_assertions)]
         println!("parsing size: {size}");
@@ -191,9 +225,13 @@ impl FromStr for Sudoku {
         );
 
         for (index, part) in s.split(',').map(str::trim).enumerate() {
-            let n = part.parse()?;
+            let n = part
+                .parse()
+                .map_err(|e| ParseSudokuError::ParseIntError(e))?;
             if n != 0 {
-                sudoku.set_cell(n, index);
+                sudoku
+                    .set_cell(n, index)
+                    .map_err(|_| ParseSudokuError::UnsolveableError)?;
             }
         }
 
@@ -233,11 +271,12 @@ impl Cell {
             locked_in: false,
         }
     }
-    fn remove(&mut self, n: u16) {
+    fn remove(&mut self, n: u16) -> Result<(), SudokuSolveError> {
         self.available.retain(|i| *i != n);
         if self.locked_in && self.available.len() == 0 {
-            panic!("Something went seriously wrong. Removed the only value in a locked cell\nThis indicates either an unsolveable sudoku or a bug in the rules.");
+            return Err(SudokuSolveError::RemovedLockedValue);
         }
+        Ok(())
     }
     #[allow(unused)]
     pub fn is_single_eq(&self, n: u16) -> bool {
@@ -272,7 +311,7 @@ fn solve_big_sudoku() {
     let mut sudoku: Sudoku = file_str.parse().unwrap();
 
     println!("{sudoku}");
-    sudoku.solve();
+    sudoku.solve().unwrap();
     println!("{sudoku}");
 }
 
@@ -294,7 +333,7 @@ fn solve_test() {
         if filename.contains("Løsning") {
             sudoku_name = filename.split_whitespace().next().unwrap().to_string();
         } else {
-            sudoku.solve();
+            sudoku.solve().unwrap();
             sudoku_name = filename;
         }
 
@@ -322,7 +361,7 @@ fn random_gen() {
             Box::new(SquareRule),
         ],
     );
-    sudoku.solve();
+    sudoku.solve().unwrap();
     let pre = sudoku.to_string();
     println!("Pre:\n{}", pre);
 
@@ -339,7 +378,7 @@ fn random_gen() {
     let post = sudoku.to_string();
     println!("Post:\n{}", post);
 
-    sudoku.solve();
+    sudoku.solve().unwrap();
 
     assert_eq!(pre, sudoku.to_string());
 
@@ -351,7 +390,7 @@ fn solve_16x_test() {
     let file_str = std::fs::read_to_string("./sudoku16x16").unwrap();
     let mut sudoku: Sudoku = file_str.parse().unwrap();
 
-    sudoku.solve();
+    sudoku.solve().unwrap();
 
     println!("{sudoku}");
 }
