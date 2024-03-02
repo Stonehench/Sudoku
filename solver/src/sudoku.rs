@@ -10,7 +10,7 @@ use integer_sqrt::IntegerSquareRoot;
 use priority_queue::PriorityQueue;
 use rand::random;
 
-use crate::rules::{ColumnRule, RowRule, Rule, SquareRule};
+use crate::rules::{ColumnRule, KnightRule, RowRule, Rule, SquareRule};
 
 #[derive(Debug)]
 pub struct Sudoku {
@@ -221,6 +221,9 @@ impl FromStr for Sudoku {
                 Box::new(RowRule),
                 Box::new(ColumnRule),
                 Box::new(SquareRule),
+
+                // TODO: the rules should not be hard coded but be bassed as an argument 
+                //Box::new(KnightRule),
             ],
         );
 
@@ -389,6 +392,19 @@ fn random_gen() {
 fn solve_16x_test() {
     let file_str = std::fs::read_to_string("./sudoku16x16").unwrap();
     let mut sudoku: Sudoku = file_str.parse().unwrap();
+
+    sudoku.solve().unwrap();
+
+    println!("{sudoku}");
+}
+
+
+#[test]
+fn solve_knights_move_sudoku() {
+    let file_str = std::fs::read_to_string("./sudokuKnightsMove").unwrap();
+    let mut sudoku: Sudoku = file_str.parse().unwrap();
+
+    println!("{sudoku}");
 
     sudoku.solve().unwrap();
 
