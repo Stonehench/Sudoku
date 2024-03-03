@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:sudoku/cell.dart';
+import 'package:sudoku/src/rust/api/simple.dart';
 
 class Board extends StatefulWidget {
-  final String boardString;
-
-  const Board(this.boardString, {super.key});
+  Board({super.key});
+  String boardString = getSudokuStr()!;
 
   @override
   State<StatefulWidget> createState() => _BoardState();
