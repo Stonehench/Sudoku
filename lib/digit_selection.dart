@@ -2,7 +2,9 @@ import 'package:flutter/material.dart';
 
 class DigitSelect extends StatelessWidget {
   final Object? size;
-  const DigitSelect(this.size, {super.key});
+  const DigitSelect(this.size, {super.key, required this.selectDigit});
+
+  final Function(int) selectDigit;
 
   @override
   Widget build(BuildContext context) {

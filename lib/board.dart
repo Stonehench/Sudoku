@@ -7,14 +7,17 @@ import 'package:sudoku/src/rust/api/simple.dart';
 
 class Board extends StatefulWidget {
   final Object? size;
-  Board(this.size, {super.key});
+  Board(this.size, {super.key,required this.getDigit});
   String boardString = getSudokuStr()!;
+
+  final int Function() getDigit;
 
   @override
   State<StatefulWidget> createState() => _BoardState();
 }
 
 class _BoardState extends State<Board> {
+
   @override
   Widget build(BuildContext context) {
     var boardArray = widget.boardString.split(",");
@@ -49,7 +52,11 @@ class _BoardState extends State<Board> {
                   mainAxisSpacing: 2),
               itemBuilder: (context, index) {
                 return Cell(
-                    boardArray.elementAt(index), index, widget.size as int);
+                  boardArray.elementAt(index),
+                  index,
+                  widget.size as int,
+                  getSelectedDigit: widget.getDigit,
+                );
               },
             ),
           ],
