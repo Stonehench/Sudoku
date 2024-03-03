@@ -2,24 +2,41 @@ import 'package:flutter/material.dart';
 import 'package:sudoku/game_view.dart';
 import 'package:sudoku/src/rust/api/simple.dart';
 
+
+
+
 class Cell extends StatefulWidget {
   final String digit;
   final int index;
   final int size;
 
-  const Cell(this.digit, this.index, this.size, {super.key,});
+  const Cell(
+    this.digit,
+    this.index,
+    this.size, {
+    super.key,
+  });
 
   @override
   State<StatefulWidget> createState() => _CellState();
 }
 
 class _CellState extends State<Cell> {
+  String? digit;
+
   @override
   Widget build(BuildContext context) {
+    digit ??= widget.digit;
+
     return InkWell(
       onTap: () {
-        bool legal = checkLegality(position: widget.index, value: GameState.selectedDigit);
+        bool legal = checkLegality(
+            position: widget.index, value: GameState.selectedDigit);
         if (legal) {
+          setState(() {
+            digit = GameState.selectedDigit.toString();  
+          });
+          
           print("LEGAL MOVE!");
         } else {
           print("ILLEGAL MOVE");
@@ -29,8 +46,8 @@ class _CellState extends State<Cell> {
       child: Container(
         color: const Color.fromARGB(255, 178, 195, 233),
         alignment: Alignment.center,
-        child: !widget.digit.startsWith("0")
-            ? Text(widget.digit,
+        child: digit != null
+            ? Text(digit!,
                 style: widget.size <= 9
                     ? const TextStyle(fontSize: 30)
                     : widget.size <= 16
