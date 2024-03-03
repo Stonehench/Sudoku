@@ -65,7 +65,7 @@ class _MenuState extends State<Menu> {
             ),
             Text(sizeText),
             TextButton(
-              onPressed: () {
+              onPressed: (){
                 bool success = generateWithSize(size: size, rulesSrc: []);
                 if (!success) {
                   setState(() {

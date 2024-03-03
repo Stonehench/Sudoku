@@ -1,4 +1,4 @@
-use solver::sudoku::{DynRule, Sudoku};
+use solver::sudoku::{Cell, DynRule, Sudoku};
 
 use solver::rules::*;
 
@@ -23,6 +23,11 @@ pub fn generate_with_size(size: usize, rules_src: Vec<String>) -> bool {
     let mut sudoku = Sudoku::new(size, rules);
     sudoku.solve().unwrap();
 
+    for _ in 0..(sudoku.size*sudoku.size) / 2 {
+        let index = rand::random::<usize>() % sudoku.cells.len();
+        sudoku.cells[index] = Cell::new_with_range(1..sudoku.size as u16 + 1);
+    }
+
     let mut state = get_state();
     state.current_sudoku = Some(sudoku);
 
@@ -30,16 +35,33 @@ pub fn generate_with_size(size: usize, rules_src: Vec<String>) -> bool {
 }
 
 #[flutter_rust_bridge::frb(sync)]
+pub fn check_legality(position: usize, value: u16) -> bool {
+    let state = get_state();
+    let sudoku = state.current_sudoku.as_ref().unwrap();
+    let mut buffer = vec![];
+    sudoku
+        .rules
+        .iter()
+        .all(|r| r.is_legal(sudoku, position, value, &mut buffer))
+}
+
+#[flutter_rust_bridge::frb(sync)]
 pub fn get_sudoku_str() -> Option<String> {
     let state = get_state();
-    let str = state.current_sudoku.as_ref()?.to_string();
-    let str = str.replace('[', "");
-    let str = str.replace(']', "");
-    let str = str.replace('\n',"");
 
-    println!("Sending: {str}");
+    let mut str_buffer = String::new();
 
-    Some(str)
+    for cell in &state.current_sudoku.as_ref()?.cells {
+        match cell.available.as_slice() {
+            [value] => str_buffer.push_str(&value.to_string()),
+            _ => str_buffer.push_str(&"0"),
+        }
+        str_buffer.push(',');
+    }
+
+    println!("Sending: {str_buffer}");
+
+    Some(str_buffer)
 }
 
 #[flutter_rust_bridge::frb(init)]

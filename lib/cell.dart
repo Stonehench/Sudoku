@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:sudoku/src/rust/api/simple.dart';
 
 class Cell extends StatefulWidget {
   final String digit;
@@ -16,6 +17,12 @@ class _CellState extends State<Cell> {
   Widget build(BuildContext context) {
     return InkWell(
       onTap: () {
+        bool legal = checkLegality(position: widget.index, value: int.parse(widget.digit));
+        if (legal) {
+          print("LEGAL MOVE!");
+        } else {
+          print("ILLEGAL MOVE");
+        }
         print("${widget.digit} ${widget.index}");
       },
       child: Container(
