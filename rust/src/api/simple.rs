@@ -38,6 +38,7 @@ pub fn generate_with_size(size: usize, rules_src: Vec<String>) -> bool {
 pub fn check_legality(position: usize, value: u16) -> bool {
     let state = get_state();
     let sudoku = state.current_sudoku.as_ref().unwrap();
+
     let mut buffer = vec![];
     sudoku
         .rules

@@ -30,27 +30,36 @@ class _CellState extends State<Cell> {
 
     return InkWell(
       onTap: () {
-        bool legal = checkLegality(
-            position: widget.index, value: GameState.selectedDigit);
-        if (legal) {
-          setState(() {
-            digit = GameState.selectedDigit.toString();
-          });
-        } else {
-          setState(() {
-            isCurrentlyError = true;
-            Timer(const Duration(seconds: 1), () {
-              setState(() {
-                isCurrentlyError = false;
+        if (digit!.trim() != "0") {
+          bool legal = checkLegality(
+              position: widget.index, value: GameState.selectedDigit);
+          if (legal) {
+            setState(() {
+              digit = GameState.selectedDigit.toString();
+            });
+          } else {
+            setState(() {
+              isCurrentlyError = true;
+              Timer(const Duration(seconds: 1), () {
+                setState(() {
+                  isCurrentlyError = false;
+                });
               });
             });
-          });
+          }
+        } else {
+          setState(() {
+              isCurrentlyError = true;
+              Timer(const Duration(seconds: 1), () {
+                setState(() {
+                  isCurrentlyError = false;
+                });
+              });
+            });
         }
       },
       child: Container(
-        color: isCurrentlyError
-            ? Colors.red
-            : const Color.fromARGB(255, 178, 195, 233),
+        color: isCurrentlyError ? Colors.red : Theme.of(context).highlightColor,
         alignment: Alignment.center,
         child: digit != null && digit!.trim() != "0"
             ? Text(digit!,
