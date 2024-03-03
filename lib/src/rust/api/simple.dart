@@ -13,6 +13,3 @@ bool generateWithSize(
 
 String? getSudokuStr({dynamic hint}) =>
     RustLib.instance.api.getSudokuStr(hint: hint);
-
-String greet({required String name, dynamic hint}) =>
-    RustLib.instance.api.greet(name: name, hint: hint);
