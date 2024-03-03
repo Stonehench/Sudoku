@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'dart:math';
 
 import 'package:flutter/services.dart';
+import 'package:sudoku/src/rust/api/simple.dart';
 
 class Menu extends StatefulWidget {
   const Menu({super.key});
@@ -63,9 +64,17 @@ class _MenuState extends State<Menu> {
             ),
             Text(sizeText),
             TextButton(
-              onPressed: () => {
-                Navigator.of(context).pushNamed('/board'),
-                inputTextController.clear()
+              onPressed: () {
+                bool success = generateWithSize(size: 9, rulesSrc: []);
+                if (!success) {
+                  setState(() {
+                    sizeText = "Failed to generate for some reason";
+                  });
+                } else {
+                  inputTextController.clear();
+                  Navigator.of(context).pushNamed('/board');
+                  
+                }
               },
               child: const Text('Create Sudoku'),
             ),

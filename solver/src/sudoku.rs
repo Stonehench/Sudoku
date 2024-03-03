@@ -11,13 +11,15 @@ use priority_queue::PriorityQueue;
 use rand::random;
 use regex_macro::regex;
 
-use crate::rules::{ColumnRule, KnightRule, RowRule, Rule, SquareRule};
+use crate::rules::{ColumnRule, RowRule, Rule, SquareRule};
+
+pub type DynRule = Box<dyn Rule + Send>;
 
 #[derive(Debug)]
 pub struct Sudoku {
     pub size: usize,
     pub cells: Vec<Cell>,
-    pub rules: Vec<Box<dyn Rule>>,
+    pub rules: Vec<DynRule>,
 }
 
 //Det her er ret fucked, men siden vi skal have den laveste entropy ud af vores priority queue skal den sammenligne omvendt
@@ -54,7 +56,7 @@ impl Display for SudokuSolveError {
 }
 
 impl Sudoku {
-    pub fn new(size: usize, rules: Vec<Box<dyn Rule>>) -> Self {
+    pub fn new(size: usize, rules: Vec<DynRule>) -> Self {
         Self {
             size,
             cells: (0..size * size)
@@ -208,7 +210,7 @@ impl FromStr for Sudoku {
     type Err = ParseSudokuError;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
-        let mut rules: Vec<Box<dyn Rule>> = vec![
+        let mut rules: Vec<DynRule> = vec![
             Box::new(RowRule),
             Box::new(ColumnRule),
             Box::new(SquareRule),
@@ -222,12 +224,11 @@ impl FromStr for Sudoku {
         {
             [rules_source, sudoku] => {
                 for rule_name in rules_source.split_whitespace() {
-                    rules.push(match rule_name {
-                        "KnightsMove" => Box::new(KnightRule),
-                        invalid => {
-                            return Err(ParseSudokuError::InvalidRuleName(invalid.to_owned()))
-                        }
-                    });
+                    rules.push(
+                        rule_name
+                            .parse()
+                            .map_err(|e| ParseSudokuError::InvalidRuleName(e))?,
+                    );
                 }
 
                 sudoku

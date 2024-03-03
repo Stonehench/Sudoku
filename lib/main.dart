@@ -21,7 +21,7 @@ class SudokuApp extends StatelessWidget {
       initialRoute: '/menu',
       routes: {
         '/menu': (context) => const Menu(),
-        '/board': (context) => Board(tempSudoku),
+        '/board': (context) => Board(),
       },
     );
   }
