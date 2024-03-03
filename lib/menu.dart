@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'dart:math';
 
 import 'package:flutter/services.dart';
+import 'package:sudoku/src/rust/api/simple.dart';
 
 class Menu extends StatefulWidget {
   const Menu({super.key});
@@ -23,16 +24,16 @@ class _MenuState extends State<Menu> {
           sizeText = "Cannot create size 0";
         });
       } else {
-        size = newSize;
-        int sqrtSize = sqrt(size).toInt();
+        int sqrtSize = sqrt(newSize).toInt();
         String rounding;
+        int size = sqrtSize*sqrtSize;
         if (sqrtSize * sqrtSize != size) {
-          rounding = " (Rounding down to ${sqrtSize * sqrtSize})";
+          rounding = " (Rounding down to $size)";
         } else {
           rounding = "";
         }
         setState(() {
-          sizeText = "${sqrtSize}x$sqrtSize$rounding";
+          sizeText = "${size}x$size$rounding";
         });
       }
     }
@@ -63,9 +64,17 @@ class _MenuState extends State<Menu> {
             ),
             Text(sizeText),
             TextButton(
-              onPressed: () => {
-                Navigator.of(context).pushNamed('/board'),
-                inputTextController.clear()
+              onPressed: () {
+                bool success = generateWithSize(size: size, rulesSrc: []);
+                if (!success) {
+                  setState(() {
+                    sizeText = "Failed to generate for some reason";
+                  });
+                } else {
+                  inputTextController.clear();
+                  Navigator.of(context).pushNamed('/board');
+                  
+                }
               },
               child: const Text('Create Sudoku'),
             ),

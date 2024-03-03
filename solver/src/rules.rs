@@ -1,7 +1,7 @@
 use integer_sqrt::IntegerSquareRoot;
-use std::fmt::Debug;
+use std::{fmt::Debug, str::FromStr};
 
-use crate::sudoku::Sudoku;
+use crate::sudoku::{DynRule, Sudoku};
 
 pub trait Rule: Debug {
     fn updates<'buf>(
@@ -19,7 +19,20 @@ pub trait Rule: Debug {
     }
 
     fn hidden_singles(&self, sudoku: &Sudoku) -> Option<(u16, usize)>;
-    fn boxed_clone(&self) -> Box<dyn Rule>;
+    fn boxed_clone(&self) -> DynRule;
+}
+
+impl FromStr for DynRule {
+    type Err = String;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        match s {
+            "KnightsMove" => Ok(Box::new(KnightRule)),
+            invalid => {
+                return Err(invalid.to_owned())
+            }
+        }
+    }
 }
 
 #[derive(Debug, Clone)]
@@ -82,7 +95,7 @@ impl Rule for SquareRule {
         }
         None
     }
-    fn boxed_clone(&self) -> Box<dyn Rule> {
+    fn boxed_clone(&self) -> DynRule {
         Box::new(self.clone())
     }
 }
@@ -127,7 +140,7 @@ impl Rule for RowRule {
         }
         None
     }
-    fn boxed_clone(&self) -> Box<dyn Rule> {
+    fn boxed_clone(&self) -> DynRule {
         Box::new(self.clone())
     }
 }
@@ -175,7 +188,7 @@ impl Rule for ColumnRule {
         }
         None
     }
-    fn boxed_clone(&self) -> Box<dyn Rule> {
+    fn boxed_clone(&self) -> DynRule {
         Box::new(self.clone())
     }
 }
@@ -261,7 +274,7 @@ impl Rule for KnightRule {
         // Hidden singles are not a thing for the knights rule
         None
     }
-    fn boxed_clone(&self) -> Box<dyn Rule> {
+    fn boxed_clone(&self) -> DynRule {
         Box::new(self.clone())
     }
    
