@@ -17,3 +17,7 @@ class GameView extends StatelessWidget {
     );
   }
 }
+
+class GameState {
+  static int selectedDigit = 1;
+}

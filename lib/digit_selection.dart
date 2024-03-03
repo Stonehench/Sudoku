@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:sudoku/game_view.dart';
 
 class DigitSelect extends StatelessWidget {
   final Object? size;
@@ -24,16 +25,21 @@ class DigitSelect extends StatelessWidget {
           padding: const EdgeInsets.all(2),
           itemBuilder: (BuildContext context, int index) {
             return InkWell(
-              onTap: () => print(index + 1),
+              onTap: () {
+                GameState.selectedDigit = index + 1;
+              },
               child: Container(
-                  alignment: Alignment.center,
-                  height: 50,
-                  width: 340 / (size as int),
-                  child: Text((index + 1).toString(),
-                      style: TextStyle(
-                        fontSize: fontSize,
-                        color: Colors.black,
-                      ))),
+                alignment: Alignment.center,
+                height: 50,
+                width: 340 / (size as int),
+                child: Text(
+                  (index + 1).toString(),
+                  style: TextStyle(
+                    fontSize: fontSize,
+                    color: Colors.black,
+                  ),
+                ),
+              ),
             );
           },
         ),

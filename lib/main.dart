@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:sudoku/game_view.dart';
 import 'package:sudoku/menu.dart';
 import 'package:sudoku/src/rust/frb_generated.dart';
-import 'board.dart';
 
 Future<void> main() async {
   await RustLib.init();
