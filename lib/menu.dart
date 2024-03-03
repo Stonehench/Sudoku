@@ -29,12 +29,12 @@ class _MenuState extends State<Menu> {
         int sqrtSize = sqrt(size).toInt();
         String rounding;
         if (sqrtSize * sqrtSize != size) {
-          rounding = " (Rounding down to ${sqrtSize * sqrtSize})";
+          rounding = " (Rounding down to ${size * size})";
         } else {
           rounding = "";
         }
         setState(() {
-          sizeText = "${sqrtSize}x$sqrtSize$rounding";
+          sizeText = "${size}x$size$rounding";
         });
       }
     }
