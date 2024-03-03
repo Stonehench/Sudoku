@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'dart:math';
 
 import 'package:flutter/services.dart';
+import 'package:sudoku/digit_selection.dart';
 import 'package:sudoku/src/rust/api/simple.dart';
 
 class Menu extends StatefulWidget {

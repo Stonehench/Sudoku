@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:sudoku/game_view.dart';
 import 'package:sudoku/menu.dart';
 import 'package:sudoku/src/rust/frb_generated.dart';
 import 'board.dart';
@@ -18,7 +19,7 @@ class SudokuApp extends StatelessWidget {
       routes: {
         '/menu': (context) => const Menu(),
         '/board': (context) =>
-            Board(ModalRoute.of(context)!.settings.arguments),
+            GameView(ModalRoute.of(context)!.settings.arguments),
       },
     );
   }
