@@ -1,9 +1,8 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:sudoku/game_view.dart';
 import 'package:sudoku/src/rust/api/simple.dart';
-
-
-
 
 class Cell extends StatefulWidget {
   final String digit;
@@ -23,6 +22,7 @@ class Cell extends StatefulWidget {
 
 class _CellState extends State<Cell> {
   String? digit;
+  bool isCurrentlyError = false;
 
   @override
   Widget build(BuildContext context) {
@@ -34,19 +34,25 @@ class _CellState extends State<Cell> {
             position: widget.index, value: GameState.selectedDigit);
         if (legal) {
           setState(() {
-            digit = GameState.selectedDigit.toString();  
+            digit = GameState.selectedDigit.toString();
           });
-          
-          print("LEGAL MOVE!");
         } else {
-          print("ILLEGAL MOVE");
+          setState(() {
+            isCurrentlyError = true;
+            Timer(const Duration(seconds: 1), () {
+              setState(() {
+                isCurrentlyError = false;
+              });
+            });
+          });
         }
-        print("${GameState.selectedDigit} ${widget.index}");
       },
       child: Container(
-        color: const Color.fromARGB(255, 178, 195, 233),
+        color: isCurrentlyError
+            ? Colors.red
+            : const Color.fromARGB(255, 178, 195, 233),
         alignment: Alignment.center,
-        child: digit != null
+        child: digit != null && digit!.trim() != "0"
             ? Text(digit!,
                 style: widget.size <= 9
                     ? const TextStyle(fontSize: 30)

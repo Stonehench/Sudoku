@@ -1,4 +1,4 @@
-use solver::sudoku::{self, Cell, DynRule, Sudoku};
+use solver::sudoku::{Cell, DynRule, Sudoku};
 
 use solver::rules::*;
 
