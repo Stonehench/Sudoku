@@ -24,16 +24,16 @@ class _MenuState extends State<Menu> {
           sizeText = "Cannot create size 0";
         });
       } else {
-        size = newSize;
-        int sqrtSize = sqrt(size).toInt();
+        int sqrtSize = sqrt(newSize).toInt();
         String rounding;
+        int size = sqrtSize*sqrtSize;
         if (sqrtSize * sqrtSize != size) {
-          rounding = " (Rounding down to ${sqrtSize * sqrtSize})";
+          rounding = " (Rounding down to $size)";
         } else {
           rounding = "";
         }
         setState(() {
-          sizeText = "${sqrtSize}x$sqrtSize$rounding";
+          sizeText = "${size}x$size$rounding";
         });
       }
     }
