@@ -107,7 +107,7 @@ impl Sudoku {
         #[cfg(debug_assertions)]
         let mut backtracks = 0;
 
-        let mut pri_queue = PriorityQueue::new();
+        let mut pri_queue = PriorityQueue::with_capacity(self.size * self.size);
         for (index, cell) in self.cells.iter().enumerate() {
             if !cell.locked_in {
                 pri_queue.push(index, Entropy(cell.available.len()));
@@ -217,7 +217,8 @@ impl FromStr for Sudoku {
         //WTFFF
         let sudoku_source = match regex!(r"(\r\n|\n)(\r\n|\n)")
             .split(s)
-            .collect::<Vec<&str>>().as_slice()
+            .collect::<Vec<&str>>()
+            .as_slice()
         {
             [rules_source, sudoku] => {
                 for rule_name in rules_source.split_whitespace() {
