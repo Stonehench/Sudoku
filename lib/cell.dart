@@ -3,8 +3,9 @@ import 'package:flutter/material.dart';
 class Cell extends StatefulWidget {
   final String digit;
   final int index;
+  final int size;
 
-  const Cell(this.digit, this.index, {super.key});
+  const Cell(this.digit, this.index, this.size, {super.key});
 
   @override
   State<StatefulWidget> createState() => _CellState();
@@ -21,7 +22,13 @@ class _CellState extends State<Cell> {
         color: const Color.fromARGB(255, 178, 195, 233),
         alignment: Alignment.center,
         child: !widget.digit.startsWith("0")
-            ? Text(widget.digit, style: const TextStyle(fontSize: 30))
+            ? Text(widget.digit,
+                style: widget.size <= 9
+                    ? const TextStyle(fontSize: 30)
+                    : widget.size <= 16
+                        ? const TextStyle(fontSize: 15)
+                        : const TextStyle(fontSize: 6))
+            // 30 or 9x9, 15 for 16x16 , 6 for anything else (for now at least)
             : const Text(""),
       ),
     );

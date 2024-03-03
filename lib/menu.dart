@@ -72,8 +72,7 @@ class _MenuState extends State<Menu> {
                   });
                 } else {
                   inputTextController.clear();
-                  Navigator.of(context).pushNamed('/board');
-                  
+                  Navigator.of(context).pushNamed('/board', arguments: size);
                 }
               },
               child: const Text('Create Sudoku'),
