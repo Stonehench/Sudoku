@@ -9,6 +9,7 @@ use std::{
 use integer_sqrt::IntegerSquareRoot;
 use priority_queue::PriorityQueue;
 use rand::random;
+use regex_macro::regex;
 
 use crate::rules::{ColumnRule, KnightRule, RowRule, Rule, SquareRule};
 
@@ -213,17 +214,24 @@ impl FromStr for Sudoku {
             Box::new(SquareRule),
         ];
 
-        let sudoku_source = if let Some((rules_source, sudoku_source)) = s.split_once("\n\n") {
-            for rule_name in rules_source.split_whitespace() {
-                rules.push(match rule_name {
-                    "KnightsMove" => Box::new(KnightRule),
-                    invalid => return Err(ParseSudokuError::InvalidRuleName(invalid.to_owned())),
-                });
-            }
+        //WTFFF
+        let sudoku_source = match regex!(r"(\r\n|\n)(\r\n|\n)")
+            .split(s)
+            .collect::<Vec<&str>>().as_slice()
+        {
+            [rules_source, sudoku] => {
+                for rule_name in rules_source.split_whitespace() {
+                    rules.push(match rule_name {
+                        "KnightsMove" => Box::new(KnightRule),
+                        invalid => {
+                            return Err(ParseSudokuError::InvalidRuleName(invalid.to_owned()))
+                        }
+                    });
+                }
 
-            sudoku_source
-        } else {
-            s
+                sudoku
+            }
+            _ => s,
         };
 
         let size = sudoku_source.split(',').count().integer_sqrt();
