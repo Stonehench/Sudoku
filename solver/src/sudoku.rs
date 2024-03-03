@@ -10,7 +10,7 @@ use integer_sqrt::IntegerSquareRoot;
 use priority_queue::PriorityQueue;
 use rand::random;
 
-use crate::rules::{ColumnRule, KnightRule, RowRule, Rule, SquareRule};
+use crate::rules::{ColumnRule, RowRule, Rule, SquareRule};
 
 #[derive(Debug)]
 pub struct Sudoku {
@@ -409,4 +409,6 @@ fn solve_knights_move_sudoku() {
     sudoku.solve().unwrap();
 
     println!("{sudoku}");
+    assert_eq!(sudoku.to_string().trim(), std::fs::read_to_string("./sudokuKnightsMoveSolution").unwrap().trim());
+
 }

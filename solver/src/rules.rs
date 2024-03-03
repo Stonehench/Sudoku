@@ -257,7 +257,7 @@ impl Rule for KnightRule {
         buffer
     }
 
-    fn hidden_singles(&self, sudoku: &Sudoku) -> Option<(u16, usize)> {
+    fn hidden_singles(&self, _sudoku: &Sudoku) -> Option<(u16, usize)> {
         // Hidden singles are not a thing for the knights rule
         None
     }
