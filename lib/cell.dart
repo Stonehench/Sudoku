@@ -30,7 +30,7 @@ class _CellState extends State<Cell> {
 
     return InkWell(
       onTap: () {
-        if (digit!.trim() != "0") {
+        if (digit!.trim() == "0") {
           bool legal = checkLegality(
               position: widget.index, value: GameState.selectedDigit);
           if (legal) {

@@ -17,3 +17,6 @@ bool checkLegality({required int position, required int value, dynamic hint}) =>
 
 String? getSudokuStr({dynamic hint}) =>
     RustLib.instance.api.getSudokuStr(hint: hint);
+
+void setCell({required int index, required int value, dynamic hint}) =>
+    RustLib.instance.api.setCell(index: index, value: value, hint: hint);
