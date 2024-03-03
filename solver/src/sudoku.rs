@@ -325,8 +325,7 @@ fn read_file_test() {
 
 #[test]
 fn solve_big_sudoku() {
-    // to run this test remember to set the sudoku size to 16
-    // hopefully this will be changed in the future to be automatic
+    // tests a 16x16 sudoku solve
 
     let file_str = std::fs::read_to_string("./sudoku16").unwrap();
     let mut sudoku: Sudoku = file_str.parse().unwrap();
@@ -430,6 +429,7 @@ fn solve_knights_move_sudoku() {
         sudoku.to_string().trim(),
         std::fs::read_to_string("./sudokuKnightsMoveSolution")
             .unwrap()
+            .replace("\r\n", "\n")
             .trim()
     );
 }
