@@ -1,15 +1,20 @@
 import 'package:flutter/material.dart';
 import 'package:sudoku/game_view.dart';
 
-class DigitSelect extends StatelessWidget {
+class DigitSelect extends StatefulWidget {
   final Object? size;
   const DigitSelect(this.size, {super.key});
 
   @override
+  State<DigitSelect> createState() => _DigitSelectState();
+}
+
+class _DigitSelectState extends State<DigitSelect> {
+  @override
   Widget build(BuildContext context) {
-    double fontSize = size! as int <= 9
+    double fontSize = widget.size! as int <= 9
         ? 30.0
-        : size as int <= 16
+        : widget.size as int <= 16
             ? 15.0
             : 6.0;
     return SizedBox(
@@ -21,17 +26,20 @@ class DigitSelect extends StatelessWidget {
         child: ListView.builder(
           physics: const NeverScrollableScrollPhysics(),
           scrollDirection: Axis.horizontal,
-          itemCount: size as int,
+          itemCount: widget.size as int,
           padding: const EdgeInsets.all(2),
           itemBuilder: (BuildContext context, int index) {
             return InkWell(
               onTap: () {
-                GameState.selectedDigit = index + 1;
+                setState(() {
+                  GameState.selectedDigit = index + 1;
+                });
               },
               child: Container(
+                color: GameState.selectedDigit == index + 1? Theme.of(context).primaryColorLight : Theme.of(context).secondaryHeaderColor,
                 alignment: Alignment.center,
                 height: 50,
-                width: 340 / (size as int),
+                width: 340 / (widget.size as int),
                 child: Text(
                   (index + 1).toString(),
                   style: TextStyle(

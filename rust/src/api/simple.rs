@@ -23,7 +23,7 @@ pub fn generate_with_size(size: usize, rules_src: Vec<String>) -> bool {
     let mut sudoku = Sudoku::new(size, rules);
     sudoku.solve().unwrap();
 
-    for _ in 0..(sudoku.size*sudoku.size) / 2 {
+    for _ in 0..(sudoku.size * sudoku.size) / 2 {
         let index = rand::random::<usize>() % sudoku.cells.len();
         sudoku.cells[index] = Cell::new_with_range(1..sudoku.size as u16 + 1);
     }
@@ -38,6 +38,7 @@ pub fn generate_with_size(size: usize, rules_src: Vec<String>) -> bool {
 pub fn check_legality(position: usize, value: u16) -> bool {
     let state = get_state();
     let sudoku = state.current_sudoku.as_ref().unwrap();
+
     let mut buffer = vec![];
     sudoku
         .rules
@@ -62,6 +63,14 @@ pub fn get_sudoku_str() -> Option<String> {
     println!("Sending: {str_buffer}");
 
     Some(str_buffer)
+}
+
+#[flutter_rust_bridge::frb(sync)]
+pub fn set_cell(index: usize, value: u16) {
+    let mut state = get_state();
+    let sudoku = state.current_sudoku.as_mut().unwrap();
+
+    sudoku.set_cell(value, index).unwrap();
 }
 
 #[flutter_rust_bridge::frb(init)]

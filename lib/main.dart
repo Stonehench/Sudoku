@@ -14,6 +14,7 @@ class SudokuApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
+      theme: ThemeData.dark(),
       initialRoute: '/menu',
       routes: {
         '/menu': (context) => const Menu(),
