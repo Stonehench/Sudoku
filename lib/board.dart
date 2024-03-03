@@ -2,15 +2,13 @@ import 'dart:math';
 
 import 'package:flutter/material.dart';
 import 'package:sudoku/cell.dart';
-import 'package:sudoku/digit_selection.dart';
 import 'package:sudoku/src/rust/api/simple.dart';
 
 class Board extends StatefulWidget {
   final Object? size;
-  Board(this.size, {super.key,required this.getDigit});
-  String boardString = getSudokuStr()!;
+  Board(this.size, {super.key});
+  final String boardString = getSudokuStr()!;
 
-  final int Function() getDigit;
 
   @override
   State<StatefulWidget> createState() => _BoardState();
@@ -54,8 +52,7 @@ class _BoardState extends State<Board> {
                 return Cell(
                   boardArray.elementAt(index),
                   index,
-                  widget.size as int,
-                  getSelectedDigit: widget.getDigit,
+                  widget.size as int
                 );
               },
             ),
