@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'dart:math';
 
 import 'package:flutter/services.dart';
+import 'package:sudoku/digit_selection.dart';
 import 'package:sudoku/src/rust/api/simple.dart';
 
 class Menu extends StatefulWidget {
@@ -27,7 +28,7 @@ class _MenuState extends State<Menu> {
         int sqrtSize = sqrt(newSize).toInt();
         String rounding;
         int size = sqrtSize*sqrtSize;
-        if (sqrtSize * sqrtSize != size) {
+        if (sqrtSize * sqrtSize != newSize) {
           rounding = " (Rounding down to $size)";
         } else {
           rounding = "";
@@ -72,8 +73,7 @@ class _MenuState extends State<Menu> {
                   });
                 } else {
                   inputTextController.clear();
-                  Navigator.of(context).pushNamed('/board');
-                  
+                  Navigator.of(context).pushNamed('/board', arguments: size);
                 }
               },
               child: const Text('Create Sudoku'),
