@@ -288,7 +288,7 @@ impl Cell {
             locked_in: true,
         }
     }
-    fn new_with_range(range: Range<u16>) -> Self {
+    pub fn new_with_range(range: Range<u16>) -> Self {
         Self {
             available: range.collect(),
             locked_in: false,

@@ -11,5 +11,9 @@ bool generateWithSize(
     RustLib.instance.api
         .generateWithSize(size: size, rulesSrc: rulesSrc, hint: hint);
 
+bool checkLegality({required int position, required int value, dynamic hint}) =>
+    RustLib.instance.api
+        .checkLegality(position: position, value: value, hint: hint);
+
 String? getSudokuStr({dynamic hint}) =>
     RustLib.instance.api.getSudokuStr(hint: hint);

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:sudoku/src/rust/api/simple.dart';
 
 class Cell extends StatefulWidget {
   final String digit;

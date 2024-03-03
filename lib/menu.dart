@@ -27,7 +27,7 @@ class _MenuState extends State<Menu> {
       } else {
         int sqrtSize = sqrt(newSize).toInt();
         String rounding;
-        int size = sqrtSize*sqrtSize;
+        size = sqrtSize * sqrtSize;
         if (sqrtSize * sqrtSize != newSize) {
           rounding = " (Rounding down to $size)";
         } else {
@@ -65,7 +65,7 @@ class _MenuState extends State<Menu> {
             ),
             Text(sizeText),
             TextButton(
-              onPressed: () {
+              onPressed: (){
                 bool success = generateWithSize(size: size, rulesSrc: []);
                 if (!success) {
                   setState(() {
