@@ -207,15 +207,6 @@ impl FromStr for Sudoku {
     type Err = ParseSudokuError;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
-        let size = s.split(',').count().integer_sqrt();
-        let sub_size = size.integer_sqrt();
-        if sub_size * sub_size != size {
-            return Err(ParseSudokuError::InvalidSizeError(size));
-        }
-
-        #[cfg(debug_assertions)]
-        println!("parsing size: {size}");
-
         let mut rules: Vec<Box<dyn Rule>> = vec![
             Box::new(RowRule),
             Box::new(ColumnRule),
@@ -234,6 +225,15 @@ impl FromStr for Sudoku {
         } else {
             s
         };
+
+        let size = sudoku_source.split(',').count().integer_sqrt();
+        let sub_size = size.integer_sqrt();
+        if sub_size * sub_size != size {
+            return Err(ParseSudokuError::InvalidSizeError(size));
+        }
+
+        #[cfg(debug_assertions)]
+        println!("parsing size: {size}");
 
         let mut sudoku = Sudoku::new(size, rules);
 
