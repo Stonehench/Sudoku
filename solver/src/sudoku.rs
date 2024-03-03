@@ -10,7 +10,7 @@ use integer_sqrt::IntegerSquareRoot;
 use priority_queue::PriorityQueue;
 use rand::random;
 
-use crate::rules::{ColumnRule, RowRule, Rule, SquareRule};
+use crate::rules::{self, ColumnRule, KnightRule, RowRule, Rule, SquareRule};
 
 #[derive(Debug)]
 pub struct Sudoku {
@@ -194,6 +194,7 @@ pub enum ParseSudokuError {
     ParseIntError(ParseIntError),
     InvalidSizeError(usize),
     UnsolveableError,
+    InvalidRuleName(String),
 }
 
 impl Display for ParseSudokuError {
@@ -215,19 +216,28 @@ impl FromStr for Sudoku {
         #[cfg(debug_assertions)]
         println!("parsing size: {size}");
 
-        let mut sudoku = Sudoku::new(
-            size,
-            vec![
-                Box::new(RowRule),
-                Box::new(ColumnRule),
-                Box::new(SquareRule),
+        let mut rules: Vec<Box<dyn Rule>> = vec![
+            Box::new(RowRule),
+            Box::new(ColumnRule),
+            Box::new(SquareRule),
+        ];
 
-                // TODO: the rules should not be hard coded but be bassed as an argument 
-                //Box::new(KnightRule),
-            ],
-        );
+        let sudoku_source = if let Some((rules_source, sudoku_source)) = s.split_once("\n\n") {
+            for rule_name in rules_source.split_whitespace() {
+                rules.push(match rule_name {
+                    "KnightsMove" => Box::new(KnightRule),
+                    invalid => return Err(ParseSudokuError::InvalidRuleName(invalid.to_owned())),
+                });
+            }
 
-        for (index, part) in s.split(',').map(str::trim).enumerate() {
+            sudoku_source
+        } else {
+            s
+        };
+
+        let mut sudoku = Sudoku::new(size, rules);
+
+        for (index, part) in sudoku_source.split(',').map(str::trim).enumerate() {
             let n = part
                 .parse()
                 .map_err(|e| ParseSudokuError::ParseIntError(e))?;
@@ -398,7 +408,6 @@ fn solve_16x_test() {
     println!("{sudoku}");
 }
 
-
 #[test]
 fn solve_knights_move_sudoku() {
     let file_str = std::fs::read_to_string("./sudokuKnightsMove").unwrap();
@@ -409,6 +418,10 @@ fn solve_knights_move_sudoku() {
     sudoku.solve().unwrap();
 
     println!("{sudoku}");
-    assert_eq!(sudoku.to_string().trim(), std::fs::read_to_string("./sudokuKnightsMoveSolution").unwrap().trim());
-
+    assert_eq!(
+        sudoku.to_string().trim(),
+        std::fs::read_to_string("./sudokuKnightsMoveSolution")
+            .unwrap()
+            .trim()
+    );
 }
