@@ -26,10 +26,8 @@ class _ToolBarState extends State<ToolBar> {
                 onPressed: () {
                   print("please erase the digit thanks:D");
                   GameState.selectedDigit = 0;
-                  // and some logic to allow "placement" in already placed digits,
-                  // just only the once the player placed themselves
 
-                  // because it no work
+                  // It kinda works might need a rework!
                 },
                 child: Text("ERASE"))
           ],
