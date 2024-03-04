@@ -35,10 +35,15 @@ class _CellState extends State<Cell> {
             ? 15.0
             : 6.0;
 
+    if (digit!.trim() == "0") {
+      // if the number in the cell is not initially 0
+      // then it must have been a clue provided in the generated sudoku
+      widget.initialClue = false;
+    }
+
     return InkWell(
       onTap: () {
-        if (digit!.trim() == "0") {
-          widget.initialClue = false;
+        if (digit!.trim() == "0" || !widget.initialClue) {
           bool legal = checkLegality(
               position: widget.index, value: GameState.selectedDigit);
           if (legal) {
