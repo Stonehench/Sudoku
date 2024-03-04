@@ -24,7 +24,7 @@ class _ToolBarState extends State<ToolBar> {
             const BackButton(),
             TextButton(
                 onPressed: () {
-                  print("please erase the digit thanks:D");
+                  //print("please erase the digit thanks:D");
                   GameState.selectedDigit = 0;
 
                   // It kinda works might need a rework!
