@@ -9,12 +9,14 @@ class Cell extends StatefulWidget {
   final int index;
   final int size;
 
-  const Cell(
+  Cell(
     this.digit,
     this.index,
     this.size, {
     super.key,
   });
+
+  bool initialClue = true;
 
   @override
   State<StatefulWidget> createState() => _CellState();
@@ -27,10 +29,16 @@ class _CellState extends State<Cell> {
   @override
   Widget build(BuildContext context) {
     digit ??= widget.digit;
+    double fontSize = widget.size <= 9
+        ? 30.0
+        : widget.size <= 16
+            ? 15.0
+            : 6.0;
 
     return InkWell(
       onTap: () {
         if (digit!.trim() == "0") {
+          widget.initialClue = false;
           bool legal = checkLegality(
               position: widget.index, value: GameState.selectedDigit);
           if (legal) {
@@ -49,13 +57,13 @@ class _CellState extends State<Cell> {
           }
         } else {
           setState(() {
-              isCurrentlyError = true;
-              Timer(const Duration(seconds: 1), () {
-                setState(() {
-                  isCurrentlyError = false;
-                });
+            isCurrentlyError = true;
+            Timer(const Duration(seconds: 1), () {
+              setState(() {
+                isCurrentlyError = false;
               });
             });
+          });
         }
       },
       child: Container(
@@ -63,11 +71,9 @@ class _CellState extends State<Cell> {
         alignment: Alignment.center,
         child: digit != null && digit!.trim() != "0"
             ? Text(digit!,
-                style: widget.size <= 9
-                    ? const TextStyle(fontSize: 30)
-                    : widget.size <= 16
-                        ? const TextStyle(fontSize: 15)
-                        : const TextStyle(fontSize: 6))
+                style: TextStyle(
+                    fontSize: fontSize,
+                    color: widget.initialClue ? Colors.white : Colors.black))
             // 30 or 9x9, 15 for 16x16 , 6 for anything else (for now at least)
             : const Text(""),
       ),
