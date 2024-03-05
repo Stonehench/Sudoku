@@ -4,7 +4,7 @@ use lazy_static::lazy_static;
 use solver::sudoku::Sudoku;
 
 pub struct AppState {
-    pub current_sudoku: Option<Sudoku>,
+    pub current_sudoku: Option<(Sudoku, Sudoku)>,
 }
 
 lazy_static! {

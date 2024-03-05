@@ -72,8 +72,6 @@ abstract class RustLibApi extends BaseApi {
   String? getSudokuStr({dynamic hint});
 
   Future<void> initApp({dynamic hint});
-
-  void setCell({required int index, required int value, dynamic hint});
 }
 
 class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
@@ -165,7 +163,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
       callFfi: (port_) {
         final serializer = SseSerializer(generalizedFrbRustBinding);
         pdeCallFfi(generalizedFrbRustBinding, serializer,
-            funcId: 5, port: port_);
+            funcId: 4, port: port_);
       },
       codec: SseCodec(
         decodeSuccessData: sse_decode_unit,
@@ -181,31 +179,6 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   TaskConstMeta get kInitAppConstMeta => const TaskConstMeta(
         debugName: "init_app",
         argNames: [],
-      );
-
-  @override
-  void setCell({required int index, required int value, dynamic hint}) {
-    return handler.executeSync(SyncTask(
-      callFfi: () {
-        final serializer = SseSerializer(generalizedFrbRustBinding);
-        sse_encode_usize(index, serializer);
-        sse_encode_u_16(value, serializer);
-        return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 4)!;
-      },
-      codec: SseCodec(
-        decodeSuccessData: sse_decode_unit,
-        decodeErrorData: null,
-      ),
-      constMeta: kSetCellConstMeta,
-      argValues: [index, value],
-      apiImpl: this,
-      hint: hint,
-    ));
-  }
-
-  TaskConstMeta get kSetCellConstMeta => const TaskConstMeta(
-        debugName: "set_cell",
-        argNames: ["index", "value"],
       );
 
   @protected

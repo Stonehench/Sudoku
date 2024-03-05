@@ -34,6 +34,7 @@ class _CellState extends State<Cell> {
           bool legal = checkLegality(
               position: widget.index, value: GameState.selectedDigit);
           if (legal) {
+            //setCell(widget.index, GameState.selectedDigit)
             setState(() {
               digit = GameState.selectedDigit.toString();
             });
