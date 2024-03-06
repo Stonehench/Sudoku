@@ -50,7 +50,7 @@ class _DigitSelectState extends State<DigitSelect> {
                     (index + 1).toString(),
                     style: TextStyle(
                       fontSize: fontSize,
-                      color: Colors.black,
+                      color: Colors.white,
                     ),
                   ),
                 ),
