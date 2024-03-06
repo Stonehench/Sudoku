@@ -4,7 +4,8 @@ use std::{
     num::ParseIntError,
     ops::Range,
     str::FromStr,
-    sync::{atomic::AtomicUsize, Arc, Mutex},
+    sync::{atomic::AtomicUsize, mpsc, Arc, Mutex},
+    time::Instant,
 };
 
 use integer_sqrt::IntegerSquareRoot;
@@ -23,7 +24,7 @@ pub struct Sudoku {
     pub size: usize,
     pub cells: Vec<Cell>,
     pub rules: Vec<DynRule>,
-    pub x_clue: Option<Vec<(usize,usize)>>,
+    pub x_clue: Option<Vec<(usize, usize)>>,
 }
 
 //Det her er ret fucked, men siden vi skal have den laveste entropy ud af vores priority queue skal den sammenligne omvendt
@@ -46,6 +47,7 @@ impl Ord for Entropy {
 }
 #[derive(Debug, Clone, Copy)]
 pub enum SudokuSolveError {
+    AlreadyManySolutions,
     UnsolveableError,
     RemovedLockedValue,
 }
@@ -104,12 +106,13 @@ impl Display for SudokuSolveError {
         match self {
             SudokuSolveError::UnsolveableError => write!(f, "No Solution. Failed to pop branch queue when entropy was 0 in cell"),
             SudokuSolveError::RemovedLockedValue => write!(f, "Something went seriously wrong. Removed the only value in a locked cell\nThis indicates either an unsolveable sudoku or a bug in the rules."),
+            SudokuSolveError::AlreadyManySolutions => write!(f, "Has already found more than 1 solution when searching for all solutions. Short circuting"),
         }
     }
 }
 
 impl Sudoku {
-    pub fn new(size: usize, rules: Vec<DynRule>, x_clue: Option<Vec<(usize,usize)>>) -> Self {
+    pub fn new(size: usize, rules: Vec<DynRule>, x_clue: Option<Vec<(usize, usize)>>) -> Self {
         Self {
             size,
             cells: (0..size * size)
@@ -235,7 +238,11 @@ impl Sudoku {
                     // i den cloned queue. Ellers vil clonen aldrig løse index cellen.
                     cloned_queue.push(index, Entropy(entropy.0 - 1));
 
-                    if let Some(ctx) = &ctx {
+                    if let Some(ctx) = ctx {
+                        if ctx.solutions.load(std::sync::atomic::Ordering::Relaxed) >= 2 {
+                            return Err(SudokuSolveError::AlreadyManySolutions);
+                        }
+
                         ctx.add_branch(self, cloned_cells, cloned_queue);
                     } else {
                         branch_stack.push((cloned_cells, cloned_queue));
@@ -265,17 +272,30 @@ impl Sudoku {
         Ok(())
     }
 
-    pub fn generate_with_size(size: usize, rules: Vec<DynRule>) -> Self {
+    pub fn generate_with_size(
+        size: usize,
+        rules: Vec<DynRule>,
+        progess: Option<mpsc::Sender<usize>>,
+    ) -> Self {
         let mut sudoku = Sudoku::new(size, rules, None);
         sudoku.solve(None, None).unwrap();
 
         const ATTEMPT_COUNT: usize = 5;
+        const RETRY_LIMIT: usize = 55;
 
         let mut count = 0;
 
         let mut currents_left = ATTEMPT_COUNT;
-
+        let timer = Instant::now();
         loop {
+            if let Some(progess) = &progess {
+                progess.send(count).unwrap();
+            }
+
+            if count >= RETRY_LIMIT {
+                break;
+            }
+
             let removed_index = random::<usize>() % sudoku.cells.len();
             if sudoku.cells[removed_index].available.len() == 9 {
                 //println!("Skipping already hit");
@@ -308,7 +328,7 @@ impl Sudoku {
 
             count += 1;
         }
-        println!("Removed {count}");
+        println!("Removed {count} in {:?}", timer.elapsed());
 
         sudoku
     }
@@ -435,7 +455,7 @@ impl Clone for Sudoku {
             size: self.size.clone(),
             cells: self.cells.clone(),
             rules: self.rules.iter().map(|r| r.boxed_clone()).collect(),
-            x_clue : self.x_clue.clone(),
+            x_clue: self.x_clue.clone(),
         }
     }
 }
@@ -583,6 +603,7 @@ fn generate_sudoku() {
             Box::new(ColumnRule),
             Box::new(SquareRule),
         ],
+        None,
     );
 
     println!("{sudoku} at {:?}", timer.elapsed());

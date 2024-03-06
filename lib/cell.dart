@@ -36,14 +36,14 @@ class _CellState extends State<Cell> {
     });
   }
 
-  void onClick() {
+  void onClick() async {
     //Check
     if (widget.digit != null) {
       setErr();
     }
     
     if ((GameState.getInstance().selectedDigit == 0 && !widget.initialClue) || widget.digit == null) {
-      if (!GameState.getInstance().updateDigit(widget.index)) {
+      if (!await GameState.getInstance().updateDigit(widget.index)) {
         setErr();
       }
     }

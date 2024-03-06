@@ -36,14 +36,14 @@ class GameState extends ChangeNotifier {
   late List<int?> board;
   List<int> initialClues = [];
 
-  bool updateDigit(int position) {
+  Future<bool> updateDigit(int position) async {
     if (selectedDigit == 0) {
       board[position] = null;
       notifyListeners();
       return true;
     }
 
-    if (checkLegality(position: position, value: selectedDigit)) {
+    if (await checkLegality(position: position, value: selectedDigit)) {
       board[position] = selectedDigit;
       notifyListeners();
       return true;
