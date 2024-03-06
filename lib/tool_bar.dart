@@ -33,7 +33,7 @@ class _ToolBarState extends State<ToolBar> {
                 },
                 style: TextButton.styleFrom(
                   backgroundColor: GameState.getInstance().selectedDigit == 0
-                      ? Theme.of(ctx).focusColor
+                      ? Theme.of(ctx).secondaryHeaderColor
                       : Theme.of(ctx).scaffoldBackgroundColor,
                 ),
                 child: const Text("Erase"),

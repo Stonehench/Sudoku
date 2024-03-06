@@ -42,7 +42,7 @@ class _DigitSelectState extends State<DigitSelect> {
                 child: Container(
                   color: GameState.getInstance().selectedDigit == index + 1
                       ? Theme.of(context).primaryColorLight
-                      : Theme.of(context).secondaryHeaderColor,
+                      : Colors.transparent,
                   alignment: Alignment.center,
                   height: 50,
                   width: 40,
