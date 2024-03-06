@@ -23,7 +23,6 @@ class Cell extends StatefulWidget {
 class _CellState extends State<Cell> {
   GameState state = GameState.getInstance();
   bool isCurrentlyError = false;
-  int? digit;
 
   void setErr() {
     setState(() {
@@ -38,15 +37,11 @@ class _CellState extends State<Cell> {
 
   void onClick() {
     //Check
-    if (digit != null) {
+    if (widget.digit != null) {
       setErr();
     }
 
-    if (checkLegality(position: widget.index, value: GameState.getInstance().selectedDigit)) {
-      setState(() {
-        digit = GameState.getInstance().selectedDigit;
-      });
-    } else {
+    if (!GameState.getInstance().updateDigit(widget.index)) {
       setErr();
     }
   }
@@ -54,14 +49,13 @@ class _CellState extends State<Cell> {
   @override
   Widget build(BuildContext context) {
     GameState state = GameState.getInstance();
-    digit ??= widget.digit;
     return InkWell(
       onTap: onClick,
       child: Container(
         color: isCurrentlyError ? Colors.red : Theme.of(context).highlightColor,
         alignment: Alignment.center,
-        child: digit != null
-            ? Text(digit.toString(),
+        child: widget.digit != null
+            ? Text(widget.digit.toString(),
                 style: state.size <= 9
                     ? const TextStyle(fontSize: 30)
                     : state.size <= 16
