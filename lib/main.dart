@@ -18,8 +18,7 @@ class SudokuApp extends StatelessWidget {
       initialRoute: '/menu',
       routes: {
         '/menu': (context) => const Menu(),
-        '/board': (context) =>
-            GameView(ModalRoute.of(context)!.settings.arguments),
+        '/board': (context) =>const GameView(),
       },
     );
   }

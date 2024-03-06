@@ -66,10 +66,8 @@ class RustLib extends BaseEntrypoint<RustLibApi, RustLibApiImpl, RustLibWire> {
 abstract class RustLibApi extends BaseApi {
   bool checkLegality({required int position, required int value, dynamic hint});
 
-  bool generateWithSize(
+  String? generateWithSize(
       {required int size, required List<String> rulesSrc, dynamic hint});
-
-  String? getSudokuStr({dynamic hint});
 
   Future<void> initApp({dynamic hint});
 }
@@ -109,7 +107,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
       );
 
   @override
-  bool generateWithSize(
+  String? generateWithSize(
       {required int size, required List<String> rulesSrc, dynamic hint}) {
     return handler.executeSync(SyncTask(
       callFfi: () {
@@ -119,7 +117,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
         return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 1)!;
       },
       codec: SseCodec(
-        decodeSuccessData: sse_decode_bool,
+        decodeSuccessData: sse_decode_opt_String,
         decodeErrorData: null,
       ),
       constMeta: kGenerateWithSizeConstMeta,
@@ -135,35 +133,12 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
       );
 
   @override
-  String? getSudokuStr({dynamic hint}) {
-    return handler.executeSync(SyncTask(
-      callFfi: () {
-        final serializer = SseSerializer(generalizedFrbRustBinding);
-        return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 3)!;
-      },
-      codec: SseCodec(
-        decodeSuccessData: sse_decode_opt_String,
-        decodeErrorData: null,
-      ),
-      constMeta: kGetSudokuStrConstMeta,
-      argValues: [],
-      apiImpl: this,
-      hint: hint,
-    ));
-  }
-
-  TaskConstMeta get kGetSudokuStrConstMeta => const TaskConstMeta(
-        debugName: "get_sudoku_str",
-        argNames: [],
-      );
-
-  @override
   Future<void> initApp({dynamic hint}) {
     return handler.executeNormal(NormalTask(
       callFfi: (port_) {
         final serializer = SseSerializer(generalizedFrbRustBinding);
         pdeCallFfi(generalizedFrbRustBinding, serializer,
-            funcId: 4, port: port_);
+            funcId: 3, port: port_);
       },
       codec: SseCodec(
         decodeSuccessData: sse_decode_unit,

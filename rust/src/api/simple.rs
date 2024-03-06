@@ -4,8 +4,9 @@ use solver::rules::*;
 
 use crate::appstate::get_state;
 
+
 #[flutter_rust_bridge::frb(sync)]
-pub fn generate_with_size(size: usize, rules_src: Vec<String>) -> bool {
+pub fn generate_with_size(size: usize, rules_src: Vec<String>) -> Option<String> {
     let mut rules: Vec<DynRule> = vec![
         Box::new(RowRule),
         Box::new(SquareRule),
@@ -16,7 +17,7 @@ pub fn generate_with_size(size: usize, rules_src: Vec<String>) -> bool {
         if let Ok(rule) = rule {
             rules.push(rule);
         } else {
-            return false;
+            return None;
         }
     }
 
@@ -29,27 +30,9 @@ pub fn generate_with_size(size: usize, rules_src: Vec<String>) -> bool {
         sudoku.cells[index] = Cell::new_with_range(1..sudoku.size as u16 + 1);
     }
 
-    let mut state = get_state();
-    state.current_sudoku = Some((sudoku,solved));
-
-    true
-}
-
-#[flutter_rust_bridge::frb(sync)]
-pub fn check_legality(position: usize, value: u16) -> bool {
-    let state = get_state();
-    let (unsolved,sudoku) = state.current_sudoku.as_ref().unwrap();
-    sudoku.cells[position].available == [value]
-
-}
-
-#[flutter_rust_bridge::frb(sync)]
-pub fn get_sudoku_str() -> Option<String> {
-    let state = get_state();
-
     let mut str_buffer = String::new();
 
-    for cell in &state.current_sudoku.as_ref()?.0.cells {
+    for cell in &sudoku.cells {
         match cell.available.as_slice() {
             [value] => str_buffer.push_str(&value.to_string()),
             _ => str_buffer.push_str(&"0"),
@@ -59,7 +42,20 @@ pub fn get_sudoku_str() -> Option<String> {
 
     println!("Sending: {str_buffer}");
 
+    
+
+    let mut state = get_state();
+    state.current_sudoku = Some((sudoku,solved));
+
     Some(str_buffer)
+}
+
+#[flutter_rust_bridge::frb(sync)]
+pub fn check_legality(position: usize, value: u16) -> bool {
+    let state = get_state();
+    let (unsolved,sudoku) = state.current_sudoku.as_ref().unwrap();
+    sudoku.cells[position].available == [value]
+
 }
 
 /*
