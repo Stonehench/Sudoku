@@ -1,13 +1,7 @@
-import 'dart:math';
-
 import 'package:flutter/material.dart';
 import 'package:sudoku/cell.dart';
 import 'package:sudoku/game_state.dart';
 
-//TODO sudokuen bliver gemt som en string og der sker kun ændrig i lokal state
-// når der klikkes på en celle.
-// Det skal nok ændres til at der er en ordentlig ræpresentation af sudokuen
-// i guien. Eventuelt skal alt informationen gemmes i den statiske GameState.
 class Board extends StatefulWidget {
   const Board({super.key});
 
