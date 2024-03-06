@@ -193,7 +193,79 @@ impl Rule for ColumnRule {
     }
 }
 
+#[derive(Debug, Clone)]
+pub struct DiagonalRule;
 
+impl Rule for DiagonalRule {
+    fn updates<'buf>(
+        &self,
+        size: usize,
+        index: usize,
+        buffer: &'buf mut Vec<usize>,
+    ) -> &'buf [usize] {
+        buffer.clear();
+        
+        if index % (size + 1) == 0 {
+            for i in (0..size).map(|i| i*(size + 1)) {
+                buffer.push(i)
+            }
+        }
+
+        if index % (size - 1) == 0 {
+            for i in (0..size).map(|i| (i+1)*(size - 1)) {
+                buffer.push(i)
+            }
+        }
+
+        buffer
+    }
+
+    fn hidden_singles(&self, sudoku: &Sudoku) -> Option<(u16, usize)> {
+            'value: for value in 1..=sudoku.size as u16 {
+                let mut found_position = None;
+
+                // itterate over digonal from top left corner down
+                for position in (0..sudoku.size).map(|i| i*(sudoku.size + 1)) {
+                    if sudoku.cells[position].available.contains(&value) {
+                        if found_position.is_some() {
+                            continue 'value;
+                        } else {
+                            found_position = Some(position);
+                        }
+                    }
+                }
+
+                if let Some(position) = found_position {
+                    if !sudoku.cells[position].locked_in {
+                        return Some((value, position));
+                    }
+                }
+
+                found_position = None;
+                // itterate over digonal from top right corner down
+                for position in (0..sudoku.size).map(|i| (i+1)*(sudoku.size - 1)) {
+                    if sudoku.cells[position].available.contains(&value) {
+                        if found_position.is_some() {
+                            continue 'value;
+                        } else {
+                            found_position = Some(position);
+                        }
+                    }
+                }
+
+                
+                if let Some(position) = found_position {
+                    if !sudoku.cells[position].locked_in {
+                        return Some((value, position));
+                    }
+                }
+            }
+        None
+    }
+    fn boxed_clone(&self) -> DynRule {
+        Box::new(self.clone())
+    }
+}
 
 #[derive(Debug, Clone)]
 pub struct KnightRule;
@@ -280,7 +352,30 @@ impl Rule for KnightRule {
    
 }
 
+#[test]
+fn diagonal_test() {
+    let sudoku = Sudoku::new(9, vec![]);
 
+    let diagonalrule = DiagonalRule;
+    let mut buffer = vec![];
+    
+    let mut indexes = diagonalrule.updates(sudoku.size, 11, &mut buffer);
+    println!("{indexes:?}");
+    assert_eq!(indexes, vec![]);
+
+    indexes = diagonalrule.updates(sudoku.size, 70, &mut buffer);
+    println!("{indexes:?}");
+    assert_eq!(indexes, vec![0,10,20,30,40,50,60,70,80]);
+
+    indexes = diagonalrule.updates(sudoku.size, 16, &mut buffer);
+    println!("{indexes:?}");
+    assert_eq!(indexes, vec![8,16,24,32,40,48,56,64,72]);
+
+    indexes = diagonalrule.updates(sudoku.size, 40, &mut buffer);
+    println!("{indexes:?}");
+    assert_eq!(indexes, vec![0,10,20,30,40,50,60,70,80,8,16,24,32,40,48,56,64,72])
+
+}
 
 #[test]
 fn row_test() {
@@ -333,6 +428,30 @@ fn knight_test() {
     println!("{indexes:?}");
 
     assert_eq!(indexes, vec![21, 23, 29, 33, 47, 51, 57, 59])
+}
+
+#[test]
+fn diagonal_hidden_math_test() {
+    let mut sudoku = Sudoku::new(
+        9,
+        vec![
+            Box::new(RowRule),
+            Box::new(ColumnRule),
+            Box::new(SquareRule),
+            Box::new(DiagonalRule)        
+        ],
+    );
+
+    sudoku.set_cell(1, 27).unwrap();
+    sudoku.set_cell(1, 39).unwrap();
+    sudoku.set_cell(1, 78).unwrap();
+    sudoku.set_cell(1, 55).unwrap();
+
+    println!("{sudoku}");
+
+    let diagonalrule = DiagonalRule;
+    let res = diagonalrule.hidden_singles(&sudoku);
+    assert_eq!(res, Some((1, 20)))
 }
 
 #[test]
