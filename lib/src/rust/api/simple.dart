@@ -6,7 +6,7 @@
 import '../frb_generated.dart';
 import 'package:flutter_rust_bridge/flutter_rust_bridge_for_generated.dart';
 
-bool generateWithSize(
+String? generateWithSize(
         {required int size, required List<String> rulesSrc, dynamic hint}) =>
     RustLib.instance.api
         .generateWithSize(size: size, rulesSrc: rulesSrc, hint: hint);
@@ -14,9 +14,3 @@ bool generateWithSize(
 bool checkLegality({required int position, required int value, dynamic hint}) =>
     RustLib.instance.api
         .checkLegality(position: position, value: value, hint: hint);
-
-String? getSudokuStr({dynamic hint}) =>
-    RustLib.instance.api.getSudokuStr(hint: hint);
-
-void setCell({required int index, required int value, dynamic hint}) =>
-    RustLib.instance.api.setCell(index: index, value: value, hint: hint);

@@ -1,81 +1,68 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
-import 'package:sudoku/game_view.dart';
-import 'package:sudoku/src/rust/api/simple.dart';
+import 'package:sudoku/game_state.dart';
 
 class Cell extends StatefulWidget {
-  final String digit;
+  final int? digit;
   final int index;
   final int size;
+  final bool initialClue;
 
-  Cell(
+  const Cell(
     this.digit,
     this.index,
-    this.size, {
+    this.size,
+    this.initialClue, {
     super.key,
   });
-
-  bool initialClue = true;
 
   @override
   State<StatefulWidget> createState() => _CellState();
 }
 
 class _CellState extends State<Cell> {
-  String? digit;
+  GameState state = GameState.getInstance();
   bool isCurrentlyError = false;
+
+  void setErr() {
+    setState(() {
+      isCurrentlyError = true;
+    });
+    Timer(const Duration(seconds: 1), () {
+      setState(() {
+        isCurrentlyError = false;
+      });
+    });
+  }
+
+  void onClick() {
+    //Check
+    if (widget.digit != null) {
+      setErr();
+    }
+
+    if (!GameState.getInstance().updateDigit(widget.index)) {
+      setErr();
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
-    digit ??= widget.digit;
-    double fontSize = widget.size <= 9
+    var state = GameState.getInstance();
+    double fontSize = state.size <= 9
         ? 30.0
-        : widget.size <= 16
+        : state.size <= 16
             ? 15.0
             : 6.0;
 
-    if (digit!.trim() == "0") {
-      // if the number in the cell is not initially 0
-      // then it must have been a clue provided in the generated sudoku
-      widget.initialClue = false;
-    }
-
     return InkWell(
-      onTap: () {
-        if (digit!.trim() == "0" || !widget.initialClue) {
-          bool legal = checkLegality(
-              position: widget.index, value: GameState.selectedDigit);
-          if (legal) {
-            setState(() {
-              digit = GameState.selectedDigit.toString();
-            });
-          } else {
-            setState(() {
-              isCurrentlyError = true;
-              Timer(const Duration(seconds: 1), () {
-                setState(() {
-                  isCurrentlyError = false;
-                });
-              });
-            });
-          }
-        } else {
-          setState(() {
-            isCurrentlyError = true;
-            Timer(const Duration(seconds: 1), () {
-              setState(() {
-                isCurrentlyError = false;
-              });
-            });
-          });
-        }
-      },
+      onTap: onClick,
       child: Container(
         color: isCurrentlyError ? Colors.red : Theme.of(context).highlightColor,
         alignment: Alignment.center,
-        child: digit != null && digit!.trim() != "0"
-            ? Text(digit!,
+        child: widget.digit != null
+            ? Text(widget.digit!.toString(),
                 style: TextStyle(
                     fontSize: fontSize,
                     color: widget.initialClue ? Colors.white : Colors.black))

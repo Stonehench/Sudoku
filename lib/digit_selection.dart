@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:sudoku/game_view.dart';
+import 'package:sudoku/game_state.dart';
 
 class DigitSelect extends StatefulWidget {
   final Object? size;
@@ -10,6 +10,7 @@ class DigitSelect extends StatefulWidget {
 }
 
 class _DigitSelectState extends State<DigitSelect> {
+  GameState state = GameState.getInstance();
   @override
   Widget build(BuildContext context) {
     double fontSize = widget.size! as int <= 9
@@ -32,11 +33,11 @@ class _DigitSelectState extends State<DigitSelect> {
             return InkWell(
               onTap: () {
                 setState(() {
-                  GameState.selectedDigit = index + 1;
+                  state.selectedDigit = index + 1;
                 });
               },
               child: Container(
-                color: GameState.selectedDigit == index + 1
+                color: GameState.getInstance().selectedDigit == index + 1
                     ? Theme.of(context).primaryColorLight
                     : Theme.of(context).secondaryHeaderColor,
                 alignment: Alignment.center,
