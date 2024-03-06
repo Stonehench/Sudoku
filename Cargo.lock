@@ -576,9 +576,12 @@ name = "solver"
 version = "0.1.0"
 dependencies = [
  "integer-sqrt",
+ "lazy_static",
+ "num_cpus",
  "priority-queue",
  "rand",
  "regex-macro",
+ "threadpool",
 ]
 
 [[package]]

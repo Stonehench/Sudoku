@@ -1,20 +1,18 @@
 use std::{
     cmp::Ordering,
-    collections::HashSet,
     fmt::{Display, Write},
-    hint,
     num::ParseIntError,
     ops::Range,
     str::FromStr,
     sync::{atomic::AtomicUsize, Arc, Mutex},
-    thread,
-    time::{Duration, Instant},
 };
 
 use integer_sqrt::IntegerSquareRoot;
+use lazy_static::lazy_static;
 use priority_queue::PriorityQueue;
 use rand::random;
 use regex_macro::regex;
+use threadpool::ThreadPool;
 
 use crate::rules::{ColumnRule, RowRule, Rule, SquareRule};
 
@@ -50,40 +48,52 @@ pub enum SudokuSolveError {
     UnsolveableError,
     RemovedLockedValue,
 }
+
+lazy_static! {
+    static ref GLOBAL_POOL: Mutex<Option<ThreadPool>> = Mutex::new(None);
+}
+
 #[derive(Debug, Clone)]
 pub struct AllSolutionsContext {
-    solutions: Arc<Mutex<HashSet<String>>>,
-    runs: Arc<AtomicUsize>,
+    solutions: Arc<AtomicUsize>,
+    pool: ThreadPool,
 }
 
 impl AllSolutionsContext {
+    fn get_pool() -> ThreadPool {
+        if let Some(pool) = GLOBAL_POOL.lock().unwrap().take() {
+            pool
+        } else {
+            ThreadPool::new(num_cpus::get())
+        }
+    }
+    fn return_pool(self) {
+        *GLOBAL_POOL.lock().unwrap() = Some(self.pool);
+    }
+
     fn add_branch(&self, old: &Sudoku, cells: Vec<Cell>, new_queue: PriorityQueue<usize, Entropy>) {
         let mut new_sudoku = Sudoku {
             cells,
             ..old.clone()
         };
         let self_clone = self.clone();
-        self.runs.fetch_add(1, std::sync::atomic::Ordering::Relaxed);
-        thread::spawn(move || {
-            let _res = new_sudoku.solve(Some(&self_clone), Some(new_queue));
 
-            self_clone
-                .runs
-                .fetch_sub(1, std::sync::atomic::Ordering::SeqCst);
+        self.pool.execute(move || {
+            let _res = new_sudoku.solve(Some(&self_clone), Some(new_queue));
         });
     }
 
-    fn wait_for_solutions(&self) {
-        while self.runs.load(std::sync::atomic::Ordering::SeqCst) != 0 {
-            hint::spin_loop();
-            thread::sleep(Duration::from_millis(1));
-        }
+    fn wait_for_solutions(self) -> usize {
+        self.pool.join();
+        let solutions = self.solutions.load(std::sync::atomic::Ordering::Relaxed);
+        self.return_pool();
+        solutions
     }
 
     fn new() -> Self {
         Self {
-            solutions: Arc::new(Mutex::new(HashSet::new())),
-            runs: Arc::new(0.into()),
+            solutions: Arc::new(0.into()),
+            pool: Self::get_pool(),
         }
     }
 }
@@ -246,8 +256,8 @@ impl Sudoku {
         }
 
         if let Some(ctx) = ctx {
-            let solutions = self.to_string();
-            ctx.solutions.lock().unwrap().insert(solutions);
+            ctx.solutions
+                .fetch_add(1, std::sync::atomic::Ordering::Relaxed);
         }
 
         Ok(())
@@ -266,7 +276,7 @@ impl Sudoku {
         loop {
             let removed_index = random::<usize>() % sudoku.cells.len();
             if sudoku.cells[removed_index].available.len() == 9 {
-                println!("Skipping already hit");
+                //println!("Skipping already hit");
                 continue;
             }
 
@@ -277,14 +287,11 @@ impl Sudoku {
             let ctx = AllSolutionsContext::new();
             let _ = solved_clone.solve(Some(&ctx), None);
 
-            ctx.wait_for_solutions();
+            let solutions = ctx.wait_for_solutions();
 
-            println!(
-                "Found {} with {count} removed",
-                ctx.solutions.lock().unwrap().len()
-            );
+            //println!("Found {} with {count} removed", solutions);
 
-            if ctx.solutions.lock().unwrap().len() > 1 {
+            if solutions > 1 {
                 if currents_left == 0 {
                     break;
                 } else {
@@ -557,14 +564,14 @@ fn find_all_solutions() {
     let ctx = AllSolutionsContext::new();
 
     let _ = sudoku.solve(Some(&ctx), None);
-    ctx.wait_for_solutions();
+    let solutions = ctx.wait_for_solutions();
 
-    println!("Found {:?} solutions", ctx.solutions.lock().unwrap().len());
+    println!("Found {:?} solutions", solutions);
 }
 
 #[test]
 fn generate_sudoku() {
-    let timer = Instant::now();
+    let timer = std::time::Instant::now();
     let sudoku = Sudoku::generate_with_size(
         9,
         vec![

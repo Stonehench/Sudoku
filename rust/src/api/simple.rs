@@ -1,10 +1,10 @@
-use solver::sudoku::{Cell, DynRule, Sudoku};
+use solver::sudoku::{DynRule, Sudoku};
 
 use solver::rules::*;
 
 use crate::appstate::get_state;
 
-//#[flutter_rust_bridge::frb(sync)]
+#[flutter_rust_bridge::frb(sync)]
 pub fn generate_with_size(size: usize, rules_src: Vec<String>) -> Option<String> {
     let mut rules: Vec<DynRule> = vec![
         Box::new(RowRule),
@@ -20,21 +20,20 @@ pub fn generate_with_size(size: usize, rules_src: Vec<String>) -> Option<String>
         }
     }
 
-    let mut sudoku = Sudoku::new(size, rules);
-    sudoku.solve(None, None).unwrap();
-    let solved = sudoku.clone();
+    let sudoku = Sudoku::generate_with_size(size, rules);
 
-    for _ in 0..(sudoku.size * sudoku.size) / 2 {
-        let index = rand::random::<usize>() % sudoku.cells.len();
-        sudoku.cells[index] = Cell::new_with_range(1..sudoku.size as u16 + 1);
+    let mut solved = sudoku.clone();
+    for cell in &mut solved.cells {
+        cell.locked_in = false;
     }
+    solved.solve(None, None).unwrap();
 
     let mut str_buffer = String::new();
 
     for cell in &sudoku.cells {
         match cell.available.as_slice() {
             [value] => str_buffer.push_str(&value.to_string()),
-            _ => str_buffer.push_str(&"0"),
+            _ => str_buffer.push('0'),
         }
         str_buffer.push(',');
     }
