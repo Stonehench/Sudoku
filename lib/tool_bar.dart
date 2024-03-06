@@ -22,14 +22,23 @@ class _ToolBarState extends State<ToolBar> {
           alignment: MainAxisAlignment.center,
           children: [
             const BackButton(),
-            TextButton(
+            ListenableBuilder(
+              listenable: GameState.getInstance(),
+              builder: (ctx, _) => TextButton(
                 onPressed: () {
                   //print("please erase the digit thanks:D");
                   GameState.getInstance().setSelected(0);
 
                   // It kinda works might need a rework!
                 },
-                child: const Text("ERASE"))
+                style: TextButton.styleFrom(
+                  backgroundColor: GameState.getInstance().selectedDigit == 0
+                      ? Theme.of(ctx).focusColor
+                      : Theme.of(ctx).scaffoldBackgroundColor,
+                ),
+                child: const Text("Erase"),
+              ),
+            )
           ],
         ),
       ),
