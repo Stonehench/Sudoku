@@ -2,7 +2,6 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:sudoku/game_state.dart';
-import 'package:sudoku/src/rust/api/simple.dart';
 
 class Cell extends StatefulWidget {
   final int? digit;
