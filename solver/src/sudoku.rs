@@ -23,6 +23,7 @@ pub struct Sudoku {
     pub size: usize,
     pub cells: Vec<Cell>,
     pub rules: Vec<DynRule>,
+    pub x_clue: Option<Vec<(usize,usize)>>,
 }
 
 //Det her er ret fucked, men siden vi skal have den laveste entropy ud af vores priority queue skal den sammenligne omvendt
@@ -108,13 +109,14 @@ impl Display for SudokuSolveError {
 }
 
 impl Sudoku {
-    pub fn new(size: usize, rules: Vec<DynRule>) -> Self {
+    pub fn new(size: usize, rules: Vec<DynRule>, x_clue: Option<Vec<(usize,usize)>>) -> Self {
         Self {
             size,
             cells: (0..size * size)
                 .map(|_| Cell::new_with_range(1..(size as u16 + 1)))
                 .collect(),
             rules,
+            x_clue,
         }
     }
 
@@ -365,7 +367,7 @@ impl FromStr for Sudoku {
         #[cfg(debug_assertions)]
         println!("parsing size: {size}");
 
-        let mut sudoku = Sudoku::new(size, rules);
+        let mut sudoku = Sudoku::new(size, rules, None);
 
         for (index, part) in sudoku_source.split(',').map(str::trim).enumerate() {
             let n = part
@@ -433,6 +435,7 @@ impl Clone for Sudoku {
             size: self.size.clone(),
             cells: self.cells.clone(),
             rules: self.rules.iter().map(|r| r.boxed_clone()).collect(),
+            x_clue : self.x_clue.clone(),
         }
     }
 }
@@ -502,6 +505,7 @@ fn random_gen() {
             Box::new(ColumnRule),
             Box::new(SquareRule),
         ],
+        None,
     );
     sudoku.solve(None, None).unwrap();
     let pre = sudoku.to_string();

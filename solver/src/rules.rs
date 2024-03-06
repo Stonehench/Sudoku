@@ -28,7 +28,10 @@ impl FromStr for DynRule {
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         match s {
             "KnightsMove" => Ok(Box::new(KnightRule)),
-            invalid => return Err(invalid.to_owned()),
+            "DiagonalRule" => Ok(Box::new(DiagonalRule)),
+            invalid => {
+                return Err(invalid.to_owned())
+            }
         }
     }
 }
@@ -191,6 +194,129 @@ impl Rule for ColumnRule {
     }
 }
 
+
+#[derive(Debug, Clone)]
+pub struct XRule;
+
+impl Rule for XRule {
+    fn updates<'buf>(
+        &self,
+        size: usize,
+        index: usize,
+        buffer: &'buf mut Vec<usize>,
+    ) -> &'buf [usize] {
+        buffer.clear();
+
+        // Doesen't really affect stuff???
+
+        buffer
+    }
+
+    fn hidden_singles(&self, sudoku: &Sudoku) -> Option<(u16, usize)> {
+        // is the index in the list of indexes that are part of X-clues
+
+        // Either don't return anything
+        // Or return the corrisponding index to the other half of X 
+
+        if let Some(x_clues) = &sudoku.x_clue {
+
+
+            for (left_index, right_index) in x_clues {
+                if sudoku.cells[*left_index].locked_in {
+                    // TODO: HÆÆÆÆÆÆÆÆLP :D
+                    if let Some(value) = sudoku.cells[*left_index].available.get(0) {
+                        return Some((((sudoku.size + 1) as u16 - value), *right_index))
+                    }
+                }
+                if sudoku.cells[*right_index].locked_in {
+                    if let Some(value) = sudoku.cells[*right_index].available.get(0) {
+                        return Some((((sudoku.size + 1) as u16 - value), *left_index))
+                    }
+                }
+            }
+        }
+        None
+    }
+
+    fn boxed_clone(&self) -> DynRule {
+        Box::new(self.clone())
+    }
+}
+
+#[derive(Debug, Clone)]
+pub struct DiagonalRule;
+
+impl Rule for DiagonalRule {
+    fn updates<'buf>(
+        &self,
+        size: usize,
+        index: usize,
+        buffer: &'buf mut Vec<usize>,
+    ) -> &'buf [usize] {
+        buffer.clear();
+        
+        if index % (size + 1) == 0 {
+            for i in (0..size).map(|i| i*(size + 1)) {
+                buffer.push(i)
+            }
+        }
+
+        if index % (size - 1) == 0 {
+            for i in (0..size).map(|i| (i+1)*(size - 1)) {
+                buffer.push(i)
+            }
+        }
+
+        buffer
+    }
+
+    fn hidden_singles(&self, sudoku: &Sudoku) -> Option<(u16, usize)> {
+            'value: for value in 1..=sudoku.size as u16 {
+                let mut found_position = None;
+
+                // itterate over digonal from top left corner down
+                for position in (0..sudoku.size).map(|i| i*(sudoku.size + 1)) {
+                    if sudoku.cells[position].available.contains(&value) {
+                        if found_position.is_some() {
+                            continue 'value;
+                        } else {
+                            found_position = Some(position);
+                        }
+                    }
+                }
+
+                if let Some(position) = found_position {
+                    if !sudoku.cells[position].locked_in {
+                        return Some((value, position));
+                    }
+                }
+
+                found_position = None;
+                // itterate over digonal from top right corner down
+                for position in (0..sudoku.size).map(|i| (i+1)*(sudoku.size - 1)) {
+                    if sudoku.cells[position].available.contains(&value) {
+                        if found_position.is_some() {
+                            continue 'value;
+                        } else {
+                            found_position = Some(position);
+                        }
+                    }
+                }
+
+                
+                if let Some(position) = found_position {
+                    if !sudoku.cells[position].locked_in {
+                        return Some((value, position));
+                    }
+                }
+            }
+        None
+    }
+    fn boxed_clone(&self) -> DynRule {
+        Box::new(self.clone())
+    }
+}
+
 #[derive(Debug, Clone)]
 pub struct KnightRule;
 
@@ -268,9 +394,35 @@ impl Rule for KnightRule {
     }
 }
 
+
+#[test]
+fn diagonal_test() {
+    let sudoku = Sudoku::new(9, vec![], None);
+
+    let diagonalrule = DiagonalRule;
+    let mut buffer = vec![];
+    
+    let mut indexes = diagonalrule.updates(sudoku.size, 11, &mut buffer);
+    println!("{indexes:?}");
+    assert_eq!(indexes, vec![]);
+
+    indexes = diagonalrule.updates(sudoku.size, 70, &mut buffer);
+    println!("{indexes:?}");
+    assert_eq!(indexes, vec![0,10,20,30,40,50,60,70,80]);
+
+    indexes = diagonalrule.updates(sudoku.size, 16, &mut buffer);
+    println!("{indexes:?}");
+    assert_eq!(indexes, vec![8,16,24,32,40,48,56,64,72]);
+
+    indexes = diagonalrule.updates(sudoku.size, 40, &mut buffer);
+    println!("{indexes:?}");
+    assert_eq!(indexes, vec![0,10,20,30,40,50,60,70,80,8,16,24,32,40,48,56,64,72])
+
+}
+
 #[test]
 fn row_test() {
-    let sudoku = Sudoku::new(9, vec![]);
+    let sudoku = Sudoku::new(9, vec![], None);
 
     let rowrule = RowRule;
     let mut buffer = vec![];
@@ -282,7 +434,7 @@ fn row_test() {
 
 #[test]
 fn column_test() {
-    let sudoku = Sudoku::new(9, vec![]);
+    let sudoku = Sudoku::new(9, vec![], None);
 
     let columnrule = ColumnRule;
     let mut buffer = vec![];
@@ -294,7 +446,7 @@ fn column_test() {
 
 #[test]
 fn square_test() {
-    let sudoku = Sudoku::new(9, vec![]);
+    let sudoku = Sudoku::new(9, vec![], None);
 
     let squarerule = SquareRule;
     let mut buffer = vec![];
@@ -306,7 +458,7 @@ fn square_test() {
 
 #[test]
 fn knight_test() {
-    let sudoku = Sudoku::new(9, vec![]);
+    let sudoku = Sudoku::new(9, vec![], None);
 
     let knightrule = KnightRule;
     let mut buffer = vec![];
@@ -322,6 +474,52 @@ fn knight_test() {
 }
 
 #[test]
+fn diagonal_hidden_math_test() {
+    let mut sudoku = Sudoku::new(
+        9,
+        vec![
+            Box::new(RowRule),
+            Box::new(ColumnRule),
+            Box::new(SquareRule),
+            Box::new(DiagonalRule)        
+        ],
+        None,
+    );
+
+    sudoku.set_cell(1, 27).unwrap();
+    sudoku.set_cell(1, 39).unwrap();
+    sudoku.set_cell(1, 78).unwrap();
+    sudoku.set_cell(1, 55).unwrap();
+
+    println!("{sudoku}");
+
+    let diagonalrule = DiagonalRule;
+    let res = diagonalrule.hidden_singles(&sudoku);
+    assert_eq!(res, Some((1, 20)))
+}
+
+#[test]
+fn x_hidden_math_test() {
+    let mut sudoku = Sudoku::new(
+        4,
+        vec![
+            Box::new(RowRule),
+            Box::new(ColumnRule),
+            Box::new(SquareRule),
+            Box::new(XRule)        
+        ],
+        Some(vec![(1 as usize, 2 as usize)]),
+    );
+
+    sudoku.set_cell(1, 1).unwrap();
+    println!("{sudoku}");
+
+    let x_rule = XRule;
+    let res = x_rule.hidden_singles(&sudoku);
+    assert_eq!(res, Some((4, 2)))
+}
+
+#[test]
 fn row_hidden_math_test() {
     let mut sudoku = Sudoku::new(
         9,
@@ -330,6 +528,7 @@ fn row_hidden_math_test() {
             Box::new(ColumnRule),
             Box::new(SquareRule),
         ],
+        None,
     );
 
     sudoku.set_cell(2, 1).unwrap();
@@ -353,6 +552,7 @@ fn column_hidden_math_test() {
             Box::new(ColumnRule),
             Box::new(SquareRule),
         ],
+        None,
     );
 
     sudoku.set_cell(2, 9).unwrap();
@@ -376,6 +576,7 @@ fn square_hidden_math_test() {
             Box::new(ColumnRule),
             Box::new(SquareRule),
         ],
+        None,
     );
 
     sudoku.set_cell(1, 27).unwrap();
