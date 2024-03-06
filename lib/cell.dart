@@ -41,14 +41,13 @@ class _CellState extends State<Cell> {
     if (widget.digit != null) {
       setErr();
     }
-    
-    if ((GameState.getInstance().selectedDigit == 0 && !widget.initialClue) || widget.digit == null) {
+
+    if ((GameState.getInstance().selectedDigit == 0 && !widget.initialClue) ||
+        widget.digit == null) {
       if (!await GameState.getInstance().updateDigit(widget.index)) {
         setErr();
       }
     }
-
-    
   }
 
   @override
@@ -60,6 +59,12 @@ class _CellState extends State<Cell> {
             ? 15.0
             : 6.0;
 
+    var txtColor = widget.initialClue ? Colors.black : Colors.white;
+
+    if (state.selectedDigit == widget.digit) {
+      txtColor = Colors.amberAccent;
+    }
+
     return InkWell(
       onTap: onClick,
       child: Container(
@@ -67,9 +72,7 @@ class _CellState extends State<Cell> {
         alignment: Alignment.center,
         child: widget.digit != null
             ? Text(widget.digit!.toString(),
-                style: TextStyle(
-                    fontSize: fontSize,
-                    color: widget.initialClue ? Colors.black : Colors.white))
+                style: TextStyle(fontSize: fontSize, color: txtColor))
             // 30 or 9x9, 15 for 16x16 , 6 for anything else (for now at least)
             : const Text(""),
       ),
