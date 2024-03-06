@@ -21,6 +21,12 @@ class GameState extends ChangeNotifier {
         .map((n) => int.parse(n))
         .map((n) => n == 0 ? null : n)
         .toList();
+    for (int i = 0; i < board.length; i++) {
+      if (board[i] != null) {
+        initialClues.add(i);
+      }
+    }
+
     size = sqrt(board.length).toInt();
   }
 
@@ -28,13 +34,25 @@ class GameState extends ChangeNotifier {
 
   int selectedDigit = 1;
   late List<int?> board;
+  List<int> initialClues = [];
 
   bool updateDigit(int position) {
+    if (selectedDigit == 0) {
+      board[position] = null;
+      notifyListeners();
+      return true;
+    }
+
     if (checkLegality(position: position, value: selectedDigit)) {
       board[position] = selectedDigit;
       notifyListeners();
       return true;
     }
     return false;
+  }
+
+  void setSelected(int newSelected) {
+    selectedDigit = newSelected;
+    notifyListeners();
   }
 }

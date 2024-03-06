@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:sudoku/board.dart';
 import 'package:sudoku/digit_selection.dart';
+import 'package:sudoku/tool_bar.dart';
 import 'package:sudoku/game_state.dart';
 
 class GameView extends StatelessWidget {
@@ -14,7 +15,7 @@ class GameView extends StatelessWidget {
       body: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         crossAxisAlignment: CrossAxisAlignment.center,
-        children: [const Board(), const SizedBox(height: 10), DigitSelect(size)],
+        children: [const Board(), const SizedBox(height: 10), DigitSelect(size),const ToolBar(),],
       ),
     );
   }

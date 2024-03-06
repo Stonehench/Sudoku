@@ -1,3 +1,5 @@
+import 'dart:math';
+
 import 'package:flutter/material.dart';
 import 'package:sudoku/cell.dart';
 import 'package:sudoku/game_state.dart';
@@ -26,7 +28,7 @@ class _BoardState extends State<Board> {
               padding: EdgeInsets.zero,
               itemCount: state.board.length,
               gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                  crossAxisCount: state.size,
+                  crossAxisCount: sqrt(state.size).toInt(),
                   crossAxisSpacing: 2,
                   mainAxisSpacing: 2),
               itemBuilder: (context, index) {
@@ -47,7 +49,8 @@ class _BoardState extends State<Board> {
                   mainAxisSpacing: 2,
                 ),
                 itemBuilder: (ctx, index) {
-                  return Cell(state.board[index], index, state.board.length);
+                  return Cell(state.board[index], index, state.board.length,
+                      state.initialClues.contains(index));
                 },
               ),
             )

@@ -37,7 +37,9 @@ class _DigitSelectState extends State<DigitSelect> {
                 });
               },
               child: Container(
-                color: state.selectedDigit == index + 1? Theme.of(context).primaryColorLight : Theme.of(context).secondaryHeaderColor,
+                color: GameState.getInstance().selectedDigit == index + 1
+                    ? Theme.of(context).primaryColorLight
+                    : Theme.of(context).secondaryHeaderColor,
                 alignment: Alignment.center,
                 height: 50,
                 width: 340 / (widget.size as int),
