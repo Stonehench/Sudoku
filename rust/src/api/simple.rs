@@ -4,7 +4,6 @@ use solver::rules::*;
 
 use crate::appstate::get_state;
 
-#[flutter_rust_bridge::frb(sync)]
 pub fn generate_with_size(size: usize, rules_src: Vec<String>) -> Option<String> {
     let mut rules: Vec<DynRule> = vec![
         Box::new(RowRule),
@@ -46,22 +45,11 @@ pub fn generate_with_size(size: usize, rules_src: Vec<String>) -> Option<String>
     Some(str_buffer)
 }
 
-#[flutter_rust_bridge::frb(sync)]
 pub fn check_legality(position: usize, value: u16) -> bool {
     let state = get_state();
-    let (unsolved, sudoku) = state.current_sudoku.as_ref().unwrap();
+    let (_, sudoku) = state.current_sudoku.as_ref().unwrap();
     sudoku.cells[position].available == [value]
 }
-
-/*
-#[flutter_rust_bridge::frb(sync)]
-pub fn set_cell(index: usize, value: u16) {
-    let mut state = get_state();
-    let sudoku = state.current_sudoku.as_mut().unwrap();
-
-    sudoku.set_cell(value, index).unwrap();
-}
- */
 
 #[flutter_rust_bridge::frb(init)]
 pub fn init_app() {

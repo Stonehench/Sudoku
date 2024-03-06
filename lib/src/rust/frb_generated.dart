@@ -64,9 +64,10 @@ class RustLib extends BaseEntrypoint<RustLibApi, RustLibApiImpl, RustLibWire> {
 }
 
 abstract class RustLibApi extends BaseApi {
-  bool checkLegality({required int position, required int value, dynamic hint});
+  Future<bool> checkLegality(
+      {required int position, required int value, dynamic hint});
 
-  String? generateWithSize(
+  Future<String?> generateWithSize(
       {required int size, required List<String> rulesSrc, dynamic hint});
 
   Future<void> initApp({dynamic hint});
@@ -81,14 +82,15 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   });
 
   @override
-  bool checkLegality(
+  Future<bool> checkLegality(
       {required int position, required int value, dynamic hint}) {
-    return handler.executeSync(SyncTask(
-      callFfi: () {
+    return handler.executeNormal(NormalTask(
+      callFfi: (port_) {
         final serializer = SseSerializer(generalizedFrbRustBinding);
         sse_encode_usize(position, serializer);
         sse_encode_u_16(value, serializer);
-        return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 2)!;
+        pdeCallFfi(generalizedFrbRustBinding, serializer,
+            funcId: 2, port: port_);
       },
       codec: SseCodec(
         decodeSuccessData: sse_decode_bool,
@@ -107,14 +109,15 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
       );
 
   @override
-  String? generateWithSize(
+  Future<String?> generateWithSize(
       {required int size, required List<String> rulesSrc, dynamic hint}) {
-    return handler.executeSync(SyncTask(
-      callFfi: () {
+    return handler.executeNormal(NormalTask(
+      callFfi: (port_) {
         final serializer = SseSerializer(generalizedFrbRustBinding);
         sse_encode_usize(size, serializer);
         sse_encode_list_String(rulesSrc, serializer);
-        return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 1)!;
+        pdeCallFfi(generalizedFrbRustBinding, serializer,
+            funcId: 1, port: port_);
       },
       codec: SseCodec(
         decodeSuccessData: sse_decode_opt_String,

@@ -5,6 +5,7 @@ use std::{
     ops::Range,
     str::FromStr,
     sync::{atomic::AtomicUsize, Arc, Mutex},
+    time::Instant,
 };
 
 use integer_sqrt::IntegerSquareRoot;
@@ -45,6 +46,7 @@ impl Ord for Entropy {
 }
 #[derive(Debug, Clone, Copy)]
 pub enum SudokuSolveError {
+    AlreadyManySolutions,
     UnsolveableError,
     RemovedLockedValue,
 }
@@ -103,6 +105,7 @@ impl Display for SudokuSolveError {
         match self {
             SudokuSolveError::UnsolveableError => write!(f, "No Solution. Failed to pop branch queue when entropy was 0 in cell"),
             SudokuSolveError::RemovedLockedValue => write!(f, "Something went seriously wrong. Removed the only value in a locked cell\nThis indicates either an unsolveable sudoku or a bug in the rules."),
+            SudokuSolveError::AlreadyManySolutions => write!(f, "Has already found more than 1 solution when searching for all solutions. Short circuting"),
         }
     }
 }
@@ -233,7 +236,11 @@ impl Sudoku {
                     // i den cloned queue. Ellers vil clonen aldrig løse index cellen.
                     cloned_queue.push(index, Entropy(entropy.0 - 1));
 
-                    if let Some(ctx) = &ctx {
+                    if let Some(ctx) = ctx {
+                        if ctx.solutions.load(std::sync::atomic::Ordering::Relaxed) >= 2 {
+                            return Err(SudokuSolveError::AlreadyManySolutions);
+                        }
+
                         ctx.add_branch(self, cloned_cells, cloned_queue);
                     } else {
                         branch_stack.push((cloned_cells, cloned_queue));
@@ -268,12 +275,17 @@ impl Sudoku {
         sudoku.solve(None, None).unwrap();
 
         const ATTEMPT_COUNT: usize = 5;
+        const RETRY_LIMIT: usize = 55;
 
         let mut count = 0;
 
         let mut currents_left = ATTEMPT_COUNT;
-
+        let timer = Instant::now();
         loop {
+            if count >= RETRY_LIMIT {
+                break;
+            }
+
             let removed_index = random::<usize>() % sudoku.cells.len();
             if sudoku.cells[removed_index].available.len() == 9 {
                 //println!("Skipping already hit");
@@ -306,7 +318,7 @@ impl Sudoku {
 
             count += 1;
         }
-        println!("Removed {count}");
+        println!("Removed {count} in {:?}", timer.elapsed());
 
         sudoku
     }

@@ -39,15 +39,16 @@ flutter_rust_bridge::frb_generated_default_handler!();
 // Section: wire_funcs
 
 fn wire_check_legality_impl(
+    port_: flutter_rust_bridge::for_generated::MessagePort,
     ptr_: flutter_rust_bridge::for_generated::PlatformGeneralizedUint8ListPtr,
     rust_vec_len_: i32,
     data_len_: i32,
-) -> flutter_rust_bridge::for_generated::WireSyncRust2DartSse {
-    FLUTTER_RUST_BRIDGE_HANDLER.wrap_sync::<flutter_rust_bridge::for_generated::SseCodec, _>(
+) {
+    FLUTTER_RUST_BRIDGE_HANDLER.wrap_normal::<flutter_rust_bridge::for_generated::SseCodec, _, _>(
         flutter_rust_bridge::for_generated::TaskInfo {
             debug_name: "check_legality",
-            port: None,
-            mode: flutter_rust_bridge::for_generated::FfiCallMode::Sync,
+            port: Some(port_),
+            mode: flutter_rust_bridge::for_generated::FfiCallMode::Normal,
         },
         move || {
             let message = unsafe {
@@ -62,22 +63,25 @@ fn wire_check_legality_impl(
             let api_position = <usize>::sse_decode(&mut deserializer);
             let api_value = <u16>::sse_decode(&mut deserializer);
             deserializer.end();
-            transform_result_sse((move || {
-                Result::<_, ()>::Ok(crate::api::simple::check_legality(api_position, api_value))
-            })())
+            move |context| {
+                transform_result_sse((move || {
+                    Result::<_, ()>::Ok(crate::api::simple::check_legality(api_position, api_value))
+                })())
+            }
         },
     )
 }
 fn wire_generate_with_size_impl(
+    port_: flutter_rust_bridge::for_generated::MessagePort,
     ptr_: flutter_rust_bridge::for_generated::PlatformGeneralizedUint8ListPtr,
     rust_vec_len_: i32,
     data_len_: i32,
-) -> flutter_rust_bridge::for_generated::WireSyncRust2DartSse {
-    FLUTTER_RUST_BRIDGE_HANDLER.wrap_sync::<flutter_rust_bridge::for_generated::SseCodec, _>(
+) {
+    FLUTTER_RUST_BRIDGE_HANDLER.wrap_normal::<flutter_rust_bridge::for_generated::SseCodec, _, _>(
         flutter_rust_bridge::for_generated::TaskInfo {
             debug_name: "generate_with_size",
-            port: None,
-            mode: flutter_rust_bridge::for_generated::FfiCallMode::Sync,
+            port: Some(port_),
+            mode: flutter_rust_bridge::for_generated::FfiCallMode::Normal,
         },
         move || {
             let message = unsafe {
@@ -92,12 +96,14 @@ fn wire_generate_with_size_impl(
             let api_size = <usize>::sse_decode(&mut deserializer);
             let api_rules_src = <Vec<String>>::sse_decode(&mut deserializer);
             deserializer.end();
-            transform_result_sse((move || {
-                Result::<_, ()>::Ok(crate::api::simple::generate_with_size(
-                    api_size,
-                    api_rules_src,
-                ))
-            })())
+            move |context| {
+                transform_result_sse((move || {
+                    Result::<_, ()>::Ok(crate::api::simple::generate_with_size(
+                        api_size,
+                        api_rules_src,
+                    ))
+                })())
+            }
         },
     )
 }
@@ -227,6 +233,8 @@ fn pde_ffi_dispatcher_primary_impl(
 ) {
     // Codec=Pde (Serialization + dispatch), see doc to use other codecs
     match func_id {
+        2 => wire_check_legality_impl(port, ptr, rust_vec_len, data_len),
+        1 => wire_generate_with_size_impl(port, ptr, rust_vec_len, data_len),
         3 => wire_init_app_impl(port, ptr, rust_vec_len, data_len),
         _ => unreachable!(),
     }
@@ -240,8 +248,6 @@ fn pde_ffi_dispatcher_sync_impl(
 ) -> flutter_rust_bridge::for_generated::WireSyncRust2DartSse {
     // Codec=Pde (Serialization + dispatch), see doc to use other codecs
     match func_id {
-        2 => wire_check_legality_impl(ptr, rust_vec_len, data_len),
-        1 => wire_generate_with_size_impl(ptr, rust_vec_len, data_len),
         _ => unreachable!(),
     }
 }
