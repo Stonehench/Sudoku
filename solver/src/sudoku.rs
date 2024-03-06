@@ -266,7 +266,7 @@ impl Sudoku {
     }
 
     pub fn generate_with_size(size: usize, rules: Vec<DynRule>) -> Self {
-        let mut sudoku = Sudoku::new(size, rules);
+        let mut sudoku = Sudoku::new(size, rules, None);
         sudoku.solve(None, None).unwrap();
 
         const ATTEMPT_COUNT: usize = 5;
