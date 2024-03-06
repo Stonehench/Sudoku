@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:sudoku/game_view.dart';
+import 'package:sudoku/game_state.dart';
 
 class ToolBar extends StatefulWidget {
   const ToolBar({super.key});
@@ -25,11 +25,11 @@ class _ToolBarState extends State<ToolBar> {
             TextButton(
                 onPressed: () {
                   //print("please erase the digit thanks:D");
-                  GameState.selectedDigit = 0;
+                  GameState.getInstance().setSelected(0);
 
                   // It kinda works might need a rework!
                 },
-                child: Text("ERASE"))
+                child: const Text("ERASE"))
           ],
         ),
       ),

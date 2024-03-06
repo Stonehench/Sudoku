@@ -41,10 +41,14 @@ class _CellState extends State<Cell> {
     if (widget.digit != null) {
       setErr();
     }
-
-    if (!GameState.getInstance().updateDigit(widget.index)) {
-      setErr();
+    
+    if (GameState.getInstance().selectedDigit == 0 || widget.digit == null) {
+      if (!GameState.getInstance().updateDigit(widget.index)) {
+        setErr();
+      }
     }
+
+    
   }
 
   @override
@@ -65,7 +69,7 @@ class _CellState extends State<Cell> {
             ? Text(widget.digit!.toString(),
                 style: TextStyle(
                     fontSize: fontSize,
-                    color: widget.initialClue ? Colors.white : Colors.black))
+                    color: widget.initialClue ? Colors.black : Colors.white))
             // 30 or 9x9, 15 for 16x16 , 6 for anything else (for now at least)
             : const Text(""),
       ),
