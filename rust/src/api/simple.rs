@@ -4,8 +4,7 @@ use solver::rules::*;
 
 use crate::appstate::get_state;
 
-
-#[flutter_rust_bridge::frb(sync)]
+//#[flutter_rust_bridge::frb(sync)]
 pub fn generate_with_size(size: usize, rules_src: Vec<String>) -> Option<String> {
     let mut rules: Vec<DynRule> = vec![
         Box::new(RowRule),
@@ -22,7 +21,7 @@ pub fn generate_with_size(size: usize, rules_src: Vec<String>) -> Option<String>
     }
 
     let mut sudoku = Sudoku::new(size, rules);
-    sudoku.solve().unwrap();
+    sudoku.solve(None, None).unwrap();
     let solved = sudoku.clone();
 
     for _ in 0..(sudoku.size * sudoku.size) / 2 {
@@ -42,10 +41,8 @@ pub fn generate_with_size(size: usize, rules_src: Vec<String>) -> Option<String>
 
     println!("Sending: {str_buffer}");
 
-    
-
     let mut state = get_state();
-    state.current_sudoku = Some((sudoku,solved));
+    state.current_sudoku = Some((sudoku, solved));
 
     Some(str_buffer)
 }
@@ -53,9 +50,8 @@ pub fn generate_with_size(size: usize, rules_src: Vec<String>) -> Option<String>
 #[flutter_rust_bridge::frb(sync)]
 pub fn check_legality(position: usize, value: u16) -> bool {
     let state = get_state();
-    let (unsolved,sudoku) = state.current_sudoku.as_ref().unwrap();
+    let (unsolved, sudoku) = state.current_sudoku.as_ref().unwrap();
     sudoku.cells[position].available == [value]
-
 }
 
 /*

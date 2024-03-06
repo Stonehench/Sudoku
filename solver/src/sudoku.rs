@@ -1,13 +1,14 @@
 use std::{
     cmp::Ordering,
+    collections::HashSet,
     fmt::{Display, Write},
     hint,
     num::ParseIntError,
-    ops::{Deref, Range},
+    ops::Range,
     str::FromStr,
     sync::{atomic::AtomicUsize, Arc, Mutex},
     thread,
-    time::Duration,
+    time::{Duration, Instant},
 };
 
 use integer_sqrt::IntegerSquareRoot;
@@ -51,7 +52,7 @@ pub enum SudokuSolveError {
 }
 #[derive(Debug, Clone)]
 pub struct AllSolutionsContext {
-    solutions: Arc<Mutex<Vec<Sudoku>>>,
+    solutions: Arc<Mutex<HashSet<String>>>,
     runs: Arc<AtomicUsize>,
 }
 
@@ -76,6 +77,13 @@ impl AllSolutionsContext {
         while self.runs.load(std::sync::atomic::Ordering::SeqCst) != 0 {
             hint::spin_loop();
             thread::sleep(Duration::from_millis(1));
+        }
+    }
+
+    fn new() -> Self {
+        Self {
+            solutions: Arc::new(Mutex::new(HashSet::new())),
+            runs: Arc::new(0.into()),
         }
     }
 }
@@ -139,7 +147,7 @@ impl Sudoku {
 
     pub fn solve(
         &mut self,
-        cxt: Option<&AllSolutionsContext>,
+        ctx: Option<&AllSolutionsContext>,
         pri_queue: Option<PriorityQueue<usize, Entropy>>,
     ) -> Result<(), SudokuSolveError> {
         #[cfg(debug_assertions)]
@@ -215,8 +223,8 @@ impl Sudoku {
                     // i den cloned queue. Ellers vil clonen aldrig løse index cellen.
                     cloned_queue.push(index, Entropy(entropy.0 - 1));
 
-                    if let Some(cxt) = &cxt {
-                        cxt.add_branch(self, cloned_cells, cloned_queue);
+                    if let Some(ctx) = &ctx {
+                        ctx.add_branch(self, cloned_cells, cloned_queue);
                     } else {
                         branch_stack.push((cloned_cells, cloned_queue));
                     }
@@ -237,11 +245,63 @@ impl Sudoku {
             println!("backtracks: {backtracks}");
         }
 
-        if let Some(ctx) = cxt {
-            ctx.solutions.lock().unwrap().push(self.clone());
+        if let Some(ctx) = ctx {
+            let solutions = self.to_string();
+            ctx.solutions.lock().unwrap().insert(solutions);
         }
 
         Ok(())
+    }
+
+    pub fn generate_with_size(size: usize, rules: Vec<DynRule>) -> Self {
+        let mut sudoku = Sudoku::new(size, rules);
+        sudoku.solve(None, None).unwrap();
+
+        const ATTEMPT_COUNT: usize = 5;
+
+        let mut count = 0;
+
+        let mut currents_left = ATTEMPT_COUNT;
+
+        loop {
+            let removed_index = random::<usize>() % sudoku.cells.len();
+            if sudoku.cells[removed_index].available.len() == 9 {
+                println!("Skipping already hit");
+                continue;
+            }
+
+            let mut solved_clone = sudoku.clone();
+
+            solved_clone.cells[removed_index] = Cell::new_with_range(1..sudoku.size as u16 + 1);
+
+            let ctx = AllSolutionsContext::new();
+            let _ = solved_clone.solve(Some(&ctx), None);
+
+            ctx.wait_for_solutions();
+
+            println!(
+                "Found {} with {count} removed",
+                ctx.solutions.lock().unwrap().len()
+            );
+
+            if ctx.solutions.lock().unwrap().len() > 1 {
+                if currents_left == 0 {
+                    break;
+                } else {
+                    currents_left -= 1;
+                    continue;
+                }
+            }
+
+            currents_left = ATTEMPT_COUNT;
+
+            sudoku.cells[removed_index] = Cell::new_with_range(1..sudoku.size as u16 + 1);
+
+            count += 1;
+        }
+        println!("Removed {count}");
+
+        sudoku
     }
 }
 
@@ -494,14 +554,25 @@ fn find_all_solutions() {
     let file_str = std::fs::read_to_string("./sudokuManySolutions").unwrap();
     let mut sudoku: Sudoku = file_str.parse().unwrap();
 
-    let ctx = AllSolutionsContext {
-        solutions: Arc::new(Mutex::new(vec![])),
-        runs: Arc::new(0.into()),
-    };
+    let ctx = AllSolutionsContext::new();
 
     let _ = sudoku.solve(Some(&ctx), None);
     ctx.wait_for_solutions();
-    for (index, solution) in ctx.solutions.lock().unwrap().deref().iter().enumerate() {
-        println!("solution {index} = {solution}");
-    }
+
+    println!("Found {:?} solutions", ctx.solutions.lock().unwrap().len());
+}
+
+#[test]
+fn generate_sudoku() {
+    let timer = Instant::now();
+    let sudoku = Sudoku::generate_with_size(
+        9,
+        vec![
+            Box::new(RowRule),
+            Box::new(ColumnRule),
+            Box::new(SquareRule),
+        ],
+    );
+
+    println!("{sudoku} at {:?}", timer.elapsed());
 }
