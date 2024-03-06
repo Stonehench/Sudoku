@@ -1,10 +1,14 @@
+use std::sync::mpsc::channel;
+use std::sync::{mpsc, Mutex};
+use std::time::Duration;
+
+use lazy_static::lazy_static;
 use solver::sudoku::{DynRule, Sudoku};
 
 use solver::rules::*;
 
 use crate::appstate::get_state;
 
-#[flutter_rust_bridge::frb(sync)]
 pub fn generate_with_size(size: usize, rules_src: Vec<String>) -> Option<String> {
     let mut rules: Vec<DynRule> = vec![
         Box::new(RowRule),
@@ -20,7 +24,9 @@ pub fn generate_with_size(size: usize, rules_src: Vec<String>) -> Option<String>
         }
     }
 
-    let sudoku = Sudoku::generate_with_size(size, rules);
+    let sender = PROGRESS.lock().unwrap().0.clone();
+
+    let sudoku = Sudoku::generate_with_size(size, rules, Some(sender));
 
     let mut solved = sudoku.clone();
     for cell in &mut solved.cells {
@@ -46,22 +52,36 @@ pub fn generate_with_size(size: usize, rules_src: Vec<String>) -> Option<String>
     Some(str_buffer)
 }
 
-#[flutter_rust_bridge::frb(sync)]
+lazy_static! {
+    static ref PROGRESS: Mutex<(mpsc::Sender<usize>, Option<mpsc::Receiver<usize>>)> =
+        Mutex::new({
+            let (sx, rx) = channel();
+
+            (sx, Some(rx))
+        });
+}
+
+pub fn wait_for_progess() -> Option<usize> {
+    let rx = PROGRESS.lock().unwrap().1.take()?;
+
+    let mut res = None;
+    while let Ok(c_res) = rx.try_recv() {
+        res = Some(c_res);
+    }
+    if res.is_none() {
+        res = rx.recv_timeout(Duration::from_secs(5)).ok();
+    }
+
+    PROGRESS.lock().unwrap().1 = Some(rx);
+
+    res
+}
+
 pub fn check_legality(position: usize, value: u16) -> bool {
     let state = get_state();
-    let (unsolved, sudoku) = state.current_sudoku.as_ref().unwrap();
+    let (_, sudoku) = state.current_sudoku.as_ref().unwrap();
     sudoku.cells[position].available == [value]
 }
-
-/*
-#[flutter_rust_bridge::frb(sync)]
-pub fn set_cell(index: usize, value: u16) {
-    let mut state = get_state();
-    let sudoku = state.current_sudoku.as_mut().unwrap();
-
-    sudoku.set_cell(value, index).unwrap();
-}
- */
 
 #[flutter_rust_bridge::frb(init)]
 pub fn init_app() {

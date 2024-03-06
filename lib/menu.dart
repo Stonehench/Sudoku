@@ -2,8 +2,7 @@ import 'package:flutter/material.dart';
 import 'dart:math';
 
 import 'package:flutter/services.dart';
-import 'package:sudoku/game_state.dart';
-import 'package:sudoku/game_view.dart';
+import 'package:sudoku/gameloader.dart';
 import 'package:sudoku/src/rust/api/simple.dart';
 
 class Menu extends StatefulWidget {
@@ -66,17 +65,13 @@ class _MenuState extends State<Menu> {
             ),
             Text(sizeText),
             TextButton(
-              onPressed: (){
-                var sudokuSource = generateWithSize(size: size, rulesSrc: []);
-                if (sudokuSource == null) {
-                  setState(() {
-                    sizeText = "Failed to generate for some reason";
-                  });
-                } else {
-                  inputTextController.clear();
-                  GameState.setInstance(GameState(sudokuSource));
-                  Navigator.of(context).push(MaterialPageRoute(builder: ((context) => const GameView())));
-                }
+              onPressed: () {
+                Future<String?> sudokuSource =
+                    generateWithSize(size: size, rulesSrc: []);
+                inputTextController.clear();
+                Navigator.of(context).push(MaterialPageRoute(
+                  builder: (context) => GameLoader(sudokuSource),
+                ));
               },
               child: const Text('Create Sudoku'),
             ),

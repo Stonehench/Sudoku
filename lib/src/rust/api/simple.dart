@@ -6,11 +6,15 @@
 import '../frb_generated.dart';
 import 'package:flutter_rust_bridge/flutter_rust_bridge_for_generated.dart';
 
-String? generateWithSize(
+Future<String?> generateWithSize(
         {required int size, required List<String> rulesSrc, dynamic hint}) =>
     RustLib.instance.api
         .generateWithSize(size: size, rulesSrc: rulesSrc, hint: hint);
 
-bool checkLegality({required int position, required int value, dynamic hint}) =>
+Future<int?> waitForProgess({dynamic hint}) =>
+    RustLib.instance.api.waitForProgess(hint: hint);
+
+Future<bool> checkLegality(
+        {required int position, required int value, dynamic hint}) =>
     RustLib.instance.api
         .checkLegality(position: position, value: value, hint: hint);
