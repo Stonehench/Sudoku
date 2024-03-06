@@ -1,9 +1,13 @@
 use std::{
     cmp::Ordering,
     fmt::{Display, Write},
+    hint,
     num::ParseIntError,
-    ops::Range,
+    ops::{Deref, Range},
     str::FromStr,
+    sync::{atomic::AtomicUsize, Arc, Mutex},
+    thread,
+    time::Duration,
 };
 
 use integer_sqrt::IntegerSquareRoot;
@@ -25,7 +29,7 @@ pub struct Sudoku {
 //Det her er ret fucked, men siden vi skal have den laveste entropy ud af vores priority queue skal den sammenligne omvendt
 // siden priority_queue tager den med størst priority lol
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
-struct Entropy(usize);
+pub struct Entropy(usize);
 
 //Sammenligning ift større / mindre men reversed
 impl PartialOrd for Entropy {
@@ -44,6 +48,36 @@ impl Ord for Entropy {
 pub enum SudokuSolveError {
     UnsolveableError,
     RemovedLockedValue,
+}
+#[derive(Debug, Clone)]
+pub struct AllSolutionsContext {
+    solutions: Arc<Mutex<Vec<Sudoku>>>,
+    runs: Arc<AtomicUsize>,
+}
+
+impl AllSolutionsContext {
+    fn add_branch(&self, old: &Sudoku, cells: Vec<Cell>, new_queue: PriorityQueue<usize, Entropy>) {
+        let mut new_sudoku = Sudoku {
+            cells,
+            ..old.clone()
+        };
+        let self_clone = self.clone();
+        self.runs.fetch_add(1, std::sync::atomic::Ordering::Relaxed);
+        thread::spawn(move || {
+            let _res = new_sudoku.solve(Some(&self_clone), Some(new_queue));
+
+            self_clone
+                .runs
+                .fetch_sub(1, std::sync::atomic::Ordering::SeqCst);
+        });
+    }
+
+    fn wait_for_solutions(&self) {
+        while self.runs.load(std::sync::atomic::Ordering::SeqCst) != 0 {
+            hint::spin_loop();
+            thread::sleep(Duration::from_millis(1));
+        }
+    }
 }
 
 impl Display for SudokuSolveError {
@@ -103,18 +137,27 @@ impl Sudoku {
         Ok(())
     }
 
-    pub fn solve(&mut self) -> Result<(), SudokuSolveError> {
+    pub fn solve(
+        &mut self,
+        cxt: Option<&AllSolutionsContext>,
+        pri_queue: Option<PriorityQueue<usize, Entropy>>,
+    ) -> Result<(), SudokuSolveError> {
         #[cfg(debug_assertions)]
         let mut branch_count = 0;
         #[cfg(debug_assertions)]
         let mut backtracks = 0;
 
-        let mut pri_queue = PriorityQueue::with_capacity(self.size * self.size);
-        for (index, cell) in self.cells.iter().enumerate() {
-            if !cell.locked_in {
-                pri_queue.push(index, Entropy(cell.available.len()));
+        let mut pri_queue = if let Some(pri_queue) = pri_queue {
+            pri_queue
+        } else {
+            let mut pri_queue = PriorityQueue::with_capacity(self.size * self.size);
+            for (index, cell) in self.cells.iter().enumerate() {
+                if !cell.locked_in {
+                    pri_queue.push(index, Entropy(cell.available.len()));
+                }
             }
-        }
+            pri_queue
+        };
 
         let mut branch_stack: Vec<(Vec<Cell>, PriorityQueue<usize, Entropy>)> = vec![];
         let mut ret_buffer = vec![];
@@ -171,7 +214,12 @@ impl Sudoku {
                     //Siden den allerede er poppet i den nuværende queue skal den indsættes igen
                     // i den cloned queue. Ellers vil clonen aldrig løse index cellen.
                     cloned_queue.push(index, Entropy(entropy.0 - 1));
-                    branch_stack.push((cloned_cells, cloned_queue));
+
+                    if let Some(cxt) = &cxt {
+                        cxt.add_branch(self, cloned_cells, cloned_queue);
+                    } else {
+                        branch_stack.push((cloned_cells, cloned_queue));
+                    }
 
                     self.update_cell(n, index, &mut pri_queue, &mut ret_buffer)?;
 
@@ -188,6 +236,11 @@ impl Sudoku {
             println!("branch count: {branch_count}");
             println!("backtracks: {backtracks}");
         }
+
+        if let Some(ctx) = cxt {
+            ctx.solutions.lock().unwrap().push(self.clone());
+        }
+
         Ok(())
     }
 }
@@ -333,7 +386,7 @@ fn solve_big_sudoku() {
     let mut sudoku: Sudoku = file_str.parse().unwrap();
 
     println!("{sudoku}");
-    sudoku.solve().unwrap();
+    sudoku.solve(None, None).unwrap();
     println!("{sudoku}");
 }
 
@@ -355,7 +408,7 @@ fn solve_test() {
         if filename.contains("Løsning") {
             sudoku_name = filename.split_whitespace().next().unwrap().to_string();
         } else {
-            sudoku.solve().unwrap();
+            sudoku.solve(None, None).unwrap();
             sudoku_name = filename;
         }
 
@@ -383,7 +436,7 @@ fn random_gen() {
             Box::new(SquareRule),
         ],
     );
-    sudoku.solve().unwrap();
+    sudoku.solve(None, None).unwrap();
     let pre = sudoku.to_string();
     println!("Pre:\n{}", pre);
 
@@ -400,7 +453,7 @@ fn random_gen() {
     let post = sudoku.to_string();
     println!("Post:\n{}", post);
 
-    sudoku.solve().unwrap();
+    sudoku.solve(None, None).unwrap();
 
     assert_eq!(pre, sudoku.to_string());
 
@@ -412,7 +465,7 @@ fn solve_16x_test() {
     let file_str = std::fs::read_to_string("./sudoku16x16").unwrap();
     let mut sudoku: Sudoku = file_str.parse().unwrap();
 
-    sudoku.solve().unwrap();
+    sudoku.solve(None, None).unwrap();
 
     println!("{sudoku}");
 }
@@ -424,7 +477,7 @@ fn solve_knights_move_sudoku() {
 
     println!("{sudoku}");
 
-    sudoku.solve().unwrap();
+    sudoku.solve(None, None).unwrap();
 
     println!("{sudoku}");
     assert_eq!(
@@ -434,4 +487,21 @@ fn solve_knights_move_sudoku() {
             .replace("\r\n", "\n")
             .trim()
     );
+}
+
+#[test]
+fn find_all_solutions() {
+    let file_str = std::fs::read_to_string("./sudokuManySolutions").unwrap();
+    let mut sudoku: Sudoku = file_str.parse().unwrap();
+
+    let ctx = AllSolutionsContext {
+        solutions: Arc::new(Mutex::new(vec![])),
+        runs: Arc::new(0.into()),
+    };
+
+    let _ = sudoku.solve(Some(&ctx), None);
+    ctx.wait_for_solutions();
+    for (index, solution) in ctx.solutions.lock().unwrap().deref().iter().enumerate() {
+        println!("solution {index} = {solution}");
+    }
 }
