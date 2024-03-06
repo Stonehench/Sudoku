@@ -4,12 +4,15 @@ use std::{
     num::ParseIntError,
     ops::Range,
     str::FromStr,
+    sync::{atomic::AtomicUsize, Arc, Mutex},
 };
 
 use integer_sqrt::IntegerSquareRoot;
+use lazy_static::lazy_static;
 use priority_queue::PriorityQueue;
 use rand::random;
 use regex_macro::regex;
+use threadpool::ThreadPool;
 
 use crate::rules::{ColumnRule, RowRule, Rule, SquareRule};
 
@@ -26,7 +29,7 @@ pub struct Sudoku {
 //Det her er ret fucked, men siden vi skal have den laveste entropy ud af vores priority queue skal den sammenligne omvendt
 // siden priority_queue tager den med størst priority lol
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
-struct Entropy(usize);
+pub struct Entropy(usize);
 
 //Sammenligning ift større / mindre men reversed
 impl PartialOrd for Entropy {
@@ -45,6 +48,55 @@ impl Ord for Entropy {
 pub enum SudokuSolveError {
     UnsolveableError,
     RemovedLockedValue,
+}
+
+lazy_static! {
+    static ref GLOBAL_POOL: Mutex<Option<ThreadPool>> = Mutex::new(None);
+}
+
+#[derive(Debug, Clone)]
+pub struct AllSolutionsContext {
+    solutions: Arc<AtomicUsize>,
+    pool: ThreadPool,
+}
+
+impl AllSolutionsContext {
+    fn get_pool() -> ThreadPool {
+        if let Some(pool) = GLOBAL_POOL.lock().unwrap().take() {
+            pool
+        } else {
+            ThreadPool::new(num_cpus::get())
+        }
+    }
+    fn return_pool(self) {
+        *GLOBAL_POOL.lock().unwrap() = Some(self.pool);
+    }
+
+    fn add_branch(&self, old: &Sudoku, cells: Vec<Cell>, new_queue: PriorityQueue<usize, Entropy>) {
+        let mut new_sudoku = Sudoku {
+            cells,
+            ..old.clone()
+        };
+        let self_clone = self.clone();
+
+        self.pool.execute(move || {
+            let _res = new_sudoku.solve(Some(&self_clone), Some(new_queue));
+        });
+    }
+
+    fn wait_for_solutions(self) -> usize {
+        self.pool.join();
+        let solutions = self.solutions.load(std::sync::atomic::Ordering::Relaxed);
+        self.return_pool();
+        solutions
+    }
+
+    fn new() -> Self {
+        Self {
+            solutions: Arc::new(0.into()),
+            pool: Self::get_pool(),
+        }
+    }
 }
 
 impl Display for SudokuSolveError {
@@ -105,18 +157,27 @@ impl Sudoku {
         Ok(())
     }
 
-    pub fn solve(&mut self) -> Result<(), SudokuSolveError> {
+    pub fn solve(
+        &mut self,
+        ctx: Option<&AllSolutionsContext>,
+        pri_queue: Option<PriorityQueue<usize, Entropy>>,
+    ) -> Result<(), SudokuSolveError> {
         #[cfg(debug_assertions)]
         let mut branch_count = 0;
         #[cfg(debug_assertions)]
         let mut backtracks = 0;
 
-        let mut pri_queue = PriorityQueue::with_capacity(self.size * self.size);
-        for (index, cell) in self.cells.iter().enumerate() {
-            if !cell.locked_in {
-                pri_queue.push(index, Entropy(cell.available.len()));
+        let mut pri_queue = if let Some(pri_queue) = pri_queue {
+            pri_queue
+        } else {
+            let mut pri_queue = PriorityQueue::with_capacity(self.size * self.size);
+            for (index, cell) in self.cells.iter().enumerate() {
+                if !cell.locked_in {
+                    pri_queue.push(index, Entropy(cell.available.len()));
+                }
             }
-        }
+            pri_queue
+        };
 
         let mut branch_stack: Vec<(Vec<Cell>, PriorityQueue<usize, Entropy>)> = vec![];
         let mut ret_buffer = vec![];
@@ -173,7 +234,12 @@ impl Sudoku {
                     //Siden den allerede er poppet i den nuværende queue skal den indsættes igen
                     // i den cloned queue. Ellers vil clonen aldrig løse index cellen.
                     cloned_queue.push(index, Entropy(entropy.0 - 1));
-                    branch_stack.push((cloned_cells, cloned_queue));
+
+                    if let Some(ctx) = &ctx {
+                        ctx.add_branch(self, cloned_cells, cloned_queue);
+                    } else {
+                        branch_stack.push((cloned_cells, cloned_queue));
+                    }
 
                     self.update_cell(n, index, &mut pri_queue, &mut ret_buffer)?;
 
@@ -190,7 +256,61 @@ impl Sudoku {
             println!("branch count: {branch_count}");
             println!("backtracks: {backtracks}");
         }
+
+        if let Some(ctx) = ctx {
+            ctx.solutions
+                .fetch_add(1, std::sync::atomic::Ordering::Relaxed);
+        }
+
         Ok(())
+    }
+
+    pub fn generate_with_size(size: usize, rules: Vec<DynRule>) -> Self {
+        let mut sudoku = Sudoku::new(size, rules);
+        sudoku.solve(None, None).unwrap();
+
+        const ATTEMPT_COUNT: usize = 5;
+
+        let mut count = 0;
+
+        let mut currents_left = ATTEMPT_COUNT;
+
+        loop {
+            let removed_index = random::<usize>() % sudoku.cells.len();
+            if sudoku.cells[removed_index].available.len() == 9 {
+                //println!("Skipping already hit");
+                continue;
+            }
+
+            let mut solved_clone = sudoku.clone();
+
+            solved_clone.cells[removed_index] = Cell::new_with_range(1..sudoku.size as u16 + 1);
+
+            let ctx = AllSolutionsContext::new();
+            let _ = solved_clone.solve(Some(&ctx), None);
+
+            let solutions = ctx.wait_for_solutions();
+
+            //println!("Found {} with {count} removed", solutions);
+
+            if solutions > 1 {
+                if currents_left == 0 {
+                    break;
+                } else {
+                    currents_left -= 1;
+                    continue;
+                }
+            }
+
+            currents_left = ATTEMPT_COUNT;
+
+            sudoku.cells[removed_index] = Cell::new_with_range(1..sudoku.size as u16 + 1);
+
+            count += 1;
+        }
+        println!("Removed {count}");
+
+        sudoku
     }
 }
 
@@ -336,7 +456,7 @@ fn solve_big_sudoku() {
     let mut sudoku: Sudoku = file_str.parse().unwrap();
 
     println!("{sudoku}");
-    sudoku.solve().unwrap();
+    sudoku.solve(None, None).unwrap();
     println!("{sudoku}");
 }
 
@@ -358,7 +478,7 @@ fn solve_test() {
         if filename.contains("Løsning") {
             sudoku_name = filename.split_whitespace().next().unwrap().to_string();
         } else {
-            sudoku.solve().unwrap();
+            sudoku.solve(None, None).unwrap();
             sudoku_name = filename;
         }
 
@@ -387,7 +507,7 @@ fn random_gen() {
         ],
         None,
     );
-    sudoku.solve().unwrap();
+    sudoku.solve(None, None).unwrap();
     let pre = sudoku.to_string();
     println!("Pre:\n{}", pre);
 
@@ -404,7 +524,7 @@ fn random_gen() {
     let post = sudoku.to_string();
     println!("Post:\n{}", post);
 
-    sudoku.solve().unwrap();
+    sudoku.solve(None, None).unwrap();
 
     assert_eq!(pre, sudoku.to_string());
 
@@ -416,7 +536,7 @@ fn solve_16x_test() {
     let file_str = std::fs::read_to_string("./sudoku16x16").unwrap();
     let mut sudoku: Sudoku = file_str.parse().unwrap();
 
-    sudoku.solve().unwrap();
+    sudoku.solve(None, None).unwrap();
 
     println!("{sudoku}");
 }
@@ -428,7 +548,7 @@ fn solve_knights_move_sudoku() {
 
     println!("{sudoku}");
 
-    sudoku.solve().unwrap();
+    sudoku.solve(None, None).unwrap();
 
     println!("{sudoku}");
     assert_eq!(
@@ -438,4 +558,32 @@ fn solve_knights_move_sudoku() {
             .replace("\r\n", "\n")
             .trim()
     );
+}
+
+#[test]
+fn find_all_solutions() {
+    let file_str = std::fs::read_to_string("./sudokuManySolutions").unwrap();
+    let mut sudoku: Sudoku = file_str.parse().unwrap();
+
+    let ctx = AllSolutionsContext::new();
+
+    let _ = sudoku.solve(Some(&ctx), None);
+    let solutions = ctx.wait_for_solutions();
+
+    println!("Found {:?} solutions", solutions);
+}
+
+#[test]
+fn generate_sudoku() {
+    let timer = std::time::Instant::now();
+    let sudoku = Sudoku::generate_with_size(
+        9,
+        vec![
+            Box::new(RowRule),
+            Box::new(ColumnRule),
+            Box::new(SquareRule),
+        ],
+    );
+
+    println!("{sudoku} at {:?}", timer.elapsed());
 }

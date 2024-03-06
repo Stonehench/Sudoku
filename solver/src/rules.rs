@@ -194,6 +194,7 @@ impl Rule for ColumnRule {
     }
 }
 
+
 #[derive(Debug, Clone)]
 pub struct XRule;
 
@@ -241,7 +242,6 @@ impl Rule for XRule {
         Box::new(self.clone())
     }
 }
-
 
 #[derive(Debug, Clone)]
 pub struct DiagonalRule;
@@ -329,11 +329,12 @@ impl Rule for KnightRule {
     ) -> &'buf [usize] {
         buffer.clear();
 
-        let size = size;
+        let isize = size as i64;
+        let iindex = index as i64;
 
-        let max_index = size as i32 * size as i32 - 1;
+        let max_index = isize * isize - 1;
 
-        let mut temp_index = index as i32 - 2 * size as i32 - 1;
+        let mut temp_index = iindex - 2 * isize - 1;
 
         // no matter the size of the sudoku you always get 8 cells
         // therefore the length of the returned buffer is always the same
@@ -341,53 +342,45 @@ impl Rule for KnightRule {
         // fell free to change it
         // do remember that it migth give negative values out..
 
-        if temp_index >= 0 && max_index > temp_index 
-            && temp_index / size as i32 + 3 != index as i32 / size as i32 {
+        if temp_index >= 0 && max_index > temp_index && temp_index / isize + 3 != iindex / isize {
             // is it faster to cast to usize or just do the math? I have no idea...
             buffer.push(temp_index as usize);
         } // 1
 
-        temp_index = index as i32 - 2 * size as i32 + 1;
-        if temp_index >= 0 && max_index > temp_index 
-            && temp_index / size as i32 + 1 != index as i32 / size as i32 {
+        temp_index = iindex - 2 * isize + 1;
+        if temp_index >= 0 && max_index > temp_index && temp_index / isize + 1 != iindex / isize {
             buffer.push(temp_index as usize);
         } // 2
 
-        temp_index =  index as i32 - 1 * size as i32 - 2 ;
-        if temp_index >= 0 && max_index > temp_index
-            && temp_index / size as i32 != index as i32 / size as i32 - 2{
+        temp_index = iindex - 1 * isize - 2;
+        if temp_index >= 0 && max_index > temp_index && temp_index / isize != iindex / isize - 2 {
             buffer.push(temp_index as usize);
         } // 3
 
-        temp_index = index as i32 - 1 * size as i32 + 2;
-        if temp_index >= 0 && max_index > temp_index 
-            && temp_index / size as i32 != index as i32 / size as i32{
+        temp_index = iindex - 1 * isize + 2;
+        if temp_index >= 0 && max_index > temp_index && temp_index / isize != iindex / isize {
             buffer.push(temp_index as usize);
         } // 4
 
-        temp_index = index as i32 + 1 * size as i32 - 2;
-        if temp_index >= 0 && max_index > temp_index  
-            && temp_index / size as i32 != index as i32 / size as i32{
+        temp_index = iindex + 1 * isize - 2;
+        if temp_index >= 0 && max_index > temp_index && temp_index / isize != iindex / isize {
             buffer.push(temp_index as usize);
         } // 5
 
-        temp_index = index as i32 + 1 * size as i32 + 2;
-        if temp_index >= 0 && max_index > temp_index 
-            && temp_index / size as i32 != index as i32 / size as i32 + 2 {
+        temp_index = iindex + 1 * isize + 2;
+        if temp_index >= 0 && max_index > temp_index && temp_index / isize != iindex / isize + 2 {
             buffer.push(temp_index as usize);
         } // 6
 
-        temp_index = index as i32 + 2 * size as i32 - 1;
-        if temp_index >= 0 && max_index > temp_index 
-            && temp_index / size as i32 != index as i32 / size as i32 + 1 {
+        temp_index = iindex + 2 * isize - 1;
+        if temp_index >= 0 && max_index > temp_index && temp_index / isize != iindex / isize + 1 {
             buffer.push(temp_index as usize);
         } // 7
 
-        temp_index = index as i32 + 2 * size as i32 + 1 ;
-        if temp_index >= 0 && max_index > temp_index 
-            && temp_index / size as i32 != index as i32 / size as i32 + 3 {
+        temp_index = iindex + 2 * isize + 1;
+        if temp_index >= 0 && max_index > temp_index && temp_index / isize != iindex / isize + 3 {
             buffer.push(temp_index as usize);
-        } // 8  
+        } // 8
 
         buffer
     }
@@ -399,8 +392,8 @@ impl Rule for KnightRule {
     fn boxed_clone(&self) -> DynRule {
         Box::new(self.clone())
     }
-   
 }
+
 
 #[test]
 fn diagonal_test() {

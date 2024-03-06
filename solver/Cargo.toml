@@ -11,6 +11,9 @@ priority-queue = "*"
 integer-sqrt = "0.1.5"
 rand = "*"
 regex-macro = "*"
+threadpool = "*"
+num_cpus = "*"
+lazy_static = "*"
 
 
 [profile.release]
