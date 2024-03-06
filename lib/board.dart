@@ -22,7 +22,7 @@ class _BoardState extends State<Board> {
         width: 340,
         child: InteractiveViewer(
           minScale: 1,
-          maxScale: 5.0,
+          maxScale: sqrt(state.size),
           child: Stack(
             alignment: Alignment.center,
             children: [
