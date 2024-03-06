@@ -28,7 +28,7 @@ class _DigitSelectState extends State<DigitSelect> {
         child: ListenableBuilder(
           listenable: GameState.getInstance(),
           builder: (cxt, _) => ListView.builder(
-            physics: const NeverScrollableScrollPhysics(),
+            //physics: const NeverScrollableScrollPhysics(),
             scrollDirection: Axis.horizontal,
             itemCount: widget.size as int,
             padding: const EdgeInsets.all(2),
@@ -45,7 +45,7 @@ class _DigitSelectState extends State<DigitSelect> {
                       : Theme.of(context).secondaryHeaderColor,
                   alignment: Alignment.center,
                   height: 50,
-                  width: 340 / (widget.size as int),
+                  width: 40,
                   child: Text(
                     (index + 1).toString(),
                     style: TextStyle(
