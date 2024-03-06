@@ -25,7 +25,7 @@ class _DigitSelectState extends State<DigitSelect> {
         alignment: Alignment.center,
         //color: const Color.fromARGB(255, 178, 195, 233),
         child: ListView.builder(
-          physics: const NeverScrollableScrollPhysics(),
+          //physics: const NeverScrollableScrollPhysics(),
           scrollDirection: Axis.horizontal,
           itemCount: widget.size as int,
           padding: const EdgeInsets.all(2),
@@ -39,15 +39,15 @@ class _DigitSelectState extends State<DigitSelect> {
               child: Container(
                 color: GameState.getInstance().selectedDigit == index + 1
                     ? Theme.of(context).primaryColorLight
-                    : Theme.of(context).secondaryHeaderColor,
+                    : Colors.transparent,
                 alignment: Alignment.center,
                 height: 50,
-                width: 340 / (widget.size as int),
+                width: 40, //340 / (widget.size as int),
                 child: Text(
                   (index + 1).toString(),
                   style: TextStyle(
                     fontSize: fontSize,
-                    color: Colors.black,
+                    color: Colors.white,
                   ),
                 ),
               ),
