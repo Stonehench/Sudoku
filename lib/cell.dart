@@ -42,7 +42,7 @@ class _CellState extends State<Cell> {
       setErr();
     }
     
-    if (GameState.getInstance().selectedDigit == 0 || widget.digit == null) {
+    if ((GameState.getInstance().selectedDigit == 0 && !widget.initialClue) || widget.digit == null) {
       if (!GameState.getInstance().updateDigit(widget.index)) {
         setErr();
       }

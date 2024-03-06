@@ -24,35 +24,39 @@ class _DigitSelectState extends State<DigitSelect> {
       child: Container(
         alignment: Alignment.center,
         //color: const Color.fromARGB(255, 178, 195, 233),
-        child: ListView.builder(
-          physics: const NeverScrollableScrollPhysics(),
-          scrollDirection: Axis.horizontal,
-          itemCount: widget.size as int,
-          padding: const EdgeInsets.all(2),
-          itemBuilder: (BuildContext context, int index) {
-            return InkWell(
-              onTap: () {
-                setState(() {
-                  state.selectedDigit = index + 1;
-                });
-              },
-              child: Container(
-                color: GameState.getInstance().selectedDigit == index + 1
-                    ? Theme.of(context).primaryColorLight
-                    : Theme.of(context).secondaryHeaderColor,
-                alignment: Alignment.center,
-                height: 50,
-                width: 340 / (widget.size as int),
-                child: Text(
-                  (index + 1).toString(),
-                  style: TextStyle(
-                    fontSize: fontSize,
-                    color: Colors.black,
+
+        child: ListenableBuilder(
+          listenable: GameState.getInstance(),
+          builder: (cxt, _) => ListView.builder(
+            //physics: const NeverScrollableScrollPhysics(),
+            scrollDirection: Axis.horizontal,
+            itemCount: widget.size as int,
+            padding: const EdgeInsets.all(2),
+            itemBuilder: (BuildContext context, int index) {
+              return InkWell(
+                onTap: () {
+                  setState(() {
+                    state.setSelected(index + 1);
+                  });
+                },
+                child: Container(
+                  color: GameState.getInstance().selectedDigit == index + 1
+                      ? Theme.of(context).primaryColorLight
+                      : Colors.transparent,
+                  alignment: Alignment.center,
+                  height: 50,
+                  width: 40,
+                  child: Text(
+                    (index + 1).toString(),
+                    style: TextStyle(
+                      fontSize: fontSize,
+                      color: Colors.white,
+                    ),
                   ),
                 ),
-              ),
-            );
-          },
+              );
+            },
+          ),
         ),
       ),
     );
