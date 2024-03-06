@@ -11,6 +11,9 @@ Future<String?> generateWithSize(
     RustLib.instance.api
         .generateWithSize(size: size, rulesSrc: rulesSrc, hint: hint);
 
+Future<int?> waitForProgess({dynamic hint}) =>
+    RustLib.instance.api.waitForProgess(hint: hint);
+
 Future<bool> checkLegality(
         {required int position, required int value, dynamic hint}) =>
     RustLib.instance.api

@@ -1,3 +1,8 @@
+use std::sync::mpsc::channel;
+use std::sync::{mpsc, Mutex};
+use std::time::Duration;
+
+use lazy_static::lazy_static;
 use solver::sudoku::{DynRule, Sudoku};
 
 use solver::rules::*;
@@ -19,7 +24,9 @@ pub fn generate_with_size(size: usize, rules_src: Vec<String>) -> Option<String>
         }
     }
 
-    let sudoku = Sudoku::generate_with_size(size, rules);
+    let sender = PROGRESS.lock().unwrap().0.clone();
+
+    let sudoku = Sudoku::generate_with_size(size, rules, Some(sender));
 
     let mut solved = sudoku.clone();
     for cell in &mut solved.cells {
@@ -43,6 +50,31 @@ pub fn generate_with_size(size: usize, rules_src: Vec<String>) -> Option<String>
     state.current_sudoku = Some((sudoku, solved));
 
     Some(str_buffer)
+}
+
+lazy_static! {
+    static ref PROGRESS: Mutex<(mpsc::Sender<usize>, Option<mpsc::Receiver<usize>>)> =
+        Mutex::new({
+            let (sx, rx) = channel();
+
+            (sx, Some(rx))
+        });
+}
+
+pub fn wait_for_progess() -> Option<usize> {
+    let rx = PROGRESS.lock().unwrap().1.take()?;
+
+    let mut res = None;
+    while let Ok(c_res) = rx.try_recv() {
+        res = Some(c_res);
+    }
+    if res.is_none() {
+        res = rx.recv_timeout(Duration::from_secs(5)).ok();
+    }
+
+    PROGRESS.lock().unwrap().1 = Some(rx);
+
+    res
 }
 
 pub fn check_legality(position: usize, value: u16) -> bool {

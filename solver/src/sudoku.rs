@@ -4,7 +4,7 @@ use std::{
     num::ParseIntError,
     ops::Range,
     str::FromStr,
-    sync::{atomic::AtomicUsize, Arc, Mutex},
+    sync::{atomic::AtomicUsize, mpsc, Arc, Mutex},
     time::Instant,
 };
 
@@ -24,7 +24,7 @@ pub struct Sudoku {
     pub size: usize,
     pub cells: Vec<Cell>,
     pub rules: Vec<DynRule>,
-    pub x_clue: Option<Vec<(usize,usize)>>,
+    pub x_clue: Option<Vec<(usize, usize)>>,
 }
 
 //Det her er ret fucked, men siden vi skal have den laveste entropy ud af vores priority queue skal den sammenligne omvendt
@@ -112,7 +112,7 @@ impl Display for SudokuSolveError {
 }
 
 impl Sudoku {
-    pub fn new(size: usize, rules: Vec<DynRule>, x_clue: Option<Vec<(usize,usize)>>) -> Self {
+    pub fn new(size: usize, rules: Vec<DynRule>, x_clue: Option<Vec<(usize, usize)>>) -> Self {
         Self {
             size,
             cells: (0..size * size)
@@ -272,8 +272,12 @@ impl Sudoku {
         Ok(())
     }
 
-    pub fn generate_with_size(size: usize, rules: Vec<DynRule>) -> Self {
-        let mut sudoku = Sudoku::new(size, rules);
+    pub fn generate_with_size(
+        size: usize,
+        rules: Vec<DynRule>,
+        progess: Option<mpsc::Sender<usize>>,
+    ) -> Self {
+        let mut sudoku = Sudoku::new(size, rules, None);
         sudoku.solve(None, None).unwrap();
 
         const ATTEMPT_COUNT: usize = 5;
@@ -284,6 +288,10 @@ impl Sudoku {
         let mut currents_left = ATTEMPT_COUNT;
         let timer = Instant::now();
         loop {
+            if let Some(progess) = &progess {
+                progess.send(count).unwrap();
+            }
+
             if count >= RETRY_LIMIT {
                 break;
             }
@@ -447,7 +455,7 @@ impl Clone for Sudoku {
             size: self.size.clone(),
             cells: self.cells.clone(),
             rules: self.rules.iter().map(|r| r.boxed_clone()).collect(),
-            x_clue : self.x_clue.clone(),
+            x_clue: self.x_clue.clone(),
         }
     }
 }
@@ -595,6 +603,7 @@ fn generate_sudoku() {
             Box::new(ColumnRule),
             Box::new(SquareRule),
         ],
+        None,
     );
 
     println!("{sudoku} at {:?}", timer.elapsed());

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_spinkit/flutter_spinkit.dart';
 import 'package:sudoku/game_state.dart';
 import 'package:sudoku/game_view.dart';
+import 'package:sudoku/src/rust/api/simple.dart';
 
 class GameLoader extends StatefulWidget {
   const GameLoader(this.sudokuSource, {super.key});
@@ -14,6 +15,7 @@ class GameLoader extends StatefulWidget {
 
 class _GameLoaderState extends State<GameLoader> {
   bool awaiting = false;
+  int removed = 0;
 
   @override
   Widget build(BuildContext context) {
@@ -36,10 +38,27 @@ class _GameLoaderState extends State<GameLoader> {
       }();
     }
 
+    () async {
+      var progress = await waitForProgess();
+      if (progress != null) {
+        setState(() {
+          removed = progress;
+        });
+      }
+    }();
+
     return Scaffold(
-        body: Center(
-            child: SpinKitWave(
-      color: Theme.of(context).highlightColor,
-    )));
+      body: Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            SpinKitWave(
+              color: Theme.of(context).highlightColor,
+            ),
+            Text("$removed / 55")
+          ],
+        ),
+      ),
+    );
   }
 }
