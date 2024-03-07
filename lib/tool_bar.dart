@@ -11,7 +11,7 @@ class ToolBar extends StatefulWidget {
 class _ToolBarState extends State<ToolBar> {
   @override
   Widget build(BuildContext context) {
-    double fontSize = 30;
+    //double fontSize = 30;
 
     return SizedBox(
       height: 50,
@@ -38,7 +38,24 @@ class _ToolBarState extends State<ToolBar> {
                 ),
                 child: const Text("Erase"),
               ),
-            )
+            ),
+            ListenableBuilder(
+              listenable: GameState.getInstance(),
+              builder: (ctx, _) => TextButton(
+                onPressed: () {
+                  //print("please erase the digit thanks:D");
+                  GameState.getInstance().switchDrafting();
+
+                  // It kinda works might need a rework!
+                },
+                style: TextButton.styleFrom(
+                  backgroundColor: GameState.getInstance().drafting
+                      ? Theme.of(ctx).secondaryHeaderColor
+                      : Theme.of(ctx).scaffoldBackgroundColor,
+                ),
+                child: const Text("Draft"),
+              ),
+            ),
           ],
         ),
       ),

@@ -21,7 +21,9 @@ class GameState extends ChangeNotifier {
         .map((n) => int.parse(n))
         .map((n) => n == 0 ? null : n)
         .toList();
+
     for (int i = 0; i < board.length; i++) {
+      drafts.add([]);
       if (board[i] != null) {
         initialClues.add(i);
       }
@@ -35,6 +37,7 @@ class GameState extends ChangeNotifier {
   int selectedDigit = 1;
   late List<int?> board;
   List<int> initialClues = [];
+  List<List<int>> drafts = [];
 
   Future<bool> updateDigit(int position) async {
     if (selectedDigit == 0) {
@@ -51,8 +54,30 @@ class GameState extends ChangeNotifier {
     return false;
   }
 
-  void setSelected(int newSelected) {
-    selectedDigit = newSelected;
+  void changeDraft(int position) {
+    if (drafts[position].contains(selectedDigit)) {
+      drafts[position].remove(selectedDigit);
+    } else {
+      drafts[position].add(selectedDigit);
+    }
     notifyListeners();
   }
+
+  void setSelected(int newSelected) {
+    selectedDigit = newSelected;
+    if (selectedDigit == 0) {
+      drafting = false;
+    }
+    notifyListeners();
+  }
+
+  void switchDrafting() {
+    drafting = !drafting;
+    if (selectedDigit == 0) {
+      selectedDigit = 1;
+    }
+    notifyListeners();
+  }
+
+  bool drafting = false;
 }

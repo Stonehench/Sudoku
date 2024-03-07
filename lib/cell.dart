@@ -37,6 +37,11 @@ class _CellState extends State<Cell> {
   }
 
   void onClick() async {
+    if (GameState.getInstance().drafting) {
+      GameState.getInstance().changeDraft(widget.index);
+      return;
+    }
+
     //Check
     if (widget.digit != null) {
       setErr();
@@ -74,7 +79,12 @@ class _CellState extends State<Cell> {
             ? Text(widget.digit!.toString(),
                 style: TextStyle(fontSize: fontSize, color: txtColor))
             // 30 or 9x9, 15 for 16x16 , 6 for anything else (for now at least)
-            : const Text(""),
+            : Wrap(
+              spacing: 2.0,
+                children: state.drafts[widget.index]
+                    .map((n) => Text(n.toString()))
+                    .toList(),
+              ),
       ),
     );
   }
