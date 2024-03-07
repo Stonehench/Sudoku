@@ -40,6 +40,8 @@ class _MenuState extends State<Menu> {
     }
   }
 
+  Set<String> gameModes = {};
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -75,6 +77,22 @@ class _MenuState extends State<Menu> {
               },
               child: const Text('Create Sudoku'),
             ),
+            Row(
+              children: [
+                Text("Knights move"),
+                Checkbox(
+                    value: gameModes.contains("KnightsMove"),
+                    onChanged: (v) {
+                      setState(() {
+                        if (v == true) {
+                          gameModes.add("KnightsMove");
+                        } else {
+                          gameModes.remove("KnightsMove");
+                        }
+                      });
+                    })
+              ],
+            )
           ],
         ),
       ),
