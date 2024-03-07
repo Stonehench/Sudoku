@@ -30,9 +30,20 @@ impl FromStr for DynRule {
         match s {
             "KnightsMove" => Ok(Box::new(KnightRule)),
             "DiagonalRule" => Ok(Box::new(DiagonalRule)),
-            _ => {let mut rule_params = s.split_whitespace();
+            _ => {let mut rule_params = s.split(';').map(str::trim);
              match rule_params.next() {
-                Some("XRule") => Ok(Box::new(XRule)),
+                Some("XRule") => Ok(Box::new(XRule{
+                    x_clue: rule_params.map(|s|{
+                        let Some((l,r)) = s.split_once(',') else {
+                            return Err(format!("Failed to split {s} on ,"));
+                        };
+                        let l = l.parse().map_err(|e| format!("{e:?}"))?;
+                        let r = r.parse().map_err(|e| format!("{e:?}"))?;
+
+                        Ok((l,r))
+                        }
+                    ).collect::<Result<_,_>>()?
+                })),
                 _ => return Err(s.to_owned())
             }}
         }
@@ -210,7 +221,9 @@ impl Rule for ColumnRule {
 }
 
 #[derive(Debug, Clone)]
-pub struct XRule;
+pub struct XRule{    
+    pub x_clue: Vec<(usize, usize)>,
+}
 
 impl Rule for XRule {
     fn updates<'buf>(
@@ -231,11 +244,9 @@ impl Rule for XRule {
 
         // Either don't return anything
         // Or return the corrisponding index to the other half of X
-
-        if let Some(x_clues) = &sudoku.x_clue {
-            for (left_index, right_index) in x_clues {
+        
+            for (left_index, right_index) in &self.x_clue {
                 if sudoku.cells[*left_index].locked_in && !sudoku.cells[*right_index].locked_in {
-                    // TODO: HÆÆÆÆÆÆÆÆLP :D
                     if let Some(value) = sudoku.cells[*left_index].available.get(0) {
                         return Some((((sudoku.size + 1) as u16 - value), *right_index));
                     }
@@ -246,7 +257,7 @@ impl Rule for XRule {
                     }
                 }
             }
-        }
+    
         None
     }
 
@@ -419,7 +430,7 @@ impl Rule for KnightRule {
 
 #[test]
 fn diagonal_test() {
-    let sudoku = Sudoku::new(9, vec![], None);
+    let sudoku = Sudoku::new(9, vec![]);
 
     let diagonalrule = DiagonalRule;
     let mut buffer = vec![];
@@ -446,7 +457,7 @@ fn diagonal_test() {
 
 #[test]
 fn row_test() {
-    let sudoku = Sudoku::new(9, vec![], None);
+    let sudoku = Sudoku::new(9, vec![]);
 
     let rowrule = RowRule;
     let mut buffer = vec![];
@@ -458,7 +469,7 @@ fn row_test() {
 
 #[test]
 fn column_test() {
-    let sudoku = Sudoku::new(9, vec![], None);
+    let sudoku = Sudoku::new(9, vec![]);
 
     let columnrule = ColumnRule;
     let mut buffer = vec![];
@@ -470,7 +481,7 @@ fn column_test() {
 
 #[test]
 fn square_test() {
-    let sudoku = Sudoku::new(9, vec![], None);
+    let sudoku = Sudoku::new(9, vec![]);
 
     let squarerule = SquareRule;
     let mut buffer = vec![];
@@ -482,7 +493,7 @@ fn square_test() {
 
 #[test]
 fn knight_test() {
-    let sudoku = Sudoku::new(9, vec![], None);
+    let sudoku = Sudoku::new(9, vec![]);
 
     let knightrule = KnightRule;
     let mut buffer = vec![];
@@ -507,7 +518,7 @@ fn diagonal_hidden_math_test() {
             Box::new(SquareRule),
             Box::new(DiagonalRule),
         ],
-        None,
+        
     );
 
     sudoku.set_cell(1, 27).unwrap();
@@ -524,21 +535,21 @@ fn diagonal_hidden_math_test() {
 
 #[test]
 fn x_hidden_math_test() {
+    let x_rule = XRule { x_clue: vec![(1 as usize, 2 as usize)]};
     let mut sudoku = Sudoku::new(
         4,
         vec![
             Box::new(RowRule),
             Box::new(ColumnRule),
             Box::new(SquareRule),
-            Box::new(XRule),
+            Box::new(x_rule.clone()),
         ],
-        Some(vec![(1 as usize, 2 as usize)]),
     );
 
     sudoku.set_cell(1, 1).unwrap();
     println!("{sudoku}");
 
-    let x_rule = XRule;
+
     let res = x_rule.hidden_singles(&sudoku);
     assert_eq!(res, Some((4, 2)))
 }
@@ -552,7 +563,6 @@ fn row_hidden_math_test() {
             Box::new(ColumnRule),
             Box::new(SquareRule),
         ],
-        None,
     );
 
     sudoku.set_cell(2, 1).unwrap();
@@ -576,7 +586,6 @@ fn column_hidden_math_test() {
             Box::new(ColumnRule),
             Box::new(SquareRule),
         ],
-        None,
     );
 
     sudoku.set_cell(2, 9).unwrap();
@@ -600,7 +609,6 @@ fn square_hidden_math_test() {
             Box::new(ColumnRule),
             Box::new(SquareRule),
         ],
-        None,
     );
 
     sudoku.set_cell(1, 27).unwrap();
