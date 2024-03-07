@@ -3,13 +3,25 @@ use std::sync::{mpsc, Mutex};
 use std::time::Duration;
 
 use lazy_static::lazy_static;
+use rand::random;
 use solver::sudoku::{AllSolutionsContext, DynRule, Sudoku};
 
 use crate::appstate::get_state;
 
-fn insert_x_locations<'s>(str: &'s mut String) -> &'s str {
+fn insert_x_locations<'s>(size: usize, str: &'s mut String) -> &'s str {
     if "XRule" == str {
-
+        for _ in 0..size / 2 {
+            let first = random::<usize>() % size * size;
+            let second = match random::<u8>() % 4 {
+                0 if first >= size => first - size,                //Up
+                1 if first % size >= 1 => first - 1,               //Left
+                2 if (first + 1) % size != 0 => first + 1,         //Right
+                3 if (first + size < size * size) => first + size, //Below
+                _ => continue, //Fallback hvis conditionen failer
+            };
+            str.push_str(&format!(";{first},{second}"));
+        }
+        println!("{str}");
     }
 
     str
@@ -18,17 +30,14 @@ fn insert_x_locations<'s>(str: &'s mut String) -> &'s str {
 pub fn generate_with_size(size: usize, mut rules_src: Vec<String>) -> Option<String> {
     let rules = rules_src
         .iter_mut()
-        .map(insert_x_locations)
+        .map(|s| insert_x_locations(size, s)) //Savner f# currying lol
         .map(str::parse::<DynRule>)
         .collect::<Result<Vec<_>, _>>()
         .ok()?;
 
     let sender = PROGRESS.lock().unwrap().0.clone();
 
-    let Ok(sudoku) = Sudoku::generate_with_size(size, rules, Some(sender)) else {
-        println!("FAILED TO GENERATE!!!");
-        return None;
-    };
+    let sudoku = Sudoku::generate_with_size(size, rules, Some(sender)).ok()?;
 
     let mut solved = sudoku.clone();
     for cell in &mut solved.cells {

@@ -30,9 +30,11 @@ class _CellState extends State<Cell> {
       isCurrentlyError = true;
     });
     Timer(const Duration(seconds: 1), () {
-      setState(() {
-        isCurrentlyError = false;
-      });
+      if (mounted) {
+        setState(() {
+          isCurrentlyError = false;
+        });
+      }
     });
   }
 
@@ -80,7 +82,7 @@ class _CellState extends State<Cell> {
                 style: TextStyle(fontSize: fontSize, color: txtColor))
             // 30 or 9x9, 15 for 16x16 , 6 for anything else (for now at least)
             : Wrap(
-              spacing: 2.0,
+                spacing: 2.0,
                 children: state.drafts[widget.index]
                     .map((n) => Text(n.toString()))
                     .toList(),

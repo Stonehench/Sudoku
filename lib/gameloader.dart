@@ -46,9 +46,11 @@ class _GameLoaderState extends State<GameLoader> {
     () async {
       var progress = await waitForProgess();
       if (progress != null) {
-        setState(() {
-          removed = progress;
-        });
+        if (mounted) {
+          setState(() {
+            removed = progress;
+          });
+        }
       }
     }();
 

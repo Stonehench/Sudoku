@@ -15,7 +15,7 @@ use rand::random;
 use regex_macro::regex;
 use threadpool::ThreadPool;
 
-use crate::rules::{ColumnRule, KnightRule, RowRule, Rule, SquareRule, XRule};
+use crate::rules::{ColumnRule, RowRule, Rule, SquareRule};
 
 pub type DynRule = Box<dyn Rule + Send>;
 
@@ -283,7 +283,7 @@ impl Sudoku {
         progess: Option<mpsc::Sender<usize>>,
     ) -> Result<Self, SudokuSolveError> {
         let mut sudoku = Sudoku::new(size, rules);
-        sudoku.solve(None, None).unwrap();
+        sudoku.solve(None, None)?;
 
         const ATTEMPT_COUNT: usize = 5;
         const RETRY_LIMIT: usize = 55;
@@ -595,6 +595,7 @@ fn generate_sudoku() {
 
 #[test]
 fn generate_sudoku_x() {
+    use crate::rules::{KnightRule, SquareRule, XRule};
     let timer = std::time::Instant::now();
     let sudoku = Sudoku::generate_with_size(
         4,
@@ -606,7 +607,8 @@ fn generate_sudoku_x() {
             }),
         ],
         None,
-    ).unwrap();
+    )
+    .unwrap();
 
     println!("{sudoku} at {:?}", timer.elapsed());
 }

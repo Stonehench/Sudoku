@@ -111,6 +111,11 @@ class _MenuState extends State<Menu> {
             Text(sizeText),
             TextButton(
               onPressed: () {
+                setState(() {
+                  sizeText = "${size}x$size";  
+                });
+                
+
                 Future<String?> sudokuSource =
                     generateWithSize(size: size, rulesSrc: gameModes.toList());
                 //inputTextController.clear();
