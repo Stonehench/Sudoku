@@ -283,9 +283,9 @@ impl Sudoku {
         size: usize,
         rules: Vec<DynRule>,
         progess: Option<mpsc::Sender<usize>>,
-    ) -> Self {
+    ) -> Result<Self, SudokuSolveError> {
         let mut sudoku = Sudoku::new(size, rules, None);
-        sudoku.solve(None, None).unwrap();
+        sudoku.solve(None, None)?;
 
         const ATTEMPT_COUNT: usize = 5;
         const RETRY_LIMIT: usize = 55;
@@ -337,7 +337,7 @@ impl Sudoku {
         }
         println!("Removed {count} in {:?}", timer.elapsed());
 
-        sudoku
+        Ok(sudoku)
     }
 }
 
@@ -591,7 +591,7 @@ fn find_all_solutions() {
 #[test]
 fn generate_sudoku() {
     let timer = std::time::Instant::now();
-    let sudoku = Sudoku::generate_with_size(9, vec![Box::new(SquareRule)], None);
+    let sudoku = Sudoku::generate_with_size(9, vec![Box::new(SquareRule)], None).unwrap();
 
     println!("{sudoku} at {:?}", timer.elapsed());
 }

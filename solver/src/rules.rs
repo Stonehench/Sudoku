@@ -28,6 +28,7 @@ impl FromStr for DynRule {
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         match s {
+            "SquareRule" => Ok(Box::new(SquareRule)),
             "KnightsMove" => Ok(Box::new(KnightRule)),
             "DiagonalRule" => Ok(Box::new(DiagonalRule)),
             invalid => return Err(invalid.to_owned()),
@@ -283,6 +284,8 @@ impl Rule for DiagonalRule {
     }
 
     fn hidden_singles(&self, sudoku: &Sudoku) -> Option<(u16, usize)> {
+        println!("HIDDEN DIAGONALS!!");
+
         'value: for value in 1..=sudoku.size as u16 {
             let mut found_position = None;
 
@@ -495,14 +498,7 @@ fn knight_test() {
 
 #[test]
 fn diagonal_hidden_math_test() {
-    let mut sudoku = Sudoku::new(
-        9,
-        vec![
-            Box::new(SquareRule),
-            Box::new(DiagonalRule),
-        ],
-        None,
-    );
+    let mut sudoku = Sudoku::new(9, vec![Box::new(SquareRule), Box::new(DiagonalRule)], None);
 
     sudoku.set_cell(1, 27).unwrap();
     sudoku.set_cell(1, 39).unwrap();
@@ -520,11 +516,7 @@ fn diagonal_hidden_math_test() {
 fn x_hidden_math_test() {
     let mut sudoku = Sudoku::new(
         4,
-        vec![
-            
-            Box::new(SquareRule),
-            Box::new(XRule),
-        ],
+        vec![Box::new(SquareRule), Box::new(XRule)],
         Some(vec![(1 as usize, 2 as usize)]),
     );
 
@@ -538,14 +530,7 @@ fn x_hidden_math_test() {
 
 #[test]
 fn row_hidden_math_test() {
-    let mut sudoku = Sudoku::new(
-        9,
-        vec![
-            
-            Box::new(SquareRule),
-        ],
-        None,
-    );
+    let mut sudoku = Sudoku::new(9, vec![Box::new(SquareRule)], None);
 
     sudoku.set_cell(2, 1).unwrap();
     sudoku.set_cell(1, 56).unwrap();
@@ -561,14 +546,7 @@ fn row_hidden_math_test() {
 
 #[test]
 fn column_hidden_math_test() {
-    let mut sudoku = Sudoku::new(
-        9,
-        vec![
-            
-            Box::new(SquareRule),
-        ],
-        None,
-    );
+    let mut sudoku = Sudoku::new(9, vec![Box::new(SquareRule)], None);
 
     sudoku.set_cell(2, 9).unwrap();
     sudoku.set_cell(1, 24).unwrap();
@@ -584,14 +562,7 @@ fn column_hidden_math_test() {
 
 #[test]
 fn square_hidden_math_test() {
-    let mut sudoku = Sudoku::new(
-        9,
-        vec![
-            
-            Box::new(SquareRule),
-        ],
-        None,
-    );
+    let mut sudoku = Sudoku::new(9, vec![Box::new(SquareRule)], None);
 
     sudoku.set_cell(1, 27).unwrap();
     sudoku.set_cell(1, 55).unwrap();

@@ -5,28 +5,30 @@ use std::time::Duration;
 use lazy_static::lazy_static;
 use solver::sudoku::{AllSolutionsContext, DynRule, Sudoku};
 
-use solver::rules::*;
-
 use crate::appstate::get_state;
 
-pub fn generate_with_size(size: usize, rules_src: Vec<String>) -> Option<String> {
-    let mut rules: Vec<DynRule> = vec![
-        Box::new(RowRule),
-        Box::new(SquareRule),
-        Box::new(ColumnRule),
-    ];
-    for rule in rules_src {
-        let rule = rule.parse::<DynRule>();
-        if let Ok(rule) = rule {
-            rules.push(rule);
-        } else {
-            return None;
-        }
+fn insert_x_locations<'s>(str: &'s mut String) -> &'s str {
+    if "XRule" == str {
+
     }
+
+    str
+}
+
+pub fn generate_with_size(size: usize, mut rules_src: Vec<String>) -> Option<String> {
+    let rules = rules_src
+        .iter_mut()
+        .map(insert_x_locations)
+        .map(str::parse::<DynRule>)
+        .collect::<Result<Vec<_>, _>>()
+        .ok()?;
 
     let sender = PROGRESS.lock().unwrap().0.clone();
 
-    let sudoku = Sudoku::generate_with_size(size, rules, Some(sender));
+    let Ok(sudoku) = Sudoku::generate_with_size(size, rules, Some(sender)) else {
+        println!("FAILED TO GENERATE!!!");
+        return None;
+    };
 
     let mut solved = sudoku.clone();
     for cell in &mut solved.cells {

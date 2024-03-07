@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'dart:math';
 
 import 'package:flutter/services.dart';
-import 'package:flutter/widgets.dart';
 import 'package:sudoku/gameloader.dart';
 import 'package:sudoku/src/rust/api/simple.dart';
 
@@ -43,6 +42,49 @@ class _MenuState extends State<Menu> {
 
   Set<String> gameModes = {};
 
+  final List<(String, String, bool)> rules = [
+    ("Square rule", "SquareRule", true),
+    ("Knights move", "KnightsMove", false),
+    ("X rule", "XRule", false),
+    ("Diaginal rule", "DiagonalRule", false),
+  ];
+
+  bool initialized = false;
+
+  List<Widget> ruleWidgets() {
+    List<Widget> list = [];
+
+    for (var (name, realname, def) in rules) {
+      if (!initialized) {
+        initialized = true;
+        if (def) {
+          gameModes.add(realname);
+        }
+      }
+
+      list.add(Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Text(name),
+          Checkbox(
+            value: gameModes.contains(realname),
+            onChanged: (v) {
+              setState(() {
+                if (v == true) {
+                  gameModes.add(realname);
+                } else {
+                  gameModes.remove(realname);
+                }
+              });
+            },
+          ),
+        ],
+      ));
+    }
+
+    return list;
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -71,44 +113,24 @@ class _MenuState extends State<Menu> {
               onPressed: () {
                 Future<String?> sudokuSource =
                     generateWithSize(size: size, rulesSrc: gameModes.toList());
-                inputTextController.clear();
-                Navigator.of(context).push(MaterialPageRoute(
-                  builder: (context) => GameLoader(sudokuSource),
-                ));
+                //inputTextController.clear();
+                () async {
+                  var res = await Navigator.of(context).push(MaterialPageRoute(
+                    builder: (context) => GameLoader(sudokuSource),
+                  ));
+                  if (res != null) {
+                    setState(() {
+                      sizeText = res.toString();
+                    });
+                  }
+                }();
               },
               child: const Text('Create Sudoku'),
             ),
             Wrap(
+              spacing: 20,
               crossAxisAlignment: WrapCrossAlignment.center,
-              children: [
-                const Text("Knights move"),
-                Checkbox(
-                    value: gameModes.contains("KnightsMove"),
-                    onChanged: (v) {
-                      setState(() {
-                        if (v == true) {
-                          gameModes.add("KnightsMove");
-                        } else {
-                          gameModes.remove("KnightsMove");
-                        }
-                      });
-                    }),
-                const SizedBox(
-                  width: 10,
-                ),
-                const Text("X Rule"),
-                Checkbox(
-                    value: gameModes.contains("XRule"),
-                    onChanged: (v) {
-                      setState(() {
-                        if (v == true) {
-                          gameModes.add("XRule");
-                        } else {
-                          gameModes.remove("XRule");
-                        }
-                      });
-                    })
-              ],
+              children: ruleWidgets(),
             )
           ],
         ),
