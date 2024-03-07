@@ -6,9 +6,9 @@ use lazy_static::lazy_static;
 use rand::random;
 use solver::sudoku::{AllSolutionsContext, DynRule, Sudoku};
 
-use crate::appstate::get_state;
+use crate::appstate::{get_state, AppState};
 
-fn insert_x_locations<'s>(size: usize, str: &'s mut String) -> &'s str {
+fn insert_x_locations<'s>(size: usize, str: &'s mut String, app_state: &mut AppState) -> &'s str {
     if "XRule" == str {
         for _ in 0..size / 2 {
             let first = random::<usize>() % size * size;
@@ -19,6 +19,7 @@ fn insert_x_locations<'s>(size: usize, str: &'s mut String) -> &'s str {
                 3 if (first + size < size * size) => first + size, //Below
                 _ => continue, //Fallback hvis conditionen failer
             };
+            app_state.x_positions.push((first, second));
             str.push_str(&format!(";{first},{second}"));
         }
         println!("{str}");
@@ -28,9 +29,12 @@ fn insert_x_locations<'s>(size: usize, str: &'s mut String) -> &'s str {
 }
 
 pub fn generate_with_size(size: usize, mut rules_src: Vec<String>) -> Option<String> {
+    let mut state = get_state();
+    state.x_positions = vec![];
+
     let rules = rules_src
         .iter_mut()
-        .map(|s| insert_x_locations(size, s)) //Savner f# currying lol
+        .map(|s| insert_x_locations(size, s, &mut state)) //Savner f# currying lol
         .map(str::parse::<DynRule>)
         .collect::<Result<Vec<_>, _>>()
         .ok()?;
@@ -57,10 +61,13 @@ pub fn generate_with_size(size: usize, mut rules_src: Vec<String>) -> Option<Str
 
     println!("Sending: {str_buffer}");
 
-    let mut state = get_state();
     state.current_sudoku = Some((sudoku, solved));
 
     Some(str_buffer)
+}
+
+pub fn get_x_positions() -> Vec<(usize, usize)> {
+    get_state().x_positions.clone()
 }
 
 lazy_static! {

@@ -33,8 +33,9 @@ class _GameLoaderState extends State<GameLoader> {
 
           return;
         }
+        var xPositions = await getXPositions();
 
-        GameState.setInstance(GameState(source));
+        GameState.setInstance(GameState(source, xPositions));
         setState(() {
           Navigator.of(context).pushReplacement(MaterialPageRoute(
             builder: (context) => const GameView(),
