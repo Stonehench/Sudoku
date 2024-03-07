@@ -222,13 +222,13 @@ impl Rule for XRule {
 
 
             for (left_index, right_index) in x_clues {
-                if sudoku.cells[*left_index].locked_in {
+                if sudoku.cells[*left_index].locked_in && !sudoku.cells[*right_index].locked_in {
                     // TODO: HÆÆÆÆÆÆÆÆLP :D
                     if let Some(value) = sudoku.cells[*left_index].available.get(0) {
                         return Some((((sudoku.size + 1) as u16 - value), *right_index))
                     }
                 }
-                if sudoku.cells[*right_index].locked_in {
+                if sudoku.cells[*right_index].locked_in && !sudoku.cells[*left_index].locked_in {
                     if let Some(value) = sudoku.cells[*right_index].available.get(0) {
                         return Some((((sudoku.size + 1) as u16 - value), *left_index))
                     }
@@ -274,7 +274,7 @@ impl Rule for DiagonalRule {
             'value: for value in 1..=sudoku.size as u16 {
                 let mut found_position = None;
 
-                // itterate over digonal from top left corner down
+                // iterate over digonal from top left corner down
                 for position in (0..sudoku.size).map(|i| i*(sudoku.size + 1)) {
                     if sudoku.cells[position].available.contains(&value) {
                         if found_position.is_some() {
@@ -292,7 +292,7 @@ impl Rule for DiagonalRule {
                 }
 
                 found_position = None;
-                // itterate over digonal from top right corner down
+                // iterate over digonal from top right corner down
                 for position in (0..sudoku.size).map(|i| (i+1)*(sudoku.size - 1)) {
                     if sudoku.cells[position].available.contains(&value) {
                         if found_position.is_some() {
