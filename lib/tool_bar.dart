@@ -18,13 +18,13 @@ class _ToolBarState extends State<ToolBar> {
       width: 340,
       child: Container(
         alignment: Alignment.center,
-        child: ButtonBar(
-          alignment: MainAxisAlignment.center,
-          children: [
-            const BackButton(),
-            ListenableBuilder(
-              listenable: GameState.getInstance(),
-              builder: (ctx, _) => TextButton(
+        child: ListenableBuilder(
+          listenable: GameState.getInstance(),
+          builder: (ctx, _) => ButtonBar(
+            alignment: MainAxisAlignment.center,
+            children: [
+              const BackButton(),
+              TextButton(
                 onPressed: () {
                   //print("please erase the digit thanks:D");
                   GameState.getInstance().setSelected(0);
@@ -38,10 +38,7 @@ class _ToolBarState extends State<ToolBar> {
                 ),
                 child: const Text("Erase"),
               ),
-            ),
-            ListenableBuilder(
-              listenable: GameState.getInstance(),
-              builder: (ctx, _) => TextButton(
+              TextButton(
                 onPressed: () {
                   //print("please erase the digit thanks:D");
                   GameState.getInstance().switchDrafting();
@@ -55,8 +52,8 @@ class _ToolBarState extends State<ToolBar> {
                 ),
                 child: const Text("Draft"),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );
