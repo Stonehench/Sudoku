@@ -15,7 +15,7 @@ use rand::random;
 use regex_macro::regex;
 use threadpool::ThreadPool;
 
-use crate::rules::{ColumnRule, RowRule, Rule, SquareRule};
+use crate::rules::{ColumnRule, KnightRule, RowRule, Rule, SquareRule, XRule};
 
 pub type DynRule = Box<dyn Rule + Send>;
 
@@ -24,7 +24,6 @@ pub struct Sudoku {
     pub size: usize,
     pub cells: Vec<Cell>,
     pub rules: Vec<DynRule>,
-    pub x_clue: Option<Vec<(usize, usize)>>,
 }
 
 //Det her er ret fucked, men siden vi skal have den laveste entropy ud af vores priority queue skal den sammenligne omvendt
@@ -112,7 +111,7 @@ impl Display for SudokuSolveError {
 }
 
 impl Sudoku {
-    pub fn new(size: usize, mut rules: Vec<DynRule>, x_clue: Option<Vec<(usize, usize)>>) -> Self {
+    pub fn new(size: usize, mut rules: Vec<DynRule>) -> Self {
         if !rules.iter().any(|r| r.get_name() == "ColumnRule") {
             rules.push(Box::new(ColumnRule));
         }
@@ -126,7 +125,6 @@ impl Sudoku {
                 .map(|_| Cell::new_with_range(1..(size as u16 + 1)))
                 .collect(),
             rules,
-            x_clue,
         }
     }
 
@@ -284,8 +282,8 @@ impl Sudoku {
         rules: Vec<DynRule>,
         progess: Option<mpsc::Sender<usize>>,
     ) -> Result<Self, SudokuSolveError> {
-        let mut sudoku = Sudoku::new(size, rules, None);
-        sudoku.solve(None, None)?;
+        let mut sudoku = Sudoku::new(size, rules);
+        sudoku.solve(None, None).unwrap();
 
         const ATTEMPT_COUNT: usize = 5;
         const RETRY_LIMIT: usize = 55;
@@ -368,7 +366,7 @@ impl FromStr for Sudoku {
             .as_slice()
         {
             [rules_source, sudoku] => {
-                for rule_name in rules_source.split_whitespace() {
+                for rule_name in rules_source.split('|').map(str::trim) {
                     rules.push(
                         rule_name
                             .parse()
@@ -390,7 +388,7 @@ impl FromStr for Sudoku {
         #[cfg(debug_assertions)]
         println!("parsing size: {size}");
 
-        let mut sudoku = Sudoku::new(size, rules, None);
+        let mut sudoku = Sudoku::new(size, rules);
 
         for (index, part) in sudoku_source.split(',').map(str::trim).enumerate() {
             let n = part
@@ -458,7 +456,6 @@ impl Clone for Sudoku {
             size: self.size.clone(),
             cells: self.cells.clone(),
             rules: self.rules.iter().map(|r| r.boxed_clone()).collect(),
-            x_clue: self.x_clue.clone(),
         }
     }
 }
@@ -521,7 +518,7 @@ fn solve_test() {
 
 #[test]
 fn random_gen() {
-    let mut sudoku = Sudoku::new(9, vec![Box::new(SquareRule)], None);
+    let mut sudoku = Sudoku::new(9, vec![Box::new(SquareRule)]);
     sudoku.solve(None, None).unwrap();
     let pre = sudoku.to_string();
     println!("Pre:\n{}", pre);
@@ -594,4 +591,32 @@ fn generate_sudoku() {
     let sudoku = Sudoku::generate_with_size(9, vec![Box::new(SquareRule)], None).unwrap();
 
     println!("{sudoku} at {:?}", timer.elapsed());
+}
+
+#[test]
+fn generate_sudoku_x() {
+    let timer = std::time::Instant::now();
+    let sudoku = Sudoku::generate_with_size(
+        4,
+        vec![
+            Box::new(SquareRule),
+            Box::new(KnightRule),
+            Box::new(XRule {
+                x_clue: vec![(0, 1), (4, 5), (4, 8), (8, 9)],
+            }),
+        ],
+        None,
+    ).unwrap();
+
+    println!("{sudoku} at {:?}", timer.elapsed());
+}
+
+#[test]
+fn knights_xsudoku() {
+    let file_str = std::fs::read_to_string("./sudokuKnightsX").unwrap();
+    let mut sudoku: Sudoku = file_str.parse().unwrap();
+
+    sudoku.solve(None, None).unwrap();
+
+    println!("{sudoku}");
 }
