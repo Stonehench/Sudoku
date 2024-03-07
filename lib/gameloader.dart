@@ -26,6 +26,8 @@ class _GameLoaderState extends State<GameLoader> {
         var source = await widget.sudokuSource;
         if (source == null) {
           //I Dunno
+          //TODO handle better
+          print("Failed to generate");
           return;
         }
 

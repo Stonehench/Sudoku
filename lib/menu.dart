@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'dart:math';
 
 import 'package:flutter/services.dart';
+import 'package:flutter/widgets.dart';
 import 'package:sudoku/gameloader.dart';
 import 'package:sudoku/src/rust/api/simple.dart';
 
@@ -69,7 +70,7 @@ class _MenuState extends State<Menu> {
             TextButton(
               onPressed: () {
                 Future<String?> sudokuSource =
-                    generateWithSize(size: size, rulesSrc: []);
+                    generateWithSize(size: size, rulesSrc: gameModes.toList());
                 inputTextController.clear();
                 Navigator.of(context).push(MaterialPageRoute(
                   builder: (context) => GameLoader(sudokuSource),
@@ -77,9 +78,10 @@ class _MenuState extends State<Menu> {
               },
               child: const Text('Create Sudoku'),
             ),
-            Row(
+            Wrap(
+              crossAxisAlignment: WrapCrossAlignment.center,
               children: [
-                Text("Knights move"),
+                const Text("Knights move"),
                 Checkbox(
                     value: gameModes.contains("KnightsMove"),
                     onChanged: (v) {
@@ -88,6 +90,21 @@ class _MenuState extends State<Menu> {
                           gameModes.add("KnightsMove");
                         } else {
                           gameModes.remove("KnightsMove");
+                        }
+                      });
+                    }),
+                const SizedBox(
+                  width: 10,
+                ),
+                const Text("X Rule"),
+                Checkbox(
+                    value: gameModes.contains("XRule"),
+                    onChanged: (v) {
+                      setState(() {
+                        if (v == true) {
+                          gameModes.add("XRule");
+                        } else {
+                          gameModes.remove("XRule");
                         }
                       });
                     })

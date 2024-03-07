@@ -32,7 +32,7 @@ pub fn generate_with_size(size: usize, rules_src: Vec<String>) -> Option<String>
     for cell in &mut solved.cells {
         cell.locked_in = false;
     }
-    solved.solve(None, None).unwrap();
+    solved.solve(None, None).ok()?;
 
     let mut str_buffer = String::new();
 
