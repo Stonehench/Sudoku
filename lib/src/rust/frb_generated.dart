@@ -67,6 +67,8 @@ abstract class RustLibApi extends BaseApi {
   Future<bool> checkLegality(
       {required int position, required int value, dynamic hint});
 
+  Future<void> closeThreads({dynamic hint});
+
   Future<String?> generateWithSize(
       {required int size, required List<String> rulesSrc, dynamic hint});
 
@@ -108,6 +110,30 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   TaskConstMeta get kCheckLegalityConstMeta => const TaskConstMeta(
         debugName: "check_legality",
         argNames: ["position", "value"],
+      );
+
+  @override
+  Future<void> closeThreads({dynamic hint}) {
+    return handler.executeNormal(NormalTask(
+      callFfi: (port_) {
+        final serializer = SseSerializer(generalizedFrbRustBinding);
+        pdeCallFfi(generalizedFrbRustBinding, serializer,
+            funcId: 5, port: port_);
+      },
+      codec: SseCodec(
+        decodeSuccessData: sse_decode_unit,
+        decodeErrorData: null,
+      ),
+      constMeta: kCloseThreadsConstMeta,
+      argValues: [],
+      apiImpl: this,
+      hint: hint,
+    ));
+  }
+
+  TaskConstMeta get kCloseThreadsConstMeta => const TaskConstMeta(
+        debugName: "close_threads",
+        argNames: [],
       );
 
   @override

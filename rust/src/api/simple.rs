@@ -3,7 +3,7 @@ use std::sync::{mpsc, Mutex};
 use std::time::Duration;
 
 use lazy_static::lazy_static;
-use solver::sudoku::{DynRule, Sudoku};
+use solver::sudoku::{AllSolutionsContext, DynRule, Sudoku};
 
 use solver::rules::*;
 
@@ -87,4 +87,9 @@ pub fn check_legality(position: usize, value: u16) -> bool {
 pub fn init_app() {
     // Default utilities - feel free to customize
     flutter_rust_bridge::setup_default_user_utils();
+}
+
+pub fn close_threads() {
+    let pool = AllSolutionsContext::get_pool();
+    drop(pool);
 }
