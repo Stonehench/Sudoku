@@ -62,7 +62,7 @@ pub struct AllSolutionsContext {
 }
 
 impl AllSolutionsContext {
-    fn get_pool() -> ThreadPool {
+    pub fn get_pool() -> ThreadPool {
         if let Some(pool) = GLOBAL_POOL.lock().unwrap().take() {
             pool
         } else {
@@ -357,11 +357,7 @@ impl FromStr for Sudoku {
     type Err = ParseSudokuError;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
-        let mut rules: Vec<DynRule> = vec![
-            Box::new(RowRule),
-            Box::new(ColumnRule),
-            Box::new(SquareRule),
-        ];
+        let mut rules: Vec<DynRule> = vec![Box::new(SquareRule)];
 
         //WTFFF
         let sudoku_source = match regex!(r"(\r\n|\n)(\r\n|\n)")
@@ -522,14 +518,7 @@ fn solve_test() {
 
 #[test]
 fn random_gen() {
-    let mut sudoku = Sudoku::new(
-        9,
-        vec![
-            Box::new(RowRule),
-            Box::new(ColumnRule),
-            Box::new(SquareRule),
-        ],
-    );
+    let mut sudoku = Sudoku::new(9, vec![Box::new(SquareRule)]);
     sudoku.solve(None, None).unwrap();
     let pre = sudoku.to_string();
     println!("Pre:\n{}", pre);
@@ -599,15 +588,7 @@ fn find_all_solutions() {
 #[test]
 fn generate_sudoku() {
     let timer = std::time::Instant::now();
-    let sudoku = Sudoku::generate_with_size(
-        9,
-        vec![
-            Box::new(RowRule),
-            Box::new(ColumnRule),
-            Box::new(SquareRule),
-        ],
-        None,
-    );
+    let sudoku = Sudoku::generate_with_size(9, vec![Box::new(SquareRule)], None);
 
     println!("{sudoku} at {:?}", timer.elapsed());
 }
@@ -620,14 +601,15 @@ fn generate_sudoku_x() {
         vec![
             Box::new(SquareRule),
             Box::new(KnightRule),
-            Box::new(XRule {x_clue : vec![(0,1),(4,5),(4,8),(8,9)]}),
+            Box::new(XRule {
+                x_clue: vec![(0, 1), (4, 5), (4, 8), (8, 9)],
+            }),
         ],
         None,
     );
 
     println!("{sudoku} at {:?}", timer.elapsed());
 }
-
 
 #[test]
 fn knights_xsudoku() {

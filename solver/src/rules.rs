@@ -513,8 +513,6 @@ fn diagonal_hidden_math_test() {
     let mut sudoku = Sudoku::new(
         9,
         vec![
-            Box::new(RowRule),
-            Box::new(ColumnRule),
             Box::new(SquareRule),
             Box::new(DiagonalRule),
         ],
@@ -539,8 +537,7 @@ fn x_hidden_math_test() {
     let mut sudoku = Sudoku::new(
         4,
         vec![
-            Box::new(RowRule),
-            Box::new(ColumnRule),
+            
             Box::new(SquareRule),
             Box::new(x_rule.clone()),
         ],
@@ -559,8 +556,7 @@ fn row_hidden_math_test() {
     let mut sudoku = Sudoku::new(
         9,
         vec![
-            Box::new(RowRule),
-            Box::new(ColumnRule),
+            
             Box::new(SquareRule),
         ],
     );
@@ -582,8 +578,7 @@ fn column_hidden_math_test() {
     let mut sudoku = Sudoku::new(
         9,
         vec![
-            Box::new(RowRule),
-            Box::new(ColumnRule),
+            
             Box::new(SquareRule),
         ],
     );
@@ -605,8 +600,7 @@ fn square_hidden_math_test() {
     let mut sudoku = Sudoku::new(
         9,
         vec![
-            Box::new(RowRule),
-            Box::new(ColumnRule),
+            
             Box::new(SquareRule),
         ],
     );

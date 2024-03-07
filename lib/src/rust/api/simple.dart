@@ -18,3 +18,6 @@ Future<bool> checkLegality(
         {required int position, required int value, dynamic hint}) =>
     RustLib.instance.api
         .checkLegality(position: position, value: value, hint: hint);
+
+Future<void> closeThreads({dynamic hint}) =>
+    RustLib.instance.api.closeThreads(hint: hint);
