@@ -112,7 +112,14 @@ impl Display for SudokuSolveError {
 }
 
 impl Sudoku {
-    pub fn new(size: usize, rules: Vec<DynRule>, x_clue: Option<Vec<(usize, usize)>>) -> Self {
+    pub fn new(size: usize, mut rules: Vec<DynRule>, x_clue: Option<Vec<(usize, usize)>>) -> Self {
+        if !rules.iter().any(|r| r.get_name() == "ColumnRule") {
+            rules.push(Box::new(ColumnRule));
+        }
+        if !rules.iter().any(|r| r.get_name() == "RowRule") {
+            rules.push(Box::new(RowRule));
+        }
+
         Self {
             size,
             cells: (0..size * size)
