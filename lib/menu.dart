@@ -40,6 +40,51 @@ class _MenuState extends State<Menu> {
     }
   }
 
+  Set<String> gameModes = {};
+
+  final List<(String, String, bool)> rules = [
+    ("Square rule", "SquareRule", true),
+    ("Knights move", "KnightsMove", false),
+    ("X rule", "XRule", false),
+    ("Diaginal rule", "DiagonalRule", false),
+  ];
+
+  bool initialized = false;
+
+  List<Widget> ruleWidgets() {
+    List<Widget> list = [];
+
+    for (var (name, realname, def) in rules) {
+      if (!initialized) {
+        initialized = true;
+        if (def) {
+          gameModes.add(realname);
+        }
+      }
+
+      list.add(Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Text(name),
+          Checkbox(
+            value: gameModes.contains(realname),
+            onChanged: (v) {
+              setState(() {
+                if (v == true) {
+                  gameModes.add(realname);
+                } else {
+                  gameModes.remove(realname);
+                }
+              });
+            },
+          ),
+        ],
+      ));
+    }
+
+    return list;
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -66,15 +111,32 @@ class _MenuState extends State<Menu> {
             Text(sizeText),
             TextButton(
               onPressed: () {
+                setState(() {
+                  sizeText = "${size}x$size";  
+                });
+                
+
                 Future<String?> sudokuSource =
-                    generateWithSize(size: size, rulesSrc: []);
-                inputTextController.clear();
-                Navigator.of(context).push(MaterialPageRoute(
-                  builder: (context) => GameLoader(sudokuSource),
-                ));
+                    generateWithSize(size: size, rulesSrc: gameModes.toList());
+                //inputTextController.clear();
+                () async {
+                  var res = await Navigator.of(context).push(MaterialPageRoute(
+                    builder: (context) => GameLoader(sudokuSource),
+                  ));
+                  if (res != null) {
+                    setState(() {
+                      sizeText = res.toString();
+                    });
+                  }
+                }();
               },
               child: const Text('Create Sudoku'),
             ),
+            Wrap(
+              spacing: 20,
+              crossAxisAlignment: WrapCrossAlignment.center,
+              children: ruleWidgets(),
+            )
           ],
         ),
       ),

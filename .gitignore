@@ -42,8 +42,7 @@ app.*.map.json
 /android/app/profile
 /android/app/release
 ./target
-target/*
-./target
+/target/
 ./windows
 ./linux
 target/.rustc_info.json

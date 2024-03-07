@@ -26,10 +26,16 @@ class _GameLoaderState extends State<GameLoader> {
         var source = await widget.sudokuSource;
         if (source == null) {
           //I Dunno
+          setState(() {
+            Navigator.of(context)
+                .pop("Failed to generate sudoku with these rules");
+          });
+
           return;
         }
+        var xPositions = await getXPositions();
 
-        GameState.setInstance(GameState(source));
+        GameState.setInstance(GameState(source, xPositions));
         setState(() {
           Navigator.of(context).pushReplacement(MaterialPageRoute(
             builder: (context) => const GameView(),
@@ -41,9 +47,11 @@ class _GameLoaderState extends State<GameLoader> {
     () async {
       var progress = await waitForProgess();
       if (progress != null) {
-        setState(() {
-          removed = progress;
-        });
+        if (mounted) {
+          setState(() {
+            removed = progress;
+          });
+        }
       }
     }();
 

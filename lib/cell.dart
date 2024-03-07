@@ -30,9 +30,11 @@ class _CellState extends State<Cell> {
       isCurrentlyError = true;
     });
     Timer(const Duration(seconds: 1), () {
-      setState(() {
-        isCurrentlyError = false;
-      });
+      if (mounted) {
+        setState(() {
+          isCurrentlyError = false;
+        });
+      }
     });
   }
 
@@ -58,6 +60,10 @@ class _CellState extends State<Cell> {
   @override
   Widget build(BuildContext context) {
     var state = GameState.getInstance();
+
+    bool isX = state.xPositions
+        .any((t) => t.$1 == widget.index || t.$2 == widget.index);
+
     double fontSize = state.size <= 9
         ? 30.0
         : state.size <= 16
@@ -73,14 +79,16 @@ class _CellState extends State<Cell> {
     return InkWell(
       onTap: onClick,
       child: Container(
-        color: isCurrentlyError ? Colors.red : Theme.of(context).highlightColor,
+        color: isCurrentlyError
+            ? Colors.red
+            : (isX ? Colors.yellow : Theme.of(context).highlightColor),
         alignment: Alignment.center,
         child: widget.digit != null
             ? Text(widget.digit!.toString(),
                 style: TextStyle(fontSize: fontSize, color: txtColor))
             // 30 or 9x9, 15 for 16x16 , 6 for anything else (for now at least)
             : Wrap(
-              spacing: 2.0,
+                spacing: 2.0,
                 children: state.drafts[widget.index]
                     .map((n) => Text(n.toString()))
                     .toList(),

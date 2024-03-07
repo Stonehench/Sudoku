@@ -11,6 +11,9 @@ Future<String?> generateWithSize(
     RustLib.instance.api
         .generateWithSize(size: size, rulesSrc: rulesSrc, hint: hint);
 
+Future<List<(int, int)>> getXPositions({dynamic hint}) =>
+    RustLib.instance.api.getXPositions(hint: hint);
+
 Future<int?> waitForProgess({dynamic hint}) =>
     RustLib.instance.api.waitForProgess(hint: hint);
 

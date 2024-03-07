@@ -9,9 +9,14 @@ Future<void> main() async {
   runApp(const SudokuApp());
 }
 
-class SudokuApp extends StatelessWidget {
+class SudokuApp extends StatefulWidget {
   const SudokuApp({super.key});
 
+  @override
+  State<SudokuApp> createState() => _SudokuAppState();
+}
+
+class _SudokuAppState extends State<SudokuApp> {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
@@ -26,6 +31,7 @@ class SudokuApp extends StatelessWidget {
 
   @override
   void dispose() {
+    super.dispose();
     closeThreads();
   }
 }
