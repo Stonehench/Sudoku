@@ -30,7 +30,11 @@ impl FromStr for DynRule {
         match s {
             "KnightsMove" => Ok(Box::new(KnightRule)),
             "DiagonalRule" => Ok(Box::new(DiagonalRule)),
-            invalid => return Err(invalid.to_owned()),
+            _ => {let mut rule_params = s.split_whitespace();
+             match rule_params.next() {
+                Some("XRule") => Ok(Box::new(XRule)),
+                _ => return Err(s.to_owned())
+            }}
         }
     }
 }

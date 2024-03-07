@@ -372,7 +372,7 @@ impl FromStr for Sudoku {
             .as_slice()
         {
             [rules_source, sudoku] => {
-                for rule_name in rules_source.split_whitespace() {
+                for rule_name in rules_source.split(':').map(str::trim) {
                     rules.push(
                         rule_name
                             .parse()
