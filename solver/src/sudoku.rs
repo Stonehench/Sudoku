@@ -279,6 +279,36 @@ impl Sudoku {
         let mut sudoku = Sudoku::new(size, rules);
         sudoku.solve(None, None)?;
 
+        // if x-rule is part of the rule set insert the X's
+        if let Some(x_rule) = sudoku.rules.iter_mut().find_map(|r| r.to_x_rule()) {
+            for index in 0..sudoku.cells.len() {
+                if let Some(current) = sudoku.cells[index].available.get(0) {
+                    if index + 1 >= sudoku.cells.len() {
+                        continue;
+                    }
+                    if let Some(left) = sudoku.cells[index + 1].available.get(0) {
+                        if current + left == sudoku.size as u16 + 1 && (index + 1) % sudoku.size != 0 {
+                            // x rule should have (index , left)
+                            x_rule.x_clue.push((index, index + 1));
+                            println!("{index}  {}", index + 1 )
+                        }
+                    }
+                    if index + sudoku.size >= sudoku.cells.len() {
+                        continue;
+                    }
+                    if let Some(below) = sudoku.cells[index + sudoku.size].available.get(0) {
+                        if current + below == sudoku.size as u16 + 1 && index + sudoku.size < sudoku.cells.len() {
+                            // x rule should have (index , below)
+                            x_rule.x_clue.push((index, index + sudoku.size));
+                            println!("{index}  {}", index + sudoku.size )
+                        }
+                    }
+                }
+                    
+            }
+        } 
+        
+
         const ATTEMPT_COUNT: usize = 5;
         const RETRY_LIMIT: usize = 55;
 

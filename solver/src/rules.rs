@@ -22,7 +22,7 @@ pub trait Rule: Debug {
     fn boxed_clone(&self) -> DynRule;
     fn get_name(&self) -> &'static str;
 
-    fn to_x_rule(&self) -> Option<&XRule> {
+    fn to_x_rule(& mut self) -> Option<& mut XRule> {
         None
     }
 }
@@ -277,7 +277,7 @@ impl Rule for XRule {
         "XRule"
     }
 
-    fn to_x_rule(&self) -> Option<&XRule> {
+    fn to_x_rule(& mut self) -> Option<& mut XRule> {
         Some(self)
     }
 }
