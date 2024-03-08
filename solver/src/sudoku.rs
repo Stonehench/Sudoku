@@ -283,6 +283,9 @@ impl Sudoku {
         if let Some(x_rule) = sudoku.rules.iter_mut().find_map(|r| r.to_x_rule()) {
             for index in 0..sudoku.cells.len() {
                 if let Some(current) = sudoku.cells[index].available.get(0) {
+                    if index + 1 >= sudoku.cells.len() {
+                        continue;
+                    }
                     if let Some(left) = sudoku.cells[index + 1].available.get(0) {
                         if current + left == sudoku.size as u16 + 1 && (index + 1) % sudoku.size != 0 {
                             // x rule should have (index , left)
