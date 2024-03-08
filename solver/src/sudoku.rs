@@ -1,11 +1,5 @@
 use std::{
-    cmp::Ordering,
-    fmt::{Display, Write},
-    num::ParseIntError,
-    ops::Range,
-    str::FromStr,
-    sync::{atomic::AtomicUsize, mpsc, Arc, Mutex},
-    time::Instant,
+    cmp::Ordering, fmt::{Display, Write}, num::ParseIntError, ops::Range, str::FromStr, sync::{atomic::AtomicUsize, mpsc, Arc, Mutex}, time::Instant
 };
 
 use integer_sqrt::IntegerSquareRoot;

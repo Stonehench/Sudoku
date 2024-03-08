@@ -21,6 +21,10 @@ pub trait Rule: Debug {
     fn hidden_singles(&self, sudoku: &Sudoku) -> Option<(u16, usize)>;
     fn boxed_clone(&self) -> DynRule;
     fn get_name(&self) -> &'static str;
+
+    fn to_x_rule(&self) -> Option<&XRule> {
+        None
+    }
 }
 
 impl FromStr for DynRule {
@@ -31,22 +35,25 @@ impl FromStr for DynRule {
             "SquareRule" => Ok(Box::new(SquareRule)),
             "KnightsMove" => Ok(Box::new(KnightRule)),
             "DiagonalRule" => Ok(Box::new(DiagonalRule)),
-            _ => {let mut rule_params = s.split(';').map(str::trim);
-             match rule_params.next() {
-                Some("XRule") => Ok(Box::new(XRule{
-                    x_clue: rule_params.map(|s|{
-                        let Some((l,r)) = s.split_once(',') else {
-                            return Err(format!("Failed to split {s} on ,"));
-                        };
-                        let l = l.parse().map_err(|e| format!("{e:?}"))?;
-                        let r = r.parse().map_err(|e| format!("{e:?}"))?;
+            _ => {
+                let mut rule_params = s.split(';').map(str::trim);
+                match rule_params.next() {
+                    Some("XRule") => Ok(Box::new(XRule {
+                        x_clue: rule_params
+                            .map(|s| {
+                                let Some((l, r)) = s.split_once(',') else {
+                                    return Err(format!("Failed to split {s} on ,"));
+                                };
+                                let l = l.parse().map_err(|e| format!("{e:?}"))?;
+                                let r = r.parse().map_err(|e| format!("{e:?}"))?;
 
-                        Ok((l,r))
-                        }
-                    ).collect::<Result<_,_>>()?
-                })),
-                _ => return Err(s.to_owned())
-            }}
+                                Ok((l, r))
+                            })
+                            .collect::<Result<_, _>>()?,
+                    })),
+                    _ => return Err(s.to_owned()),
+                }
+            }
         }
     }
 }
@@ -222,7 +229,7 @@ impl Rule for ColumnRule {
 }
 
 #[derive(Debug, Clone)]
-pub struct XRule{    
+pub struct XRule {
     pub x_clue: Vec<(usize, usize)>,
 }
 
@@ -245,20 +252,20 @@ impl Rule for XRule {
 
         // Either don't return anything
         // Or return the corrisponding index to the other half of X
-        
-            for (left_index, right_index) in &self.x_clue {
-                if sudoku.cells[*left_index].locked_in && !sudoku.cells[*right_index].locked_in {
-                    if let Some(value) = sudoku.cells[*left_index].available.get(0) {
-                        return Some((((sudoku.size + 1) as u16 - value), *right_index));
-                    }
-                }
-                if sudoku.cells[*right_index].locked_in && !sudoku.cells[*left_index].locked_in {
-                    if let Some(value) = sudoku.cells[*right_index].available.get(0) {
-                        return Some((((sudoku.size + 1) as u16 - value), *left_index));
-                    }
+
+        for (left_index, right_index) in &self.x_clue {
+            if sudoku.cells[*left_index].locked_in && !sudoku.cells[*right_index].locked_in {
+                if let Some(value) = sudoku.cells[*left_index].available.get(0) {
+                    return Some((((sudoku.size + 1) as u16 - value), *right_index));
                 }
             }
-    
+            if sudoku.cells[*right_index].locked_in && !sudoku.cells[*left_index].locked_in {
+                if let Some(value) = sudoku.cells[*right_index].available.get(0) {
+                    return Some((((sudoku.size + 1) as u16 - value), *left_index));
+                }
+            }
+        }
+
         None
     }
 
@@ -268,6 +275,10 @@ impl Rule for XRule {
 
     fn get_name(&self) -> &'static str {
         "XRule"
+    }
+
+    fn to_x_rule(&self) -> Option<&XRule> {
+        Some(self)
     }
 }
 
@@ -529,18 +540,13 @@ fn diagonal_hidden_math_test() {
 
 #[test]
 fn x_hidden_math_test() {
-    let x_rule = XRule { x_clue: vec![(1 as usize, 2 as usize)]};
-    let mut sudoku = Sudoku::new(
-        4,
-        vec![
-            Box::new(SquareRule),
-            Box::new(x_rule.clone()),
-        ],
-    );
+    let x_rule = XRule {
+        x_clue: vec![(1 as usize, 2 as usize)],
+    };
+    let mut sudoku = Sudoku::new(4, vec![Box::new(SquareRule), Box::new(x_rule.clone())]);
 
     sudoku.set_cell(1, 1).unwrap();
     println!("{sudoku}");
-
 
     let res = x_rule.hidden_singles(&sudoku);
     assert_eq!(res, Some((4, 2)))
