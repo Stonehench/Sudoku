@@ -290,6 +290,7 @@ impl Sudoku {
                         if current + left == sudoku.size as u16 + 1 && (index + 1) % sudoku.size != 0 {
                             // x rule should have (index , left)
                             x_rule.x_clue.push((index, index + 1));
+                            println!("{index}  {}", index + 1 )
                         }
                     }
                     if index + sudoku.size >= sudoku.cells.len() {
@@ -299,6 +300,7 @@ impl Sudoku {
                         if current + below == sudoku.size as u16 + 1 && index + sudoku.size < sudoku.cells.len() {
                             // x rule should have (index , below)
                             x_rule.x_clue.push((index, index + sudoku.size));
+                            println!("{index}  {}", index + sudoku.size )
                         }
                     }
                 }

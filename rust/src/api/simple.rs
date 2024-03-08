@@ -23,7 +23,11 @@ pub fn generate_with_size(size: usize, rules_src: Vec<String>) -> Option<String>
 
     let sender = PROGRESS.lock().unwrap().0.clone();
 
-    let sudoku = Sudoku::generate_with_size(size, rules, Some(sender)).ok()?;
+    let mut sudoku = Sudoku::generate_with_size(size, rules, Some(sender)).ok()?;
+
+    if let Some(x_rule) = sudoku.rules.iter_mut().find_map(|r| r.to_x_rule()) {
+        state.x_positions = x_rule.x_clue.clone();
+    }
 
 
     let mut solved = sudoku.clone();
