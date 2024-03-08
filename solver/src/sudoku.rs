@@ -280,17 +280,21 @@ impl Sudoku {
         sudoku.solve(None, None)?;
 
         // if x-rule is part of the rule set insert the X's
-        if sudoku.rules.iter().map(|r| r.get_name()).any(|r| r == "XRule") {
+        if let Some(x_rule) = sudoku.rules.iter_mut().find_map(|r| r.to_x_rule()) {
             for index in 0..sudoku.cells.len() {
-                if let Some(current) = sudoku.cells.get(index).unwrap().available.get(0) {
-                    if let Some(left) = sudoku.cells.get(index + 1).unwrap().available.get(0) {
-                        if current + left == sudoku.size as u16 + 1 {
+                if let Some(current) = sudoku.cells[index].available.get(0) {
+                    if let Some(left) = sudoku.cells[index + 1].available.get(0) {
+                        if current + left == sudoku.size as u16 + 1 && (index + 1) % sudoku.size != 0 {
                             // x rule should have (index , left)
+                            x_rule.x_clue.push((index, index + 1));
+                            println!("Left X")
                         }
                     }
-                    if let Some(below) = sudoku.cells.get(index + 9).unwrap().available.get(0) {
-                        if current + below == sudoku.size as u16 + 1 {
+                    if let Some(below) = sudoku.cells[index + sudoku.size].available.get(0) {
+                        if current + below == sudoku.size as u16 + 1 && index + sudoku.size < sudoku.cells.len() {
                             // x rule should have (index , below)
+                            x_rule.x_clue.push((index, index + sudoku.size));
+                            println!("Below X")
                         }
                     }
                 }
