@@ -361,7 +361,7 @@ impl Rule for DiagonalRule {
 
     fn hidden_singles(&self, sudoku: &Sudoku) -> Option<(u16, usize)> {
 
-        'value: for value in 1..=sudoku.size as u16 {
+        for value in 1..=sudoku.size as u16 {
             let mut found_position = None;
 
             // iterate over digonal from top left corner down
@@ -533,39 +533,39 @@ fn diagonal_test() {
         vec![0, 10, 20, 30, 40, 50, 60, 70, 80, 8, 16, 24, 32, 40, 48, 56, 64, 72]
     );
 
-    let sudokuSmall = Sudoku::new(4, vec![]);
+    let sudoku_small = Sudoku::new(4, vec![]);
 
-    indexes = diagonalrule.updates(sudokuSmall.size, 0, &mut buffer);
+    indexes = diagonalrule.updates(sudoku_small.size, 0, &mut buffer);
     assert_eq!(indexes, vec![0, 5, 10, 15]);
-    indexes = diagonalrule.updates(sudokuSmall.size, 1, &mut buffer);
+    indexes = diagonalrule.updates(sudoku_small.size, 1, &mut buffer);
     assert_eq!(indexes, vec![]);
-    indexes = diagonalrule.updates(sudokuSmall.size, 2, &mut buffer);
+    indexes = diagonalrule.updates(sudoku_small.size, 2, &mut buffer);
     assert_eq!(indexes, vec![]);
-    indexes = diagonalrule.updates(sudokuSmall.size, 3, &mut buffer);
+    indexes = diagonalrule.updates(sudoku_small.size, 3, &mut buffer);
     assert_eq!(indexes, vec![3, 6, 9, 12]);
-    indexes = diagonalrule.updates(sudokuSmall.size, 4, &mut buffer);
+    indexes = diagonalrule.updates(sudoku_small.size, 4, &mut buffer);
     assert_eq!(indexes, vec![]);
-    indexes = diagonalrule.updates(sudokuSmall.size, 5, &mut buffer);
+    indexes = diagonalrule.updates(sudoku_small.size, 5, &mut buffer);
     assert_eq!(indexes, vec![0, 5, 10, 15]);
-    indexes = diagonalrule.updates(sudokuSmall.size, 6, &mut buffer);
+    indexes = diagonalrule.updates(sudoku_small.size, 6, &mut buffer);
     assert_eq!(indexes, vec![3, 6, 9, 12]);
-    indexes = diagonalrule.updates(sudokuSmall.size, 7, &mut buffer);
+    indexes = diagonalrule.updates(sudoku_small.size, 7, &mut buffer);
     assert_eq!(indexes, vec![]);
-    indexes = diagonalrule.updates(sudokuSmall.size, 8, &mut buffer);
+    indexes = diagonalrule.updates(sudoku_small.size, 8, &mut buffer);
     assert_eq!(indexes, vec![]);
-    indexes = diagonalrule.updates(sudokuSmall.size, 9, &mut buffer);
+    indexes = diagonalrule.updates(sudoku_small.size, 9, &mut buffer);
     assert_eq!(indexes, vec![3, 6, 9, 12]);    
-    indexes = diagonalrule.updates(sudokuSmall.size, 10, &mut buffer);
+    indexes = diagonalrule.updates(sudoku_small.size, 10, &mut buffer);
     assert_eq!(indexes, vec![0, 5, 10, 15]);
-    indexes = diagonalrule.updates(sudokuSmall.size, 11, &mut buffer);
+    indexes = diagonalrule.updates(sudoku_small.size, 11, &mut buffer);
     assert_eq!(indexes, vec![]);
-    indexes = diagonalrule.updates(sudokuSmall.size, 12, &mut buffer);
+    indexes = diagonalrule.updates(sudoku_small.size, 12, &mut buffer);
     assert_eq!(indexes, vec![3, 6, 9, 12]);
-    indexes = diagonalrule.updates(sudokuSmall.size, 13, &mut buffer);
+    indexes = diagonalrule.updates(sudoku_small.size, 13, &mut buffer);
     assert_eq!(indexes, vec![]);
-    indexes = diagonalrule.updates(sudokuSmall.size, 14, &mut buffer);
+    indexes = diagonalrule.updates(sudoku_small.size, 14, &mut buffer);
     assert_eq!(indexes, vec![]);
-    indexes = diagonalrule.updates(sudokuSmall.size, 15, &mut buffer);
+    indexes = diagonalrule.updates(sudoku_small.size, 15, &mut buffer);
     assert_eq!(indexes, vec![0, 5, 10, 15]);
 
 }
