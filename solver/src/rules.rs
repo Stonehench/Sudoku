@@ -19,6 +19,11 @@ pub trait Rule: Debug {
     }
 
     fn hidden_singles(&self, sudoku: &Sudoku) -> Option<(u16, usize)>;
+
+    // TODO altså jeg er ikke helt sikker på at det her er 100% lovligt
+    // return (Value to be removed, [list of indexes where the removel should happen])
+    fn locked_candidate(&self, sudoku: &Sudoku) -> Option<(u16, Vec<usize>)> { None } 
+
     fn boxed_clone(&self) -> DynRule;
     fn get_name(&self) -> &'static str;
 
@@ -87,7 +92,7 @@ impl Rule for SquareRule {
         }
         buffer
     }
-
+    
     fn hidden_singles(&self, sudoku: &Sudoku) -> Option<(u16, usize)> {
         let sub_s = sudoku.size.integer_sqrt();
         for sq_y in 0..sub_s {
@@ -118,6 +123,7 @@ impl Rule for SquareRule {
         }
         None
     }
+
     fn boxed_clone(&self) -> DynRule {
         Box::new(self.clone())
     }
@@ -265,6 +271,37 @@ impl Rule for XRule {
                 }
             }
         }
+
+        None
+    }
+
+    fn locked_candidate(&self, sudoku: &Sudoku) -> Option<(u16, Vec<usize>)> {
+        //let mut found_candidate: Option<(u16, Vec<usize>)> = None;
+        let mut found_positions: Vec<usize> = vec![];
+        // for all numbers in the sudoku
+        // for all pairs in the X-clue
+        for i in 1..(sudoku.size + 1) as u16 {
+            found_positions.clear();
+
+            for (left_index, right_index) in &self.x_clue {
+                // if neither side of the pair is locked in and the number is avalible in left but the counter part is not avalible in right
+                if !sudoku.cells[*left_index].locked_in &&
+                    !sudoku.cells[*right_index].locked_in && 
+                    sudoku.cells[*left_index].available.contains(&i) && 
+                    !sudoku.cells[*right_index].available.contains(&((sudoku.size + 1) as u16 - i)){
+                        found_positions.push(*left_index);
+                }
+                if !sudoku.cells[*left_index].locked_in &&
+                !sudoku.cells[*right_index].locked_in && 
+                sudoku.cells[*right_index].available.contains(&i) && 
+                !sudoku.cells[*left_index].available.contains(&((sudoku.size + 1) as u16 - i)){
+                    found_positions.push(*right_index);
+            }
+            }
+            if !found_positions.is_empty() {
+                return Some((i, found_positions));
+            }
+        } 
 
         None
     }
@@ -454,6 +491,22 @@ impl Rule for KnightRule {
         "KnightRule"
     }
 }
+
+#[test]
+fn locked_x_candidate() {
+    let mut sudoku = Sudoku::new(4, vec![]);
+    let x_rule = XRule {
+        x_clue: vec![(1 as usize, 2 as usize)],
+    };
+
+    sudoku.set_cell(1, 5).unwrap();
+    println!("{sudoku}");
+
+    let res = x_rule.locked_candidate(&sudoku);
+    assert_eq!(res, Some((4, vec![2])))
+}
+
+
 
 #[test]
 fn diagonal_test() {

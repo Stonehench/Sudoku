@@ -221,6 +221,16 @@ impl Sudoku {
                         }
                     }
 
+                    // No hidden singles where found time to seach for locked candidates!
+                    for rule in &self.rules {
+                        if let Some((n, removable_indexes)) = rule.locked_candidate(self) {
+                            for index in removable_indexes {
+                                self.cells[index].remove(n)?;
+                            }
+                            continue 'main;
+                        }
+                    }
+
                     //Der er flere muligheder for hvad der kan vælges. Derfor pushes state på branch stacken og der vælges en mulighed
                     //Vælg random
                     let choice = random::<usize>() % entropy.0;
