@@ -294,13 +294,22 @@ impl Rule for DiagonalRule {
     ) -> &'buf [usize] {
         buffer.clear();
 
-        if index % (size + 1) == 0 {
+        if index == 0 || index == (size * size) - 1 || !(index % (size - 1) == 0) && index % (size + 1) == 0 {
             for i in (0..size).map(|i| i * (size + 1)) {
                 buffer.push(i)
             }
         }
 
-        if index % (size - 1) == 0 {
+        if !(index % (size + 1) == 0) && index % (size - 1) == 0 {
+            for i in (0..size).map(|i| (i + 1) * (size - 1)) {
+                buffer.push(i)
+            }
+        }
+
+        if size % 2 == 1 && index == (size *size) / 2{
+            for i in (0..size).map(|i| i * (size + 1)) {
+                buffer.push(i)
+            }
             for i in (0..size).map(|i| (i + 1) * (size - 1)) {
                 buffer.push(i)
             }
@@ -317,7 +326,7 @@ impl Rule for DiagonalRule {
 
             // iterate over digonal from top left corner down
             for position in (0..sudoku.size).map(|i| i * (sudoku.size + 1)) {
-                if sudoku.cells[position].available.contains(&value) {
+                if sudoku.cells[position].available.contains(&value) && ! sudoku.cells[position].locked_in {
                     if found_position.is_some() {
                         continue 'value;
                     } else {
@@ -335,7 +344,7 @@ impl Rule for DiagonalRule {
             found_position = None;
             // iterate over digonal from top right corner down
             for position in (0..sudoku.size).map(|i| (i + 1) * (sudoku.size - 1)) {
-                if sudoku.cells[position].available.contains(&value) {
+                if sudoku.cells[position].available.contains(&value) && ! sudoku.cells[position].locked_in{
                     if found_position.is_some() {
                         continue 'value;
                     } else {
@@ -450,23 +459,52 @@ fn diagonal_test() {
     let mut buffer = vec![];
 
     let mut indexes = diagonalrule.updates(sudoku.size, 11, &mut buffer);
-    println!("{indexes:?}");
     assert_eq!(indexes, vec![]);
 
-    indexes = diagonalrule.updates(sudoku.size, 70, &mut buffer);
-    println!("{indexes:?}");
+    indexes = diagonalrule.updates(sudoku.size, 80, &mut buffer);
+    assert_eq!(indexes, vec![0, 10, 20, 30, 40, 50, 60, 70, 80]);
+
+    indexes = diagonalrule.updates(sudoku.size, 0, &mut buffer);
     assert_eq!(indexes, vec![0, 10, 20, 30, 40, 50, 60, 70, 80]);
 
     indexes = diagonalrule.updates(sudoku.size, 16, &mut buffer);
-    println!("{indexes:?}");
     assert_eq!(indexes, vec![8, 16, 24, 32, 40, 48, 56, 64, 72]);
 
     indexes = diagonalrule.updates(sudoku.size, 40, &mut buffer);
-    println!("{indexes:?}");
     assert_eq!(
         indexes,
         vec![0, 10, 20, 30, 40, 50, 60, 70, 80, 8, 16, 24, 32, 40, 48, 56, 64, 72]
-    )
+    );
+
+    let sudokuSmall = Sudoku::new(4, vec![]);
+
+    indexes = diagonalrule.updates(sudokuSmall.size, 11, &mut buffer);
+    assert_eq!(indexes, vec![]);
+
+    indexes = diagonalrule.updates(sudokuSmall.size, 0, &mut buffer);
+    assert_eq!(indexes, vec![0, 5, 10, 15]);
+
+    indexes = diagonalrule.updates(sudokuSmall.size, 5, &mut buffer);
+    assert_eq!(indexes, vec![0, 5, 10, 15]);
+
+    indexes = diagonalrule.updates(sudokuSmall.size, 10, &mut buffer);
+    assert_eq!(indexes, vec![0, 5, 10, 15]);
+
+    indexes = diagonalrule.updates(sudokuSmall.size, 15, &mut buffer);
+    assert_eq!(indexes, vec![0, 5, 10, 15]);
+
+    indexes = diagonalrule.updates(sudokuSmall.size, 3, &mut buffer);
+    assert_eq!(indexes, vec![3, 6, 9, 12]);
+
+    indexes = diagonalrule.updates(sudokuSmall.size, 6, &mut buffer);
+    assert_eq!(indexes, vec![3, 6, 9, 12]);
+
+    indexes = diagonalrule.updates(sudokuSmall.size, 9, &mut buffer);
+    assert_eq!(indexes, vec![3, 6, 9, 12]);
+
+    indexes = diagonalrule.updates(sudokuSmall.size, 12, &mut buffer);
+    assert_eq!(indexes, vec![3, 6, 9, 12]);
+
 }
 
 #[test]

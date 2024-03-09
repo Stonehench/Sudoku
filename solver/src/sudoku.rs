@@ -112,7 +112,6 @@ impl Sudoku {
         if !rules.iter().any(|r| r.get_name() == "RowRule") {
             rules.push(Box::new(RowRule));
         }
-
         Self {
             size,
             cells: (0..size * size)
@@ -121,6 +120,8 @@ impl Sudoku {
             rules,
         }
     }
+
+    
 
     pub fn set_cell(&mut self, n: u16, index: usize) -> Result<(), SudokuSolveError> {
         let mut ret_buffer = vec![];
