@@ -319,7 +319,6 @@ impl Rule for DiagonalRule {
     }
 
     fn hidden_singles(&self, sudoku: &Sudoku) -> Option<(u16, usize)> {
-        println!("HIDDEN DIAGONALS!!");
 
         'value: for value in 1..=sudoku.size as u16 {
             let mut found_position = None;
