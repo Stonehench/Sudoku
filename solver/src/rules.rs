@@ -294,18 +294,22 @@ impl Rule for DiagonalRule {
     ) -> &'buf [usize] {
         buffer.clear();
 
+
+        // Check if the index is on the first diagonal, and not on the second
         if index == 0 || index == (size * size) - 1 || !(index % (size - 1) == 0) && index % (size + 1) == 0 {
             for i in (0..size).map(|i| i * (size + 1)) {
                 buffer.push(i)
             }
         }
 
+        // Check if the index is on the second diagonal, and not on the first
         if !(index % (size + 1) == 0) && index % (size - 1) == 0 {
             for i in (0..size).map(|i| (i + 1) * (size - 1)) {
                 buffer.push(i)
             }
         }
 
+        // In the rare case that the index is on the middle square in a sudoku of odd side-length
         if size % 2 == 1 && index == (size *size) / 2{
             for i in (0..size).map(|i| i * (size + 1)) {
                 buffer.push(i)

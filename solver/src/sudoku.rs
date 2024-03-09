@@ -213,11 +213,10 @@ impl Sudoku {
                     for rule in &self.rules {
                         if let Some((n, hidden_index)) = rule.hidden_singles(self) {
                             //Put nuværende cell tilbage i priority queue
-
                             pri_queue.push(index, entropy);
                             pri_queue.remove(&hidden_index);
                             self.update_cell(n, hidden_index, &mut pri_queue, &mut ret_buffer)?;
-
+                            
                             continue 'main;
                         }
                     }
@@ -498,6 +497,19 @@ fn solve_big_sudoku() {
     // tests a 16x16 sudoku solve
 
     let file_str = std::fs::read_to_string("./sudoku16").unwrap();
+    let mut sudoku: Sudoku = file_str.parse().unwrap();
+
+    println!("{sudoku}");
+    sudoku.solve(None, None).unwrap();
+    println!("{sudoku}");
+}
+
+
+#[test]
+fn solve_4x4_xdiagonal_sudoku() {
+    // TODO This will calculate two different solutions at random!!!!!
+
+    let file_str = std::fs::read_to_string("./sudokuXDiagonal4x4").unwrap();
     let mut sudoku: Sudoku = file_str.parse().unwrap();
 
     println!("{sudoku}");
