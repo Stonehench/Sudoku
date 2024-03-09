@@ -1,5 +1,11 @@
 use std::{
-    cmp::Ordering, fmt::{Display, Write}, num::ParseIntError, ops::Range, str::FromStr, sync::{atomic::AtomicUsize, mpsc, Arc, Mutex}, time::Instant
+    cmp::Ordering,
+    fmt::{Display, Write},
+    num::ParseIntError,
+    ops::Range,
+    str::FromStr,
+    sync::{atomic::AtomicUsize, mpsc, Arc, Mutex},
+    time::Instant,
 };
 
 use integer_sqrt::IntegerSquareRoot;
@@ -121,8 +127,6 @@ impl Sudoku {
         }
     }
 
-    
-
     pub fn set_cell(&mut self, n: u16, index: usize) -> Result<(), SudokuSolveError> {
         let mut ret_buffer = vec![];
         self.cells[index] = Cell::single(n);
@@ -216,7 +220,7 @@ impl Sudoku {
                             pri_queue.push(index, entropy);
                             pri_queue.remove(&hidden_index);
                             self.update_cell(n, hidden_index, &mut pri_queue, &mut ret_buffer)?;
-                            
+
                             continue 'main;
                         }
                     }
@@ -238,6 +242,7 @@ impl Sudoku {
                     cloned_queue.push(index, Entropy(entropy.0 - 1));
 
                     if let Some(ctx) = ctx {
+                        #[cfg(not(debug_assertions))]
                         if ctx.solutions.load(std::sync::atomic::Ordering::Relaxed) >= 2 {
                             return Err(SudokuSolveError::AlreadyManySolutions);
                         }
@@ -278,6 +283,9 @@ impl Sudoku {
     ) -> Result<Self, SudokuSolveError> {
         let mut sudoku = Sudoku::new(size, rules);
         sudoku.solve(None, None)?;
+        for cell in &mut sudoku.cells {
+            cell.locked_in = false;
+        }
 
         // if x-rule is part of the rule set insert the X's
         if let Some(x_rule) = sudoku.rules.iter_mut().find_map(|r| r.to_x_rule()) {
@@ -287,30 +295,32 @@ impl Sudoku {
                         continue;
                     }
                     if let Some(left) = sudoku.cells[index + 1].available.get(0) {
-                        if current + left == sudoku.size as u16 + 1 && (index + 1) % sudoku.size != 0 {
+                        if current + left == sudoku.size as u16 + 1
+                            && (index + 1) % sudoku.size != 0
+                        {
                             // x rule should have (index , left)
                             x_rule.x_clue.push((index, index + 1));
-                            println!("{index}  {}", index + 1 )
+                            println!("{index}  {}", index + 1)
                         }
                     }
                     if index + sudoku.size >= sudoku.cells.len() {
                         continue;
                     }
                     if let Some(below) = sudoku.cells[index + sudoku.size].available.get(0) {
-                        if current + below == sudoku.size as u16 + 1 && index + sudoku.size < sudoku.cells.len() {
+                        if current + below == sudoku.size as u16 + 1
+                            && index + sudoku.size < sudoku.cells.len()
+                        {
                             // x rule should have (index , below)
                             x_rule.x_clue.push((index, index + sudoku.size));
-                            println!("{index}  {}", index + sudoku.size )
+                            println!("{index}  {}", index + sudoku.size)
                         }
                     }
                 }
-                    
             }
-        } 
-        
+        }
 
-        const ATTEMPT_COUNT: usize = 5;
-        const RETRY_LIMIT: usize = 55;
+        const ATTEMPT_COUNT: usize = 25;
+        const RETRY_LIMIT: usize = 550;
 
         let mut count = 0;
 
@@ -326,7 +336,8 @@ impl Sudoku {
             }
 
             let removed_index = random::<usize>() % sudoku.cells.len();
-            if sudoku.cells[removed_index].available.len() == 9 {
+            if sudoku.cells[removed_index].available.len() == sudoku.size
+            {
                 //println!("Skipping already hit");
                 continue;
             }
@@ -340,10 +351,11 @@ impl Sudoku {
 
             let solutions = ctx.wait_for_solutions();
 
-            //println!("Found {} with {count} removed", solutions);
+            println!("Found {} with {count} removed", solutions);
 
             if solutions > 1 {
                 if currents_left == 0 {
+                    println!("FAILED TO FIND NEW UNIQUE WITHIN LIMITS!!");
                     break;
                 } else {
                     currents_left -= 1;
@@ -354,10 +366,14 @@ impl Sudoku {
             currents_left = ATTEMPT_COUNT;
 
             sudoku.cells[removed_index] = Cell::new_with_range(1..sudoku.size as u16 + 1);
-
+            println!("Removed {removed_index}");
             count += 1;
         }
         println!("Removed {count} in {:?}", timer.elapsed());
+
+        for cell in &mut sudoku.cells {
+            cell.locked_in = false;
+        }
 
         Ok(sudoku)
     }
@@ -504,7 +520,6 @@ fn solve_big_sudoku() {
     println!("{sudoku}");
 }
 
-
 #[test]
 fn solve_4x4_xdiagonal_sudoku() {
     // TODO This will calculate two different solutions at random!!!!!
@@ -513,8 +528,41 @@ fn solve_4x4_xdiagonal_sudoku() {
     let mut sudoku: Sudoku = file_str.parse().unwrap();
 
     println!("{sudoku}");
-    sudoku.solve(None, None).unwrap();
+
+    let cxt = AllSolutionsContext::new();
+    sudoku.solve(Some(&cxt), None).unwrap();
+    println!("{sudoku}, {:?}", cxt.wait_for_solutions());
+}
+#[test]
+fn generate_4x4_xdiagonal() {
+    let xrule = crate::rules::XRule {
+        x_clue: vec![/*
+            (0, 4),
+            (1, 5),
+            (2, 6),
+            (3, 7),
+            (8, 12),
+            (9, 13),
+            (10, 14),
+            (11, 15), */
+        ],
+    };
+    let mut sudoku = Sudoku::generate_with_size(
+        4,
+        vec![
+            Box::new(SquareRule),
+            Box::new(crate::rules::DiagonalRule),
+            Box::new(xrule),
+        ],
+        None,
+    )
+    .unwrap();
     println!("{sudoku}");
+
+    let cxt = AllSolutionsContext::new();
+    sudoku.solve(Some(&cxt), None).unwrap();
+
+    println!("{sudoku} = {}", cxt.wait_for_solutions());
 }
 
 #[test]

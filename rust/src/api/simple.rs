@@ -31,9 +31,6 @@ pub fn generate_with_size(size: usize, rules_src: Vec<String>) -> Option<String>
 
 
     let mut solved = sudoku.clone();
-    for cell in &mut solved.cells {
-        cell.locked_in = false;
-    }
     solved.solve(None, None).ok()?;
 
     let mut str_buffer = String::new();
