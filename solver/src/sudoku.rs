@@ -225,15 +225,24 @@ impl Sudoku {
                         }
                     }
 
-                    // No hidden singles where found time to seach for locked candidates!
+                    /*
+                    //Locked candidates
                     for rule in &self.rules {
                         if let Some((n, removable_indexes)) = rule.locked_candidate(self) {
-                            for index in removable_indexes {
-                                self.cells[index].remove(n)?;
+                            //println!("Removing {n} from {removable_indexes:?}");            
+                            /*
+                            for remove_index in removable_indexes {
+                                pri_queue.remove(&remove_index);
+                                self.cells[remove_index].remove(n)?;
+                                if remove_index != index{
+                                    pri_queue.push(remove_index, Entropy(self.cells[remove_index].available.len()));
+                                }
                             }
+                            pri_queue.push(index, Entropy(self.cells[index].available.len()));
                             continue 'main;
+                            */
                         }
-                    }
+                    } */
 
                     //Der er flere muligheder for hvad der kan vælges. Derfor pushes state på branch stacken og der vælges en mulighed
                     //Vælg random
