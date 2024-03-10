@@ -116,7 +116,7 @@ impl Sudoku {
             rules.push(ColumnRule::new());
         }
         if !rules.iter().any(|r| r.get_name() == "RowRule") {
-            rules.push(Box::new(RowRule));
+            rules.push(RowRule::new());
         }
         Self {
             size,

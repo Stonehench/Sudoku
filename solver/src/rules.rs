@@ -244,8 +244,17 @@ impl Rule for SquareRule {
     }
 }
 #[derive(Debug, Clone)]
-pub struct RowRule;
 
+pub struct RowRule {
+    pub has_locked: RefCell<Option<bool>>,
+}
+impl RowRule {
+    pub fn new() -> Box<dyn Rule + Send> {
+        Box::new(RowRule {
+            has_locked: RefCell::new(None),
+        })
+    }
+}
 impl Rule for RowRule {
     fn updates<'buf>(
         &self,
@@ -278,6 +287,78 @@ impl Rule for RowRule {
                 if let Some(position) = found_position {
                     if !sudoku.cells[position].locked_in {
                         return Some((value, position));
+                    }
+                }
+            }
+        }
+        None
+    }
+    
+    fn locked_candidate(&self, sudoku: &Sudoku) -> Option<(u16, Vec<usize>)> {
+         // locked candidate only really applies when square rule is in the ruleset
+        // There are certain patterns of available numbers that may all eliminate a certain cell
+
+        //This NEEDS to be on a different line, since it has to drop the borrow BEFORE matching.
+        let has_locked = *self.has_locked.borrow();
+
+        match has_locked {
+            None => {
+                let has_squares = sudoku.rules.iter().any(|r| r.get_name() == "SquareRule");
+                *self.has_locked.borrow_mut() = Some(has_squares);
+                if !has_squares {
+                    return None;
+                }
+            }
+            Some(false) => return None,
+            Some(true) => {}
+        }
+        for value in 1..=sudoku.size as u16 {
+            // this is almost identical to the implementation for Coulumn go there for explanatory comments
+            let mut found_column_position: Vec<usize> = vec![];
+            let sub_s = sudoku.size.integer_sqrt();
+            let mut row;
+            'find_box: for position in
+                (0..sudoku.size).map(|i| i * sub_s + (sudoku.size * (sub_s - 1) * (i / sub_s)))
+            {
+                found_column_position.clear();
+
+                for sub_row in 0..sub_s {
+                    row = position / sudoku.size;
+
+                    for box_pos in (0..sudoku.size).map(|i| {
+                        position - (sudoku.size * ((position / sudoku.size) % sub_s))
+                            + (i % sub_s)
+                            + (sudoku.size * (i / sub_s))
+                    }) {
+                        if box_pos / sub_s != sub_row
+                            && sudoku.cells[box_pos].available.contains(&value)
+                        {
+                            continue 'find_box;
+                        } else if box_pos / sub_s == sub_row
+                            && sudoku.cells[box_pos].available.contains(&value)
+                            && !sudoku.cells[box_pos].locked_in
+                        {
+                            found_column_position.push(box_pos);
+                        }
+                    }
+
+                    if !found_column_position.is_empty() {
+                        if (0..(sudoku.size))
+                            .map(|i| i + (sudoku.size * row))
+                            .filter(|i| !found_column_position.contains(i))
+                            .any(|i| sudoku.cells[i].available.contains(&value))
+                        {
+                            return Some((
+                                value,
+                                (0..(sudoku.size))
+                                    .map(|i| i + (sudoku.size * row))
+                                    .filter(|i| {
+                                        !found_column_position.contains(i)
+                                            && sudoku.cells[*i].available.contains(&value)
+                                    })
+                                    .collect(),
+                            ));
+                        }
                     }
                 }
             }
@@ -821,6 +902,23 @@ fn locked_column_candidate() {
 
     assert_eq!(res, Some((2, vec![27, 36, 45, 54, 63, 72])))
 }
+
+#[test]
+fn locked_row_candidate() {
+    let mut sudoku = Sudoku::new(9, vec![Box::new(SquareRule)]);
+    let row_rule = RowRule::new();
+
+    sudoku.set_cell(1, 9).unwrap();
+    sudoku.set_cell(8, 18).unwrap();
+    sudoku.set_cell(3, 10).unwrap();
+    sudoku.set_cell(4, 11).unwrap();
+    sudoku.set_cell(5, 19).unwrap();
+    sudoku.set_cell(7, 20).unwrap();
+
+    let res = row_rule.locked_candidate(&sudoku);
+
+    assert_eq!(res, Some((2, vec![3, 4, 5, 6, 7, 8])))
+}
 #[test]
 fn locked_x_candidate() {
     let mut sudoku = Sudoku::new(4, vec![]);
@@ -928,7 +1026,7 @@ fn diagonal_test() {
 fn row_test() {
     let sudoku = Sudoku::new(9, vec![]);
 
-    let rowrule = RowRule;
+    let rowrule = RowRule::new();
     let mut buffer = vec![];
     let indexes = rowrule.updates(sudoku.size, 11, &mut buffer);
     println!("{indexes:?}");
@@ -1018,7 +1116,7 @@ fn row_hidden_math_test() {
 
     println!("{sudoku}");
 
-    let rowrule = RowRule;
+    let rowrule = RowRule::new();
     let res = rowrule.hidden_singles(&sudoku);
     assert_eq!(res, Some((1, 0)))
 }
