@@ -806,7 +806,7 @@ impl Rule for KnightRule {
 }
 #[test]
 fn locked_column_candidate() {
-    let mut sudoku = Sudoku::new(9, vec![]);
+    let mut sudoku = Sudoku::new(9, vec![Box::new(SquareRule)]);
     let column_rule = ColumnRule::new();
 
     sudoku.set_cell(1, 1).unwrap();
