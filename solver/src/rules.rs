@@ -228,8 +228,52 @@ impl Rule for ColumnRule {
     }
 
     fn locked_candidate(&self, sudoku: &Sudoku) -> Option<(u16, Vec<usize>)> {
-        // TODO
+        // locked candidate only really applies when square rule is in the ruleset
         // There are certain patterns of available numbers that may all eliminate a certain cell
+
+        for value in 1..=sudoku.size as u16 {
+            let mut found_column_position: Vec<usize> = vec![];
+            let sub_s = sudoku.size.integer_sqrt();
+
+            let mut column;
+            // look through every column
+            // for there to be a locked candidate in a colums
+            // all 'available' for a number in a box must be contained in that column
+
+            // first check the square, then remove from the column
+            // find all the top right corners of squares
+            'find_box: for position in (0..sudoku.size).map(|i| i * sub_s + (sudoku.size * (sub_s - 1) * (i/sub_s))) {
+                found_column_position.clear();
+                
+                for sub_column in 0..sub_s {
+                    // get the true column number
+                    column = position % sudoku.size;
+
+                    for box_pos in (0..sudoku.size).map(|i| position - (sudoku.size * ((position/sudoku.size) % sub_s)) + (i % sub_s) + (sudoku.size * (i/sub_s))){
+
+                        // if the box position is not in the same sub_column and contains the value this is not a locked candidate
+                        if box_pos % sub_s != sub_column && sudoku.cells[box_pos].available.contains(&value) {
+                            continue 'find_box; 
+
+                        // if the box position is in the same coolumn and contains the value this, there is potential
+                        } else if box_pos % sub_s == sub_column && sudoku.cells[box_pos].available.contains(&value) && !sudoku.cells[box_pos].locked_in {
+                            found_column_position.push(box_pos);
+                        }
+                    }    
+
+                    if !found_column_position.is_empty(){
+                        if (0..(sudoku.size)).map(|i| (i * sudoku.size) + column).filter(|i| !found_column_position.contains(i)).any(|i| sudoku.cells[i].available.contains(&value)){
+                            return Some((value, (0..(sudoku.size)).map(|i|   (i * sudoku.size) + column).filter(|i| !found_column_position.contains(i) && sudoku.cells[*i].available.contains(&value)).collect())); 
+                        }  
+                    }                
+                }
+
+                
+                
+            }
+
+            
+        }
         None
     }
     fn boxed_clone(&self) -> DynRule {
@@ -552,7 +596,23 @@ impl Rule for KnightRule {
         "KnightRule"
     }
 }
+#[test]
+fn locked_column_candidate() {
+    let mut sudoku = Sudoku::new(9, vec![]);
+    let column_rule = ColumnRule;
 
+    sudoku.set_cell(1, 1).unwrap();
+    sudoku.set_cell(3, 10).unwrap();
+    sudoku.set_cell(4, 11).unwrap();
+    sudoku.set_cell(5, 2).unwrap();
+    sudoku.set_cell(6, 19).unwrap();
+    sudoku.set_cell(7, 20).unwrap();
+
+    let res = column_rule.locked_candidate(&sudoku);
+
+    assert_eq!(res, Some((2, vec![27, 36, 45, 54, 63, 72])))
+    
+}
 #[test]
 fn locked_x_candidate() {
     let mut sudoku = Sudoku::new(4, vec![]);
