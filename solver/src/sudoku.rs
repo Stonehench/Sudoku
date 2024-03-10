@@ -229,7 +229,7 @@ impl Sudoku {
                     //Locked candidates
                     for rule in &self.rules { 
                         if let Some((n, removable_indexes)) = rule.locked_candidate(self) {
-                            println!("Removing {n} from {removable_indexes:?} with rule {}", rule.get_name());            
+                            //println!("Removing {n} from {removable_indexes:?} with rule {}", rule.get_name());            
                             
                             for remove_index in removable_indexes {
                                 pri_queue.remove(&remove_index);
