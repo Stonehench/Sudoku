@@ -348,7 +348,11 @@ impl Rule for ColumnRule {
     fn locked_candidate(&self, sudoku: &Sudoku) -> Option<(u16, Vec<usize>)> {
         // locked candidate only really applies when square rule is in the ruleset
         // There are certain patterns of available numbers that may all eliminate a certain cell
-        match *self.has_locked.borrow() {
+
+        //This NEEDS to be on a different line, since it has to drop the borrow BEFORE matching.
+        let has_locked = *self.has_locked.borrow();
+
+        match has_locked {
             None => {
                 let has_squares = sudoku.rules.iter().any(|r| r.get_name() == "SquareRule");
                 *self.has_locked.borrow_mut() = Some(has_squares);
