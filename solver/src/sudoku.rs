@@ -225,12 +225,12 @@ impl Sudoku {
                         }
                     }
 
-                    /*
+                    
                     //Locked candidates
-                    for rule in &self.rules {
+                    for rule in &self.rules { 
                         if let Some((n, removable_indexes)) = rule.locked_candidate(self) {
-                            //println!("Removing {n} from {removable_indexes:?}");            
-                            /*
+                            println!("Removing {n} from {removable_indexes:?} with rule {}", rule.get_name());            
+                            
                             for remove_index in removable_indexes {
                                 pri_queue.remove(&remove_index);
                                 self.cells[remove_index].remove(n)?;
@@ -240,10 +240,10 @@ impl Sudoku {
                             }
                             pri_queue.push(index, Entropy(self.cells[index].available.len()));
                             continue 'main;
-                            */
+                            
                         }
-                    } */
-
+                    } 
+                    
                     //Der er flere muligheder for hvad der kan vælges. Derfor pushes state på branch stacken og der vælges en mulighed
                     //Vælg random
                     let choice = random::<usize>() % entropy.0;
@@ -339,7 +339,7 @@ impl Sudoku {
         }
 
         const ATTEMPT_COUNT: usize = 25;
-        const RETRY_LIMIT: usize = 550;
+        const RETRY_LIMIT: usize = 70;
 
         let mut count = 0;
 

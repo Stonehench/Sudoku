@@ -402,6 +402,58 @@ impl Rule for DiagonalRule {
         }
         None
     }
+
+    fn locked_candidate(&self, sudoku: &Sudoku) -> Option<(u16, Vec<usize>)> {
+        for value in 1..=sudoku.size as u16 {
+            let mut found_diagonal_position: Vec<usize> = vec![];
+            let sub_s = sudoku.size.integer_sqrt();
+
+            // look in the first diagonal
+            // for there to be a locked candidate in a diagonal
+            // all 'available' for a number in a box must be contained on the diagonal
+            'find_box: for position in (0..sub_s).map(|i| (i*sub_s) * (sudoku.size + 1)) {
+                found_diagonal_position.clear();
+                
+                for box_pos in (0..sudoku.size).map(|i| position - (sudoku.size * ((position/sudoku.size) % sub_s)) + (i % sub_s) + (sudoku.size * (i/sub_s))){
+                    // if the box position is not on the diagonal and contains the value this is not a locked candidate
+                    if box_pos % (sudoku.size + 1) != 0 && sudoku.cells[box_pos].available.contains(&value) {
+                        continue 'find_box; 
+                    // if the box position is on the diagonal and contains the value this, there is potential
+                    } else if box_pos % (sudoku.size + 1) == 0 && sudoku.cells[box_pos].available.contains(&value) && !sudoku.cells[box_pos].locked_in {
+                        found_diagonal_position.push(box_pos);
+                    }
+                }
+                if !found_diagonal_position.is_empty(){
+                    //println!("{found_diagonal_position:?}")
+                    if (0..(sudoku.size)).map(|i| i * (sudoku.size + 1)).filter(|i| !found_diagonal_position.contains(i)).any(|i| sudoku.cells[i].available.contains(&value)){
+                        return Some((value, (0..(sudoku.size)).map(|i| i * (sudoku.size + 1)).filter(|i| !found_diagonal_position.contains(i) && sudoku.cells[*i].available.contains(&value)).collect())); 
+                    }  
+                }
+            }
+
+            // look in the second diagonal
+            'find_box: for position in (1..(sub_s + 1)).map(|i| ((i * sub_s) * (sudoku.size - 1)) - (sub_s - 1) * sudoku.size) {
+                found_diagonal_position.clear();
+                
+                for box_pos in (0..sudoku.size).map(|i| position - (sudoku.size * ((position/sudoku.size) % sub_s)) + (i % sub_s) + (sudoku.size * (i/sub_s))){
+                    // if the box position is not on the diagonal and contains the value this is not a locked candidate
+                    if box_pos % (sudoku.size - 1) != 0 && sudoku.cells[box_pos].available.contains(&value) {
+                        continue 'find_box; 
+                    // if the box position is on the diagonal and contains the value this, there is potential
+                    } else if box_pos % (sudoku.size - 1) == 0 && sudoku.cells[box_pos].available.contains(&value) && !sudoku.cells[box_pos].locked_in{
+                        found_diagonal_position.push(box_pos);
+                    }
+                }
+                // if something was found and the rest of the diagonal is not already empty
+                if !found_diagonal_position.is_empty() {
+                    if (1..(sudoku.size + 1)).map(|i| i * (sudoku.size - 1)).filter(|i| !found_diagonal_position.contains(i)).any(|i| sudoku.cells[i].available.contains(&value)){
+                       return Some((value, (1..(sudoku.size + 1)).map(|i| i * (sudoku.size - 1)).filter(|i| !found_diagonal_position.contains(i) && sudoku.cells[*i].available.contains(&value)).collect())); 
+                    }  
+                }
+            }
+        }
+        None
+    }
     fn boxed_clone(&self) -> DynRule {
         Box::new(self.clone())
     }
@@ -506,7 +558,33 @@ fn locked_x_candidate() {
     assert_eq!(res, Some((4, vec![2])))
 }
 
+#[test]
+fn locked_diagonal_candidate() {
+    let mut sudoku = Sudoku::new(9, vec![Box::new(SquareRule)]);
+    let diagonal_rule = DiagonalRule;
 
+    sudoku.set_cell(2, 1).unwrap();
+    sudoku.set_cell(3, 2).unwrap();
+    sudoku.set_cell(4, 9).unwrap();
+    sudoku.set_cell(5, 11).unwrap();
+    sudoku.set_cell(6, 18).unwrap();
+    sudoku.set_cell(7, 19).unwrap();
+
+    let res = diagonal_rule.locked_candidate(&sudoku);
+    assert_eq!(res, Some((1, vec![30,40,50,60,70,80])));
+
+    sudoku = Sudoku::new(9, vec![Box::new(SquareRule)]);
+
+    sudoku.set_cell(2, 6).unwrap();
+    sudoku.set_cell(3, 7).unwrap();
+    sudoku.set_cell(4, 15).unwrap();
+    sudoku.set_cell(5, 17).unwrap();
+    sudoku.set_cell(6, 25).unwrap();
+    sudoku.set_cell(7, 26).unwrap();
+
+    let res = diagonal_rule.locked_candidate(&sudoku);
+    assert_eq!(res, Some((1, vec![32,40,48,56,64,72])))
+}
 
 #[test]
 fn diagonal_test() {
