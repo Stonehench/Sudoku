@@ -18,7 +18,8 @@ pub trait Rule: Debug {
             .any(|c| c.is_single_eq(value))
     }
 
-    fn hidden_singles(&self, sudoku: &Sudoku) -> Option<(u16, usize)>;
+    // not all rules may have a possibblility to avail hidden singles
+    fn hidden_singles(&self, sudoku: &Sudoku) -> Option<(u16, usize)> { None }
 
     // TODO altså jeg er ikke helt sikker på at det her er 100% lovligt
     // return (Value to be removed, [list of indexes where the removel should happen])
@@ -225,6 +226,12 @@ impl Rule for ColumnRule {
         }
         None
     }
+
+    fn locked_candidate(&self, sudoku: &Sudoku) -> Option<(u16, Vec<usize>)> {
+        // TODO
+        // There are certain patterns of available numbers that may all eliminate a certain cell
+        None
+    }
     fn boxed_clone(&self) -> DynRule {
         Box::new(self.clone())
     }
@@ -404,6 +411,7 @@ impl Rule for DiagonalRule {
     }
 
     fn locked_candidate(&self, sudoku: &Sudoku) -> Option<(u16, Vec<usize>)> {
+        // TODO this only works if the square rule is also a part of the ruleset
         for value in 1..=sudoku.size as u16 {
             let mut found_diagonal_position: Vec<usize> = vec![];
             let sub_s = sudoku.size.integer_sqrt();
@@ -531,8 +539,9 @@ impl Rule for KnightRule {
         buffer
     }
 
-    fn hidden_singles(&self, _sudoku: &Sudoku) -> Option<(u16, usize)> {
-        // Hidden singles are not a thing for the knights rule
+    fn locked_candidate(&self, sudoku: &Sudoku) -> Option<(u16, Vec<usize>)> {
+        // TODO
+        // There are certain patterns of available numbers that may all eliminate a certain cell
         None
     }
     fn boxed_clone(&self) -> DynRule {
