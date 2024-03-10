@@ -180,7 +180,7 @@ impl Rule for SquareRule {
                 for l in 0..sub_size {
                     for r in l + 1..sub_size {
                         if !masks_y[l].is_empty() && masks_y[l].len() < sub_size && masks_y[l] == masks_y[r] {
-                            println!("HORIZONTAL {value}: {:?} = {:?} at {l} {r}", masks_y[l], masks_y[r]);
+                            //println!("HORIZONTAL {value}: {:?} = {:?} at {l} {r}", masks_y[l], masks_y[r]);
                             let mut res = vec![];
 
                             for n_sq_x in (0..sub_size).filter(|sq_x| *sq_x != l && *sq_x != r) {
@@ -215,7 +215,7 @@ impl Rule for SquareRule {
                 for l in 0..sub_size {
                     for r in l + 1..sub_size {
                         if !masks_x[l].is_empty() && masks_x[l].len() < sub_size && masks_x[l] == masks_x[r] {
-                            println!("VERTICAL {value}: {:?} = {:?} at {l} {r}", masks_x[l], masks_x[r]);
+                            //println!("VERTICAL {value}: {:?} = {:?} at {l} {r}", masks_x[l], masks_x[r]);
                             let mut res = vec![];
                             
                             for n_sq_y in (0..sub_size).filter(|sq_y| *sq_y != l && *sq_y != r) {
