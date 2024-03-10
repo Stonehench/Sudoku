@@ -216,8 +216,8 @@ impl Rule for SquareRule {
                         if masks_x[l].len() < sub_size && masks_x[l] == masks_x[r] {
                             //println!("VERTICAL: {:?} = {:?}", masks_x[l], masks_x[r]);
                             let mut res = vec![];
+                            
                             for n_sq_y in (0..sub_size).filter(|sq_y| *sq_y != l && *sq_y != r) {
-                                dbg!(n_sq_y);
                                 for l_x in (0..sub_size).filter(|x| masks_x[0].contains(x)) {
                                     for l_y in 0..sub_size {
                                         let x = l_x + sq_x * sub_size;
