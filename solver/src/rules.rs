@@ -185,7 +185,7 @@ impl Rule for SquareRule {
 
                             for n_sq_x in (0..sub_size).filter(|sq_x| *sq_x != l && *sq_x != r) {
                                 for l_x in 0..sub_size {
-                                    for l_y in (0..sub_size).filter(|y| masks_y[0].contains(y)) {
+                                    for l_y in (0..sub_size).filter(|y| masks_y[l].contains(y)) {
                                         let x = l_x + n_sq_x * sub_size;
                                         let y = l_y + sq_y * sub_size;
                                         let i = x + y * sudoku.size;
@@ -219,7 +219,7 @@ impl Rule for SquareRule {
                             let mut res = vec![];
                             
                             for n_sq_y in (0..sub_size).filter(|sq_y| *sq_y != l && *sq_y != r) {
-                                for l_x in (0..sub_size).filter(|x| masks_x[0].contains(x)) {
+                                for l_x in (0..sub_size).filter(|x| masks_x[l].contains(x)) {
                                     for l_y in 0..sub_size {
                                         let x = l_x + sq_x * sub_size;
                                         let y = l_y + n_sq_y * sub_size;
