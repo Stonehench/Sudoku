@@ -1,7 +1,11 @@
 use integer_sqrt::IntegerSquareRoot;
-use std::{fmt::Debug, str::FromStr};
+use std::{
+    collections::{btree_map::Values, HashSet},
+    fmt::Debug,
+    str::FromStr,
+};
 
-use crate::sudoku::{DynRule, Sudoku};
+use crate::sudoku::{self, DynRule, Sudoku};
 
 pub trait Rule: Debug {
     fn updates<'buf>(
@@ -19,16 +23,20 @@ pub trait Rule: Debug {
     }
 
     // not all rules may have a possibblility to avail hidden singles
-    fn hidden_singles(&self, sudoku: &Sudoku) -> Option<(u16, usize)> { None }
+    fn hidden_singles(&self, sudoku: &Sudoku) -> Option<(u16, usize)> {
+        None
+    }
 
     // TODO altså jeg er ikke helt sikker på at det her er 100% lovligt
     // return (Value to be removed, [list of indexes where the removel should happen])
-    fn locked_candidate(&self, sudoku: &Sudoku) -> Option<(u16, Vec<usize>)> { None } 
+    fn locked_candidate(&self, sudoku: &Sudoku) -> Option<(u16, Vec<usize>)> {
+        None
+    }
 
     fn boxed_clone(&self) -> DynRule;
     fn get_name(&self) -> &'static str;
 
-    fn to_x_rule(& mut self) -> Option<& mut XRule> {
+    fn to_x_rule(&mut self) -> Option<&mut XRule> {
         None
     }
 }
@@ -93,7 +101,7 @@ impl Rule for SquareRule {
         }
         buffer
     }
-    
+
     fn hidden_singles(&self, sudoku: &Sudoku) -> Option<(u16, usize)> {
         let sub_s = sudoku.size.integer_sqrt();
         for sq_y in 0..sub_s {
@@ -131,6 +139,110 @@ impl Rule for SquareRule {
 
     fn get_name(&self) -> &'static str {
         "SquareRule"
+    }
+
+    fn locked_candidate(&self, sudoku: &Sudoku) -> Option<(u16, Vec<usize>)> {
+        let sub_size = sudoku.size.integer_sqrt();
+
+        // Hjælper funktion
+        fn locked_in_sq(
+            sq_y: usize,
+            sq_x: usize,
+            sub_size: usize,
+            value: u16,
+            sudoku: &Sudoku,
+        ) -> (HashSet<usize>, HashSet<usize>) {
+            let mut rows = HashSet::new();
+            let mut columns = HashSet::new();
+
+            for l_x in 0..sub_size {
+                for l_y in 0..sub_size {
+                    let x = l_x + sq_x * sub_size;
+                    let y = l_y + sq_y * sub_size;
+                    let i = x + y * sudoku.size;
+                    let cell = &sudoku.cells[i];
+                    if !cell.locked_in && cell.available.contains(&value) {
+                        rows.insert(l_y);
+                        columns.insert(l_x);
+                    }
+                }
+            }
+            (rows, columns)
+        }
+
+        for value in 1..sudoku.size as u16 + 1 {
+            //Tjek for vandret
+            for sq_y in 0..sub_size {
+                let mut masks_y = vec![];
+                for sq_x in 0..sub_size {
+                    masks_y.push(locked_in_sq(sq_y, sq_x, sub_size, value, sudoku).0)
+                }
+
+                //Tjek om der er nogle af dem som er 100% ens
+                for l in 0..sub_size {
+                    for r in l + 1..sub_size {
+                        if masks_y[l].len() < sub_size && masks_y[l] == masks_y[r] {
+                            //println!("HORIZONTAL: {:?} = {:?}", masks_y[l], masks_y[r]);
+                            let mut res = vec![];
+
+                            for n_sq_x in (0..sub_size).filter(|sq_x| *sq_x != l && *sq_x != r) {
+                                for l_x in 0..sub_size {
+                                    for l_y in (0..sub_size).filter(|y| masks_y[0].contains(y)) {
+                                        let x = l_x + n_sq_x * sub_size;
+                                        let y = l_y + sq_y * sub_size;
+                                        let i = x + y * sudoku.size;
+                                        let cell = &sudoku.cells[i];
+                                        if cell.available.contains(&value) {
+                                            res.push(i);
+                                        }
+                                    }
+                                }
+                            }
+
+                            if !res.is_empty() {
+                                return Some((value, res));
+                            }
+                        }
+                    }
+                }
+            }
+            //Tjek for lodret
+            for sq_x in 0..sub_size {
+                let mut masks_x = vec![];
+                for sq_y in 0..sub_size {
+                    masks_x.push(locked_in_sq(sq_y, sq_x, sub_size, value, sudoku).1)
+                }
+
+                //Tjek om der er nogle af dem som er 100% identisk
+                for l in 0..sub_size {
+                    for r in l + 1..sub_size {
+                        if masks_x[l].len() < sub_size && masks_x[l] == masks_x[r] {
+                            //println!("VERTICAL: {:?} = {:?}", masks_x[l], masks_x[r]);
+                            let mut res = vec![];
+                            for n_sq_y in (0..sub_size).filter(|sq_y| *sq_y != l && *sq_y != r) {
+                                dbg!(n_sq_y);
+                                for l_x in (0..sub_size).filter(|x| masks_x[0].contains(x)) {
+                                    for l_y in 0..sub_size {
+                                        let x = l_x + sq_x * sub_size;
+                                        let y = l_y + n_sq_y * sub_size;
+                                        let i = x + y * sudoku.size;
+                                        let cell = &sudoku.cells[i];
+                                        if cell.available.contains(&value) {
+                                            res.push(i);
+                                        }
+                                    }
+                                }
+                            }
+
+                            if !res.is_empty() {
+                                return Some((value, res));
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        None
     }
 }
 #[derive(Debug, Clone)]
@@ -292,23 +404,29 @@ impl Rule for XRule {
 
             for (left_index, right_index) in &self.x_clue {
                 // if neither side of the pair is locked in and the number is avalible in left but the counter part is not avalible in right
-                if !sudoku.cells[*left_index].locked_in &&
-                    !sudoku.cells[*right_index].locked_in && 
-                    sudoku.cells[*left_index].available.contains(&i) && 
-                    !sudoku.cells[*right_index].available.contains(&((sudoku.size + 1) as u16 - i)){
-                        found_positions.push(*left_index);
+                if !sudoku.cells[*left_index].locked_in
+                    && !sudoku.cells[*right_index].locked_in
+                    && sudoku.cells[*left_index].available.contains(&i)
+                    && !sudoku.cells[*right_index]
+                        .available
+                        .contains(&((sudoku.size + 1) as u16 - i))
+                {
+                    found_positions.push(*left_index);
                 }
-                if !sudoku.cells[*left_index].locked_in &&
-                !sudoku.cells[*right_index].locked_in && 
-                sudoku.cells[*right_index].available.contains(&i) && 
-                !sudoku.cells[*left_index].available.contains(&((sudoku.size + 1) as u16 - i)){
+                if !sudoku.cells[*left_index].locked_in
+                    && !sudoku.cells[*right_index].locked_in
+                    && sudoku.cells[*right_index].available.contains(&i)
+                    && !sudoku.cells[*left_index]
+                        .available
+                        .contains(&((sudoku.size + 1) as u16 - i))
+                {
                     found_positions.push(*right_index);
-            }
+                }
             }
             if !found_positions.is_empty() {
                 return Some((i, found_positions));
             }
-        } 
+        }
 
         None
     }
@@ -321,7 +439,7 @@ impl Rule for XRule {
         "XRule"
     }
 
-    fn to_x_rule(& mut self) -> Option<& mut XRule> {
+    fn to_x_rule(&mut self) -> Option<&mut XRule> {
         Some(self)
     }
 }
@@ -338,9 +456,11 @@ impl Rule for DiagonalRule {
     ) -> &'buf [usize] {
         buffer.clear();
 
-
         // Check if the index is on the first diagonal, and not on the second
-        if index == 0 || index == (size * size) - 1 || !(index % (size - 1) == 0) && index % (size + 1) == 0 {
+        if index == 0
+            || index == (size * size) - 1
+            || !(index % (size - 1) == 0) && index % (size + 1) == 0
+        {
             for i in (0..size).map(|i| i * (size + 1)) {
                 buffer.push(i)
             }
@@ -354,7 +474,7 @@ impl Rule for DiagonalRule {
         }
 
         // In the rare case that the index is on the middle square in a sudoku of odd side-length
-        if size % 2 == 1 && index == (size *size) / 2{
+        if size % 2 == 1 && index == (size * size) / 2 {
             for i in (0..size).map(|i| i * (size + 1)) {
                 buffer.push(i)
             }
@@ -367,13 +487,14 @@ impl Rule for DiagonalRule {
     }
 
     fn hidden_singles(&self, sudoku: &Sudoku) -> Option<(u16, usize)> {
-
         for value in 1..=sudoku.size as u16 {
             let mut found_position = None;
 
             // iterate over digonal from top left corner down
             for position in (0..sudoku.size).map(|i| i * (sudoku.size + 1)) {
-                if sudoku.cells[position].available.contains(&value) && !sudoku.cells[position].locked_in {
+                if sudoku.cells[position].available.contains(&value)
+                    && !sudoku.cells[position].locked_in
+                {
                     if found_position.is_some() {
                         found_position = None;
                         break;
@@ -391,7 +512,9 @@ impl Rule for DiagonalRule {
 
             // iterate over digonal from top right corner down
             for position in (0..sudoku.size).map(|i| (i + 1) * (sudoku.size - 1)) {
-                if sudoku.cells[position].available.contains(&value) && !sudoku.cells[position].locked_in {
+                if sudoku.cells[position].available.contains(&value)
+                    && !sudoku.cells[position].locked_in
+                {
                     if found_position.is_some() {
                         found_position = None;
                         break;
@@ -419,44 +542,90 @@ impl Rule for DiagonalRule {
             // look in the first diagonal
             // for there to be a locked candidate in a diagonal
             // all 'available' for a number in a box must be contained on the diagonal
-            'find_box: for position in (0..sub_s).map(|i| (i*sub_s) * (sudoku.size + 1)) {
+            'find_box: for position in (0..sub_s).map(|i| (i * sub_s) * (sudoku.size + 1)) {
                 found_diagonal_position.clear();
-                
-                for box_pos in (0..sudoku.size).map(|i| position - (sudoku.size * ((position/sudoku.size) % sub_s)) + (i % sub_s) + (sudoku.size * (i/sub_s))){
+
+                for box_pos in (0..sudoku.size).map(|i| {
+                    position - (sudoku.size * ((position / sudoku.size) % sub_s))
+                        + (i % sub_s)
+                        + (sudoku.size * (i / sub_s))
+                }) {
                     // if the box position is not on the diagonal and contains the value this is not a locked candidate
-                    if box_pos % (sudoku.size + 1) != 0 && sudoku.cells[box_pos].available.contains(&value) {
-                        continue 'find_box; 
+                    if box_pos % (sudoku.size + 1) != 0
+                        && sudoku.cells[box_pos].available.contains(&value)
+                    {
+                        continue 'find_box;
                     // if the box position is on the diagonal and contains the value this, there is potential
-                    } else if box_pos % (sudoku.size + 1) == 0 && sudoku.cells[box_pos].available.contains(&value) && !sudoku.cells[box_pos].locked_in {
+                    } else if box_pos % (sudoku.size + 1) == 0
+                        && sudoku.cells[box_pos].available.contains(&value)
+                        && !sudoku.cells[box_pos].locked_in
+                    {
                         found_diagonal_position.push(box_pos);
                     }
                 }
-                if !found_diagonal_position.is_empty(){
+                if !found_diagonal_position.is_empty() {
                     //println!("{found_diagonal_position:?}")
-                    if (0..(sudoku.size)).map(|i| i * (sudoku.size + 1)).filter(|i| !found_diagonal_position.contains(i)).any(|i| sudoku.cells[i].available.contains(&value)){
-                        return Some((value, (0..(sudoku.size)).map(|i| i * (sudoku.size + 1)).filter(|i| !found_diagonal_position.contains(i) && sudoku.cells[*i].available.contains(&value)).collect())); 
-                    }  
+                    if (0..(sudoku.size))
+                        .map(|i| i * (sudoku.size + 1))
+                        .filter(|i| !found_diagonal_position.contains(i))
+                        .any(|i| sudoku.cells[i].available.contains(&value))
+                    {
+                        return Some((
+                            value,
+                            (0..(sudoku.size))
+                                .map(|i| i * (sudoku.size + 1))
+                                .filter(|i| {
+                                    !found_diagonal_position.contains(i)
+                                        && sudoku.cells[*i].available.contains(&value)
+                                })
+                                .collect(),
+                        ));
+                    }
                 }
             }
 
             // look in the second diagonal
-            'find_box: for position in (1..(sub_s + 1)).map(|i| ((i * sub_s) * (sudoku.size - 1)) - (sub_s - 1) * sudoku.size) {
+            'find_box: for position in (1..(sub_s + 1))
+                .map(|i| ((i * sub_s) * (sudoku.size - 1)) - (sub_s - 1) * sudoku.size)
+            {
                 found_diagonal_position.clear();
-                
-                for box_pos in (0..sudoku.size).map(|i| position - (sudoku.size * ((position/sudoku.size) % sub_s)) + (i % sub_s) + (sudoku.size * (i/sub_s))){
+
+                for box_pos in (0..sudoku.size).map(|i| {
+                    position - (sudoku.size * ((position / sudoku.size) % sub_s))
+                        + (i % sub_s)
+                        + (sudoku.size * (i / sub_s))
+                }) {
                     // if the box position is not on the diagonal and contains the value this is not a locked candidate
-                    if box_pos % (sudoku.size - 1) != 0 && sudoku.cells[box_pos].available.contains(&value) {
-                        continue 'find_box; 
+                    if box_pos % (sudoku.size - 1) != 0
+                        && sudoku.cells[box_pos].available.contains(&value)
+                    {
+                        continue 'find_box;
                     // if the box position is on the diagonal and contains the value this, there is potential
-                    } else if box_pos % (sudoku.size - 1) == 0 && sudoku.cells[box_pos].available.contains(&value) && !sudoku.cells[box_pos].locked_in{
+                    } else if box_pos % (sudoku.size - 1) == 0
+                        && sudoku.cells[box_pos].available.contains(&value)
+                        && !sudoku.cells[box_pos].locked_in
+                    {
                         found_diagonal_position.push(box_pos);
                     }
                 }
                 // if something was found and the rest of the diagonal is not already empty
                 if !found_diagonal_position.is_empty() {
-                    if (1..(sudoku.size + 1)).map(|i| i * (sudoku.size - 1)).filter(|i| !found_diagonal_position.contains(i)).any(|i| sudoku.cells[i].available.contains(&value)){
-                       return Some((value, (1..(sudoku.size + 1)).map(|i| i * (sudoku.size - 1)).filter(|i| !found_diagonal_position.contains(i) && sudoku.cells[*i].available.contains(&value)).collect())); 
-                    }  
+                    if (1..(sudoku.size + 1))
+                        .map(|i| i * (sudoku.size - 1))
+                        .filter(|i| !found_diagonal_position.contains(i))
+                        .any(|i| sudoku.cells[i].available.contains(&value))
+                    {
+                        return Some((
+                            value,
+                            (1..(sudoku.size + 1))
+                                .map(|i| i * (sudoku.size - 1))
+                                .filter(|i| {
+                                    !found_diagonal_position.contains(i)
+                                        && sudoku.cells[*i].available.contains(&value)
+                                })
+                                .collect(),
+                        ));
+                    }
                 }
             }
         }
@@ -580,7 +749,7 @@ fn locked_diagonal_candidate() {
     sudoku.set_cell(7, 19).unwrap();
 
     let res = diagonal_rule.locked_candidate(&sudoku);
-    assert_eq!(res, Some((1, vec![30,40,50,60,70,80])));
+    assert_eq!(res, Some((1, vec![30, 40, 50, 60, 70, 80])));
 
     sudoku = Sudoku::new(9, vec![Box::new(SquareRule)]);
 
@@ -592,7 +761,7 @@ fn locked_diagonal_candidate() {
     sudoku.set_cell(7, 26).unwrap();
 
     let res = diagonal_rule.locked_candidate(&sudoku);
-    assert_eq!(res, Some((1, vec![32,40,48,56,64,72])))
+    assert_eq!(res, Some((1, vec![32, 40, 48, 56, 64, 72])))
 }
 
 #[test]
@@ -641,7 +810,7 @@ fn diagonal_test() {
     indexes = diagonalrule.updates(sudoku_small.size, 8, &mut buffer);
     assert_eq!(indexes, vec![]);
     indexes = diagonalrule.updates(sudoku_small.size, 9, &mut buffer);
-    assert_eq!(indexes, vec![3, 6, 9, 12]);    
+    assert_eq!(indexes, vec![3, 6, 9, 12]);
     indexes = diagonalrule.updates(sudoku_small.size, 10, &mut buffer);
     assert_eq!(indexes, vec![0, 5, 10, 15]);
     indexes = diagonalrule.updates(sudoku_small.size, 11, &mut buffer);
@@ -654,7 +823,6 @@ fn diagonal_test() {
     assert_eq!(indexes, vec![]);
     indexes = diagonalrule.updates(sudoku_small.size, 15, &mut buffer);
     assert_eq!(indexes, vec![0, 5, 10, 15]);
-
 }
 
 #[test]
@@ -787,4 +955,37 @@ fn square_hidden_math_test() {
     let res = squarerule.hidden_singles(&sudoku);
     println!("{res:?}");
     assert_eq!(res, Some((1, 20)))
+}
+#[test]
+fn square_locked_x_test() {
+    let mut sudoku = Sudoku::new(9, vec![Box::new(SquareRule)]);
+
+    let removes = vec![
+        0, 2, 4, 5, 7, 8, 9, 11, 12, 14, 15, 16, 18, 19, 20, 21, 22, 24, 25, 26,
+    ];
+
+    for index in removes {
+        sudoku.cells[index].available.retain(|n| *n != 1);
+    }
+
+    let res = SquareRule.locked_candidate(&sudoku);
+
+    assert_eq!(res, Some((1, vec![3, 13])));
+}
+
+#[test]
+fn square_locked_y_test() {
+    let mut sudoku = Sudoku::new(9, vec![Box::new(SquareRule)]);
+
+    let removes = vec![
+        0, 2, 9, 10, 18, 19, 20, 27, 28, 36, 37, 38, 45, 47, 54, 56, 64, 65, 72, 73,
+    ];
+
+    for index in removes {
+        sudoku.cells[index].available.retain(|n| *n != 1);
+    }
+
+    let res = SquareRule.locked_candidate(&sudoku);
+
+    assert_eq!(res, Some((1, vec![55, 74])));
 }

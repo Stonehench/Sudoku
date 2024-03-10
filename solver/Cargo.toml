@@ -15,7 +15,6 @@ threadpool = "*"
 num_cpus = "*"
 lazy_static = "*"
 
-
 [profile.release]
 debug=true
 strip="none"
