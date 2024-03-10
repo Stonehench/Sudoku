@@ -2,7 +2,7 @@ use integer_sqrt::IntegerSquareRoot;
 use std::cell::RefCell;
 use std::{collections::HashSet, fmt::Debug, str::FromStr};
 
-use crate::sudoku::{self, DynRule, Sudoku};
+use crate::sudoku::{DynRule, Sudoku};
 
 pub trait Rule: Debug {
     fn updates<'buf>(
@@ -20,13 +20,13 @@ pub trait Rule: Debug {
     }
 
     // not all rules may have a possibblility to avail hidden singles
-    fn hidden_singles(&self, sudoku: &Sudoku) -> Option<(u16, usize)> {
+    fn hidden_singles(&self, _sudoku: &Sudoku) -> Option<(u16, usize)> {
         None
     }
 
     // TODO altså jeg er ikke helt sikker på at det her er 100% lovligt
     // return (Value to be removed, [list of indexes where the removel should happen])
-    fn locked_candidate(&self, sudoku: &Sudoku) -> Option<(u16, Vec<usize>)> {
+    fn locked_candidate(&self, _sudoku: &Sudoku) -> Option<(u16, Vec<usize>)> {
         None
     }
 
@@ -179,7 +179,10 @@ impl Rule for SquareRule {
                 //Tjek om der er nogle af dem som er 100% ens
                 for l in 0..sub_size {
                     for r in l + 1..sub_size {
-                        if !masks_y[l].is_empty() && masks_y[l].len() < sub_size && masks_y[l] == masks_y[r] {
+                        if !masks_y[l].is_empty()
+                            && masks_y[l].len() < sub_size
+                            && masks_y[l] == masks_y[r]
+                        {
                             //println!("HORIZONTAL {value}: {:?} = {:?} at {l} {r}", masks_y[l], masks_y[r]);
                             let mut res = vec![];
 
@@ -214,10 +217,13 @@ impl Rule for SquareRule {
                 //Tjek om der er nogle af dem som er 100% identisk
                 for l in 0..sub_size {
                     for r in l + 1..sub_size {
-                        if !masks_x[l].is_empty() && masks_x[l].len() < sub_size && masks_x[l] == masks_x[r] {
+                        if !masks_x[l].is_empty()
+                            && masks_x[l].len() < sub_size
+                            && masks_x[l] == masks_x[r]
+                        {
                             //println!("VERTICAL {value}: {:?} = {:?} at {l} {r}", masks_x[l], masks_x[r]);
                             let mut res = vec![];
-                            
+
                             for n_sq_y in (0..sub_size).filter(|sq_y| *sq_y != l && *sq_y != r) {
                                 for l_x in (0..sub_size).filter(|x| masks_x[l].contains(x)) {
                                     for l_y in 0..sub_size {
@@ -293,9 +299,9 @@ impl Rule for RowRule {
         }
         None
     }
-    
+
     fn locked_candidate(&self, sudoku: &Sudoku) -> Option<(u16, Vec<usize>)> {
-         // locked candidate only really applies when square rule is in the ruleset
+        // locked candidate only really applies when square rule is in the ruleset
         // There are certain patterns of available numbers that may all eliminate a certain cell
 
         //This NEEDS to be on a different line, since it has to drop the borrow BEFORE matching.
@@ -873,7 +879,7 @@ impl Rule for KnightRule {
         buffer
     }
 
-    fn locked_candidate(&self, sudoku: &Sudoku) -> Option<(u16, Vec<usize>)> {
+    fn locked_candidate(&self, _sudoku: &Sudoku) -> Option<(u16, Vec<usize>)> {
         // TODO
         // There are certain patterns of available numbers that may all eliminate a certain cell
         None
