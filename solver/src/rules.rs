@@ -139,6 +139,7 @@ impl Rule for SquareRule {
     }
 
     fn locked_candidate(&self, sudoku: &Sudoku) -> Option<(u16, Vec<usize>)> {
+        //return None;
         let sub_size = sudoku.size.integer_sqrt();
 
         // Hjælper funktion
@@ -178,8 +179,8 @@ impl Rule for SquareRule {
                 //Tjek om der er nogle af dem som er 100% ens
                 for l in 0..sub_size {
                     for r in l + 1..sub_size {
-                        if masks_y[l].len() < sub_size && masks_y[l] == masks_y[r] {
-                            //println!("HORIZONTAL: {:?} = {:?}", masks_y[l], masks_y[r]);
+                        if !masks_y[l].is_empty() && masks_y[l].len() < sub_size && masks_y[l] == masks_y[r] {
+                            println!("HORIZONTAL {value}: {:?} = {:?} at {l} {r}", masks_y[l], masks_y[r]);
                             let mut res = vec![];
 
                             for n_sq_x in (0..sub_size).filter(|sq_x| *sq_x != l && *sq_x != r) {
@@ -213,8 +214,8 @@ impl Rule for SquareRule {
                 //Tjek om der er nogle af dem som er 100% identisk
                 for l in 0..sub_size {
                     for r in l + 1..sub_size {
-                        if masks_x[l].len() < sub_size && masks_x[l] == masks_x[r] {
-                            //println!("VERTICAL: {:?} = {:?}", masks_x[l], masks_x[r]);
+                        if !masks_x[l].is_empty() && masks_x[l].len() < sub_size && masks_x[l] == masks_x[r] {
+                            println!("VERTICAL {value}: {:?} = {:?} at {l} {r}", masks_x[l], masks_x[r]);
                             let mut res = vec![];
                             
                             for n_sq_y in (0..sub_size).filter(|sq_y| *sq_y != l && *sq_y != r) {
@@ -1055,7 +1056,7 @@ fn square_hidden_math_test() {
     assert_eq!(res, Some((1, 20)))
 }
 #[test]
-fn square_locked_x_test() {
+fn locked_square_x_candidate() {
     let mut sudoku = Sudoku::new(9, vec![Box::new(SquareRule)]);
 
     let removes = vec![
@@ -1072,7 +1073,7 @@ fn square_locked_x_test() {
 }
 
 #[test]
-fn square_locked_y_test() {
+fn locked_square_y_candidate() {
     let mut sudoku = Sudoku::new(9, vec![Box::new(SquareRule)]);
 
     let removes = vec![
