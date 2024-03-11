@@ -825,7 +825,9 @@ impl Rule for DiagonalRule {
                     for remove_index in (0..(sudoku.size))
                         .map(|i| i * (sudoku.size + 1)) // indexes of the diagonal
                         .filter(|index| {
-                            index - (sudoku.size * ((index / sudoku.size) % sub_s)) - (index % sub_s)
+                            index
+                                - (sudoku.size * ((index / sudoku.size) % sub_s))
+                                - (index % sub_s)
                                 != position
                         })
                     // but not in the box
@@ -871,7 +873,9 @@ impl Rule for DiagonalRule {
                     for remove_index in (1..(sudoku.size + 1))
                         .map(|i| i * (sudoku.size - 1)) // indexes of the diagonal
                         .filter(|index| {
-                            index - (sudoku.size * ((index / sudoku.size) % sub_s)) - (index % sub_s)
+                            index
+                                - (sudoku.size * ((index / sudoku.size) % sub_s))
+                                - (index % sub_s)
                                 != position
                         })
                     // but not in the box
@@ -1263,10 +1267,11 @@ fn locked_square_x_candidate() {
     for index in removes {
         sudoku.cells[index].available.retain(|n| *n != 1);
     }
+    let mut buffer = vec![];
+    let mut arena = Bump::new();
+    let res = SquareRule.locked_candidate(&sudoku, &mut buffer, &mut arena);
 
-    //let res = SquareRule.locked_candidate(&sudoku);
-
-    //assert_eq!(res, Some((1, vec![3, 13])));
+    assert_eq!(res, Some((1, vec![3, 13].as_slice())));
 }
 
 #[test]
@@ -1281,7 +1286,9 @@ fn locked_square_y_candidate() {
         sudoku.cells[index].available.retain(|n| *n != 1);
     }
 
-    //let res = SquareRule.locked_candidate(&sudoku);
+    let mut buffer = vec![];
+    let mut arena = Bump::new();
+    let res = SquareRule.locked_candidate(&sudoku, &mut buffer, &mut arena);
 
-    //assert_eq!(res, Some((1, vec![55, 74])));
+    assert_eq!(res, Some((1, vec![55, 74].as_slice())));
 }
