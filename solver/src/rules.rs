@@ -325,16 +325,20 @@ impl Rule for RowRule {
             Some(false) => return None,
             Some(true) => {}
         }
+        //let mut found_column_position: Vec<usize> = vec![];
+        let mut candidate_found: bool;
+        let sub_s = sudoku.size.integer_sqrt();
+        let mut row;
+
         for value in 1..=sudoku.size as u16 {
             // this is almost identical to the implementation for Coulumn go there for explanatory comments
-            let mut found_column_position: Vec<usize> = vec![];
-            let sub_s = sudoku.size.integer_sqrt();
-            let mut row;
             'find_box: for position in
                 (0..sudoku.size).map(|i| i * sub_s + (sudoku.size * (sub_s - 1) * (i / sub_s)))
             {
-                found_column_position.clear();
-
+                //found_column_position.clear();
+                candidate_found = false;
+                buffer.clear();
+                
                 for sub_row in 0..sub_s {
                     row = position / sudoku.size;
 
@@ -351,29 +355,26 @@ impl Rule for RowRule {
                             && sudoku.cells[box_pos].available.contains(&value)
                             && !sudoku.cells[box_pos].locked_in
                         {
-                            found_column_position.push(box_pos);
+                            //found_column_position.push(box_pos);
+                            candidate_found = true;
                         }
                     }
-                    /* 
-                    if !found_column_position.is_empty() {
-                        if (0..(sudoku.size))
-                            .map(|i| i + (sudoku.size * row))
-                            .filter(|i| !found_column_position.contains(i))
-                            .any(|i| sudoku.cells[i].available.contains(&value))
+
+                    if candidate_found {
+                        // push the indexes outside of the box to the buffer
+                        // only indexes containing the value should be pushed
+                        for remove_index in (0..(sudoku.size))
+                        .map(|i| i + (sudoku.size * row)) // indexes of the row
+                        .filter(|index| index - (sudoku.size * ((index/sudoku.size) % sub_s)) - (index % 3) != position) // but not in the box
                         {
-                            return Some((
-                                value,
-                                (0..(sudoku.size))
-                                    .map(|i| i + (sudoku.size * row))
-                                    .filter(|i| {
-                                        !found_column_position.contains(i)
-                                            && sudoku.cells[*i].available.contains(&value)
-                                    })
-                                    .collect(),
-                            ));
+                            if sudoku.cells[remove_index].available.contains(&value){ // only push indexes that contain the value
+                                buffer.push(remove_index)
+                            }
                         }
+                        if !buffer.is_empty(){
+                            return Some((value,buffer));
+                        } 
                     }
-                    */
                 }
             }
         }
@@ -459,11 +460,12 @@ impl Rule for ColumnRule {
             Some(false) => return None,
             Some(true) => {}
         }
-        for value in 1..=sudoku.size as u16 {
-            let mut found_column_position: Vec<usize> = vec![];
-            let sub_s = sudoku.size.integer_sqrt();
 
-            let mut column;
+        let mut candidate_found: bool;
+        let sub_s = sudoku.size.integer_sqrt();
+        let mut column;
+
+        for value in 1..=sudoku.size as u16 {
             // look through every column
             // for there to be a locked candidate in a colums
             // all 'available' for a number in a box must be contained in that column
@@ -473,7 +475,8 @@ impl Rule for ColumnRule {
             'find_box: for position in
                 (0..sudoku.size).map(|i| i * sub_s + (sudoku.size * (sub_s - 1) * (i / sub_s)))
             {
-                found_column_position.clear();
+                candidate_found = false;
+                buffer.clear();
 
                 for sub_column in 0..sub_s {
                     // get the true column number
@@ -495,29 +498,25 @@ impl Rule for ColumnRule {
                             && sudoku.cells[box_pos].available.contains(&value)
                             && !sudoku.cells[box_pos].locked_in
                         {
-                            found_column_position.push(box_pos);
+                            candidate_found = true;
                         }
                     }
-                    /*
-                    if !found_column_position.is_empty() {
-                        if (0..(sudoku.size))
-                            .map(|i| (i * sudoku.size) + column)
-                            .filter(|i| !found_column_position.contains(i))
-                            .any(|i| sudoku.cells[i].available.contains(&value))
+
+                    if candidate_found {
+                        // push the indexes outside of the box to the buffer
+                        // only indexes containing the value should be pushed
+                        for remove_index in (0..(sudoku.size))
+                        .map(|i| (i * sudoku.size) + column) // indexes of the column
+                        .filter(|index| index - (sudoku.size * ((index/sudoku.size) % sub_s)) - (index % 3) != position) // but not in the box
                         {
-                            return Some((
-                                value,
-                                (0..(sudoku.size))
-                                    .map(|i| (i * sudoku.size) + column)
-                                    .filter(|i| {
-                                        !found_column_position.contains(i)
-                                            && sudoku.cells[*i].available.contains(&value)
-                                    })
-                                    .collect(),
-                            ));
+                            if sudoku.cells[remove_index].available.contains(&value){ // only push indexes that contain the value
+                                buffer.push(remove_index)
+                            }
                         }
+                        if !buffer.is_empty(){
+                            return Some((value,buffer));
+                        } 
                     }
-                    */
                 }
             }
         }
@@ -592,7 +591,6 @@ impl Rule for XRule {
                         .available
                         .contains(&((sudoku.size + 1) as u16 - i))
                 {
-                    //found_positions.push(*left_index);
                     buffer.push(*left_index);
                 }
                 if !sudoku.cells[*left_index].locked_in
@@ -602,7 +600,6 @@ impl Rule for XRule {
                         .available
                         .contains(&((sudoku.size + 1) as u16 - i))
                 {
-                    //found_positions.push(*right_index);
                     buffer.push(*right_index);
                 }
             }
@@ -730,6 +727,7 @@ impl Rule for DiagonalRule {
             // all 'available' for a number in a box must be contained on the diagonal
             'find_box: for position in (0..sub_s).map(|i| (i * sub_s) * (sudoku.size + 1)) {
                 candidate_found = false;
+                buffer.clear();
 
                 // calculate all indexes in the current box
                 for box_pos in (0..sudoku.size).map(|i| {
@@ -775,6 +773,7 @@ impl Rule for DiagonalRule {
                 .map(|i| ((i * sub_s) * (sudoku.size - 1)) - (sub_s - 1) * sudoku.size)
             {
                 candidate_found = false;
+                buffer.clear();
 
                 for box_pos in (0..sudoku.size).map(|i| {
                     position - (sudoku.size * ((position / sudoku.size) % sub_s))
@@ -804,7 +803,7 @@ impl Rule for DiagonalRule {
                             buffer.push(remove_index)
                         }
                     }
-                    
+
                     if !buffer.is_empty(){
                         return Some((value,buffer));
                     } 
@@ -910,9 +909,15 @@ fn locked_column_candidate() {
     sudoku.set_cell(5, 2).unwrap();
     sudoku.set_cell(7, 20).unwrap();
     let mut buffer = vec![];
-    let res = column_rule.locked_candidate(&sudoku, &mut buffer);
+    let mut res = column_rule.locked_candidate(&sudoku, &mut buffer);
 
-    assert_eq!(res, Some((2, vec![27, 36, 45, 54, 63, 72].as_slice())))
+    assert_eq!(res, Some((2, vec![27, 36, 45, 54, 63, 72].as_slice())));
+
+
+    sudoku.set_cell(2, 42).unwrap();
+    sudoku.set_cell(2, 48).unwrap();
+    res = column_rule.locked_candidate(&sudoku, &mut buffer);
+    assert_eq!(res, Some((2, vec![27, 54, 63, 72].as_slice())))
 }
 
 #[test]
