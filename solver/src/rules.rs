@@ -409,7 +409,7 @@ impl Rule for RowRule {
                             .filter(|index| {
                                 index
                                     - (sudoku.size * ((index / sudoku.size) % sub_s))
-                                    - (index % 3)
+                                    - (index % sub_s)
                                     != position
                             })
                         // but not in the box
@@ -563,7 +563,7 @@ impl Rule for ColumnRule {
                             .filter(|index| {
                                 index
                                     - (sudoku.size * ((index / sudoku.size) % sub_s))
-                                    - (index % 3)
+                                    - (index % sub_s)
                                     != position
                             })
                         // but not in the box
@@ -825,7 +825,7 @@ impl Rule for DiagonalRule {
                     for remove_index in (0..(sudoku.size))
                         .map(|i| i * (sudoku.size + 1)) // indexes of the diagonal
                         .filter(|index| {
-                            index - (sudoku.size * ((index / sudoku.size) % sub_s)) - (index % 3)
+                            index - (sudoku.size * ((index / sudoku.size) % sub_s)) - (index % sub_s)
                                 != position
                         })
                     // but not in the box
@@ -871,7 +871,7 @@ impl Rule for DiagonalRule {
                     for remove_index in (1..(sudoku.size + 1))
                         .map(|i| i * (sudoku.size - 1)) // indexes of the diagonal
                         .filter(|index| {
-                            index - (sudoku.size * ((index / sudoku.size) % sub_s)) - (index % 3)
+                            index - (sudoku.size * ((index / sudoku.size) % sub_s)) - (index % sub_s)
                                 != position
                         })
                     // but not in the box
