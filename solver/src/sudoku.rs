@@ -225,25 +225,31 @@ impl Sudoku {
                         }
                     }
 
-                    
                     //Locked candidates
-                    for rule in &self.rules { 
-                        if let Some((n, removable_indexes)) = rule.locked_candidate(self) {
-                            //println!("Removing {n} from {removable_indexes:?} with rule {}", rule.get_name());            
-                            
+                    for rule in &self.rules {
+                        if let Some((n, removable_indexes)) =
+                            rule.locked_candidate(self, &mut ret_buffer)
+                        {
+                            #[cfg(debug_assertions)] // I debug mode tjekker vi om locked_candidates ikke er tomme
+                            assert!(!removable_indexes.is_empty());
+
+                            //Put nuværende cell tilbage i priority queue
+                            pri_queue.push(index, entropy);
+
                             for remove_index in removable_indexes {
-                                pri_queue.remove(&remove_index);
-                                self.cells[remove_index].remove(n)?;
-                                if remove_index != index{
-                                    pri_queue.push(remove_index, Entropy(self.cells[remove_index].available.len()));
+                                self.cells[*remove_index].remove(n)?;
+                                if *remove_index != index {
+                                    pri_queue.change_priority(
+                                        remove_index,
+                                        Entropy(self.cells[*remove_index].available.len()),
+                                    );
                                 }
                             }
-                            pri_queue.push(index, Entropy(self.cells[index].available.len()));
+
                             continue 'main;
-                            
                         }
-                    } 
-                    
+                    }
+
                     //Der er flere muligheder for hvad der kan vælges. Derfor pushes state på branch stacken og der vælges en mulighed
                     //Vælg random
                     let choice = random::<usize>() % entropy.0;
@@ -355,8 +361,7 @@ impl Sudoku {
             }
 
             let removed_index = random::<usize>() % sudoku.cells.len();
-            if sudoku.cells[removed_index].available.len() == sudoku.size
-            {
+            if sudoku.cells[removed_index].available.len() == sudoku.size {
                 //println!("Skipping already hit");
                 continue;
             }
