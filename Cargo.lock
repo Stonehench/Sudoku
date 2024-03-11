@@ -575,6 +575,7 @@ dependencies = [
 name = "solver"
 version = "0.1.0"
 dependencies = [
+ "bumpalo",
  "integer-sqrt",
  "lazy_static",
  "num_cpus",

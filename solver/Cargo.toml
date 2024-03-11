@@ -14,6 +14,7 @@ regex-macro = "*"
 threadpool = "*"
 num_cpus = "*"
 lazy_static = "*"
+bumpalo = {version = "*", features = ["collections"]}
 
 [profile.release]
 debug=true

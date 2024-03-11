@@ -1,6 +1,8 @@
+use bumpalo::collections::Vec as BumpVec;
+use bumpalo::Bump;
 use integer_sqrt::IntegerSquareRoot;
 use std::cell::RefCell;
-use std::{collections::HashSet, fmt::Debug, str::FromStr};
+use std::{fmt::Debug, str::FromStr};
 
 use crate::sudoku::{DynRule, Sudoku};
 
@@ -29,7 +31,8 @@ pub trait Rule: Debug {
     fn locked_candidate<'buf>(
         &self,
         _sudoku: &Sudoku,
-        buffer: &'buf mut Vec<usize>,
+        _buffer: &'buf mut Vec<usize>,
+        arena: &mut Bump,
     ) -> Option<(u16, &'buf [usize])> {
         None
     }
@@ -146,19 +149,26 @@ impl Rule for SquareRule {
         &self,
         sudoku: &Sudoku,
         buffer: &'buf mut Vec<usize>,
+        arena: &mut Bump,
     ) -> Option<(u16, &'buf [usize])> {
+        
         let sub_size = sudoku.size.integer_sqrt();
+        enum SqType {
+            Row,
+            Column,
+        }
 
         // Hjælper funktion
-        fn locked_in_sq(
+        fn locked_in_sq<'arena>(
             sq_y: usize,
             sq_x: usize,
             sub_size: usize,
             value: u16,
+            sq_type: SqType,
+            arena: &'arena Bump,
             sudoku: &Sudoku,
-        ) -> (HashSet<usize>, HashSet<usize>) {
-            let mut rows = HashSet::new();
-            let mut columns = HashSet::new();
+        ) -> BumpVec<'arena, usize> {
+            let mut data = BumpVec::new_in(arena);
 
             for l_x in 0..sub_size {
                 for l_y in 0..sub_size {
@@ -167,20 +177,32 @@ impl Rule for SquareRule {
                     let i = x + y * sudoku.size;
                     let cell = &sudoku.cells[i];
                     if !cell.locked_in && cell.available.contains(&value) {
-                        rows.insert(l_y);
-                        columns.insert(l_x);
+                        data.push(match sq_type {
+                            SqType::Row => l_x,
+                            SqType::Column => l_y,
+                        });
                     }
                 }
             }
-            (rows, columns)
+            data.dedup();
+            data.sort();
+            data
         }
 
         for value in 1..sudoku.size as u16 + 1 {
             //Tjek for vandret
             for sq_y in 0..sub_size {
-                let mut masks_y = vec![];
+                let mut masks_y = BumpVec::new_in(&arena);
                 for sq_x in 0..sub_size {
-                    masks_y.push(locked_in_sq(sq_y, sq_x, sub_size, value, sudoku).0)
+                    masks_y.push(locked_in_sq(
+                        sq_y,
+                        sq_x,
+                        sub_size,
+                        value,
+                        SqType::Column,
+                        arena,
+                        sudoku,
+                    ))
                 }
 
                 //Tjek om der er nogle af dem som er 100% ens
@@ -208,6 +230,8 @@ impl Rule for SquareRule {
                             }
 
                             if !buffer.is_empty() {
+                                drop(masks_y);
+                                arena.reset();
                                 return Some((value, buffer));
                             }
                         }
@@ -216,9 +240,17 @@ impl Rule for SquareRule {
             }
             //Tjek for lodret
             for sq_x in 0..sub_size {
-                let mut masks_x = vec![];
+                let mut masks_x = BumpVec::new_in(&arena);
                 for sq_y in 0..sub_size {
-                    masks_x.push(locked_in_sq(sq_y, sq_x, sub_size, value, sudoku).1)
+                    masks_x.push(locked_in_sq(
+                        sq_y,
+                        sq_x,
+                        sub_size,
+                        value,
+                        SqType::Row,
+                        arena,
+                        sudoku,
+                    ))
                 }
 
                 //Tjek om der er nogle af dem som er 100% identisk
@@ -246,6 +278,8 @@ impl Rule for SquareRule {
                             }
 
                             if !buffer.is_empty() {
+                                drop(masks_x);
+                                arena.reset();
                                 return Some((value, buffer));
                             }
                         }
@@ -307,7 +341,12 @@ impl Rule for RowRule {
         None
     }
 
-    fn locked_candidate<'buf>(&self, sudoku: &Sudoku, buffer: &'buf mut Vec<usize>) -> Option<(u16, &'buf [usize])> {
+    fn locked_candidate<'buf>(
+        &self,
+        sudoku: &Sudoku,
+        buffer: &'buf mut Vec<usize>,
+        arena: &mut Bump,
+    ) -> Option<(u16, &'buf [usize])> {
         // locked candidate only really applies when square rule is in the ruleset
         // There are certain patterns of available numbers that may all eliminate a certain cell
 
@@ -354,7 +393,7 @@ impl Rule for RowRule {
                             found_column_position.push(box_pos);
                         }
                     }
-                    /* 
+                    /*
                     if !found_column_position.is_empty() {
                         if (0..(sudoku.size))
                             .map(|i| i + (sudoku.size * row))
@@ -441,7 +480,12 @@ impl Rule for ColumnRule {
         None
     }
 
-    fn locked_candidate<'buf>(&self, sudoku: &Sudoku, buffer: &'buf mut Vec<usize>) -> Option<(u16, &'buf [usize])> {
+    fn locked_candidate<'buf>(
+        &self,
+        sudoku: &Sudoku,
+        buffer: &'buf mut Vec<usize>,
+        _arena: &mut Bump,
+    ) -> Option<(u16, &'buf [usize])> {
         // locked candidate only really applies when square rule is in the ruleset
         // There are certain patterns of available numbers that may all eliminate a certain cell
 
@@ -574,7 +618,12 @@ impl Rule for XRule {
         None
     }
 
-    fn locked_candidate<'buf>(&self, sudoku: &Sudoku, buffer: &'buf mut Vec<usize>) -> Option<(u16, &'buf [usize])> {
+    fn locked_candidate<'buf>(
+        &self,
+        sudoku: &Sudoku,
+        buffer: &'buf mut Vec<usize>,
+        _arena: &mut Bump,
+    ) -> Option<(u16, &'buf [usize])> {
         //let mut found_candidate: Option<(u16, Vec<usize>)> = None;
         //let mut found_positions: Vec<usize> = vec![];
         // for all numbers in the sudoku
@@ -716,7 +765,12 @@ impl Rule for DiagonalRule {
         None
     }
 
-    fn locked_candidate<'buf>(&self, sudoku: &Sudoku, buffer: &'buf mut Vec<usize>) -> Option<(u16, &'buf [usize])> {
+    fn locked_candidate<'buf>(
+        &self,
+        sudoku: &Sudoku,
+        buffer: &'buf mut Vec<usize>,
+        _arena: &mut Bump,
+    ) -> Option<(u16, &'buf [usize])> {
         let sub_s = sudoku.size.integer_sqrt();
 
         // keep track of wether or not a possible candidate has been found in the box
@@ -724,7 +778,6 @@ impl Rule for DiagonalRule {
 
         // TODO this only works if the square rule is also a part of the ruleset
         for value in 1..=sudoku.size as u16 {
-        
             // look in the first diagonal
             // for there to be a locked candidate in a diagonal
             // all 'available' for a number in a box must be contained on the diagonal
@@ -752,21 +805,25 @@ impl Rule for DiagonalRule {
                 }
 
                 if candidate_found {
-
                     // push the indexes outside of the box to the buffer
                     // only indexes containing the value should be pushed
 
                     for remove_index in (0..(sudoku.size))
-                    .map(|i| i * (sudoku.size + 1)) // indexes of the diagonal
-                    .filter(|index| index - (sudoku.size * ((index/sudoku.size) % sub_s)) - (index % 3) != position) // but not in the box
+                        .map(|i| i * (sudoku.size + 1)) // indexes of the diagonal
+                        .filter(|index| {
+                            index - (sudoku.size * ((index / sudoku.size) % sub_s)) - (index % 3)
+                                != position
+                        })
+                    // but not in the box
                     {
-                        if sudoku.cells[remove_index].available.contains(&value){ // only push indexes that contain the value
+                        if sudoku.cells[remove_index].available.contains(&value) {
+                            // only push indexes that contain the value
                             buffer.push(remove_index)
                         }
                     }
-                    if !buffer.is_empty(){
-                        return Some((value,buffer));
-                    } 
+                    if !buffer.is_empty() {
+                        return Some((value, buffer));
+                    }
                 }
             }
 
@@ -790,24 +847,29 @@ impl Rule for DiagonalRule {
                     } else if box_pos % (sudoku.size - 1) == 0
                         && sudoku.cells[box_pos].available.contains(&value)
                         && !sudoku.cells[box_pos].locked_in
-                    {   
+                    {
                         candidate_found = true;
                     }
                 }
                 // if something was found and the rest of the diagonal is not already empty
                 if candidate_found {
-                    for remove_index in (1..(sudoku.size +1))
-                    .map(|i| i * (sudoku.size - 1)) // indexes of the diagonal
-                    .filter(|index| index - (sudoku.size * ((index/sudoku.size) % sub_s)) - (index % 3) != position) // but not in the box
+                    for remove_index in (1..(sudoku.size + 1))
+                        .map(|i| i * (sudoku.size - 1)) // indexes of the diagonal
+                        .filter(|index| {
+                            index - (sudoku.size * ((index / sudoku.size) % sub_s)) - (index % 3)
+                                != position
+                        })
+                    // but not in the box
                     {
-                        if sudoku.cells[remove_index].available.contains(&value){ // only push indexes that contain the value
+                        if sudoku.cells[remove_index].available.contains(&value) {
+                            // only push indexes that contain the value
                             buffer.push(remove_index)
                         }
                     }
-                    
-                    if !buffer.is_empty(){
-                        return Some((value,buffer));
-                    } 
+
+                    if !buffer.is_empty() {
+                        return Some((value, buffer));
+                    }
                 }
             }
         }
@@ -910,7 +972,8 @@ fn locked_column_candidate() {
     sudoku.set_cell(5, 2).unwrap();
     sudoku.set_cell(7, 20).unwrap();
     let mut buffer = vec![];
-    let res = column_rule.locked_candidate(&sudoku, &mut buffer);
+    let mut arena = Bump::new();
+    let res = column_rule.locked_candidate(&sudoku, &mut buffer, &mut arena);
 
     assert_eq!(res, Some((2, vec![27, 36, 45, 54, 63, 72].as_slice())))
 }
@@ -927,7 +990,8 @@ fn locked_row_candidate() {
     sudoku.set_cell(5, 19).unwrap();
     sudoku.set_cell(7, 20).unwrap();
     let mut buffer = vec![];
-    let res = row_rule.locked_candidate(&sudoku, &mut buffer);
+    let mut arena = Bump::new();
+    let res = row_rule.locked_candidate(&sudoku, &mut buffer, &mut arena);
 
     assert_eq!(res, Some((2, vec![3, 4, 5, 6, 7, 8].as_slice())))
 }
@@ -941,7 +1005,8 @@ fn locked_x_candidate() {
     sudoku.set_cell(1, 5).unwrap();
     println!("{sudoku}");
     let mut buffer = vec![];
-    let res = x_rule.locked_candidate(&sudoku, &mut buffer);
+    let mut arena = Bump::new();
+    let res = x_rule.locked_candidate(&sudoku, &mut buffer, &mut arena);
     assert_eq!(res, Some((4, vec![2].as_slice())))
 }
 
@@ -957,7 +1022,8 @@ fn locked_diagonal_candidate() {
     sudoku.set_cell(6, 18).unwrap();
     sudoku.set_cell(7, 19).unwrap();
     let mut buffer = vec![];
-    let res = diagonal_rule.locked_candidate(&sudoku, &mut buffer);
+    let mut arena = Bump::new();
+    let res = diagonal_rule.locked_candidate(&sudoku, &mut buffer, &mut arena);
     assert_eq!(res, Some((1, vec![30, 40, 50, 60, 70, 80].as_slice())));
 
     sudoku = Sudoku::new(9, vec![Box::new(SquareRule)]);
@@ -969,7 +1035,8 @@ fn locked_diagonal_candidate() {
     sudoku.set_cell(6, 25).unwrap();
     sudoku.set_cell(7, 26).unwrap();
     let mut buffer = vec![];
-    let res = diagonal_rule.locked_candidate(&sudoku, &mut buffer);
+    let mut arena = Bump::new();
+    let res = diagonal_rule.locked_candidate(&sudoku, &mut buffer, &mut arena);
     assert_eq!(res, Some((1, vec![32, 40, 48, 56, 64, 72].as_slice())))
 }
 

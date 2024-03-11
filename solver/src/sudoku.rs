@@ -8,6 +8,7 @@ use std::{
     time::Instant,
 };
 
+use bumpalo::Bump;
 use integer_sqrt::IntegerSquareRoot;
 use lazy_static::lazy_static;
 use priority_queue::PriorityQueue;
@@ -188,6 +189,7 @@ impl Sudoku {
 
         let mut branch_stack: Vec<(Vec<Cell>, PriorityQueue<usize, Entropy>)> = vec![];
         let mut ret_buffer = vec![];
+        let mut arena = Bump::new();
 
         'main: while let Some((index, entropy)) = pri_queue.pop() {
             match entropy.0 {
@@ -228,7 +230,7 @@ impl Sudoku {
                     //Locked candidates
                     for rule in &self.rules {
                         if let Some((n, removable_indexes)) =
-                            rule.locked_candidate(self, &mut ret_buffer)
+                            rule.locked_candidate(self, &mut ret_buffer, &mut arena)
                         {
                             #[cfg(debug_assertions)] // I debug mode tjekker vi om locked_candidates ikke er tomme
                             assert!(!removable_indexes.is_empty());
