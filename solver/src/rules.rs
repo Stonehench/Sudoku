@@ -32,7 +32,7 @@ pub trait Rule: Debug {
         &self,
         _sudoku: &Sudoku,
         _buffer: &'buf mut Vec<usize>,
-        arena: &mut Bump,
+        _arena: &mut Bump,
     ) -> Option<(u16, &'buf [usize])> {
         None
     }
@@ -190,8 +190,9 @@ impl Rule for SquareRule {
 
         for value in 1..sudoku.size as u16 + 1 {
             //Tjek for vandret
+            let mut masks_y = BumpVec::new_in(&arena);
             for sq_y in 0..sub_size {
-                let mut masks_y = BumpVec::new_in(&arena);
+                masks_y.clear();
                 for sq_x in 0..sub_size {
                     masks_y.push(locked_in_sq(
                         sq_y,
@@ -238,8 +239,9 @@ impl Rule for SquareRule {
                 }
             }
             //Tjek for lodret
+            let mut masks_x = BumpVec::new_in(&arena);
             for sq_x in 0..sub_size {
-                let mut masks_x = BumpVec::new_in(&arena);
+                masks_x.clear();
                 for sq_y in 0..sub_size {
                     masks_x.push(locked_in_sq(
                         sq_y,
@@ -278,6 +280,7 @@ impl Rule for SquareRule {
 
                             if !buffer.is_empty() {
                                 drop(masks_x);
+                                drop(masks_y);
                                 arena.reset();
                                 return Some((value, buffer));
                             }
@@ -344,7 +347,7 @@ impl Rule for RowRule {
         &self,
         sudoku: &Sudoku,
         buffer: &'buf mut Vec<usize>,
-        arena: &mut Bump,
+        _arena: &mut Bump,
     ) -> Option<(u16, &'buf [usize])> {
         // locked candidate only really applies when square rule is in the ruleset
         // There are certain patterns of available numbers that may all eliminate a certain cell
