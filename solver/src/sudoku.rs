@@ -240,12 +240,10 @@ impl Sudoku {
 
                             for remove_index in removable_indexes {
                                 self.cells[*remove_index].remove(n)?;
-                                if *remove_index != index {
-                                    pri_queue.change_priority(
+                                pri_queue.change_priority(
                                         remove_index,
                                         Entropy(self.cells[*remove_index].available.len()),
-                                    );
-                                }
+                                );
                             }
 
                             continue 'main;
