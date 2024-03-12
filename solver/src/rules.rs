@@ -797,12 +797,10 @@ impl Rule for DiagonalRule {
             'find_box: for position in (0..sub_s).map(|i| (i * sub_s) * (sudoku.size + 1)) {
                 candidate_found = false;
                 buffer.clear();
-
+                
                 // calculate all indexes in the current box
                 for box_pos in (0..sudoku.size).map(|i| {
-                    position - (sudoku.size * ((position / sudoku.size) % sub_s))
-                        + (i % sub_s)
-                        + (sudoku.size * (i / sub_s))
+                    position + (i % sub_s) + (sudoku.size * (i / sub_s))
                 }) {
                     // if the box position is not on the diagonal and contains the value this is not a locked candidate
                     if box_pos % (sudoku.size + 1) != 0
@@ -851,9 +849,7 @@ impl Rule for DiagonalRule {
                 buffer.clear();
 
                 for box_pos in (0..sudoku.size).map(|i| {
-                    position - (sudoku.size * ((position / sudoku.size) % sub_s))
-                        + (i % sub_s)
-                        + (sudoku.size * (i / sub_s))
+                    position + (i % sub_s) + (sudoku.size * (i / sub_s))
                 }) {
                     // if the box position is not on the diagonal and contains the value this is not a locked candidate
                     if box_pos % (sudoku.size - 1) != 0
@@ -1061,7 +1057,18 @@ fn locked_diagonal_candidate() {
     let mut buffer = vec![];
     let mut arena = Bump::new();
     let res = diagonal_rule.locked_candidate(&sudoku, &mut buffer, &mut arena);
-    assert_eq!(res, Some((1, vec![32, 40, 48, 56, 64, 72].as_slice())))
+    assert_eq!(res, Some((1, vec![32, 40, 48, 56, 64, 72].as_slice())));
+
+    sudoku = Sudoku::new(4, vec![Box::new(SquareRule)]);
+
+    sudoku.set_cell(2, 8).unwrap();
+    sudoku.set_cell(3, 13).unwrap();
+
+    let mut buffer = vec![];
+    let mut arena = Bump::new();
+    let res = diagonal_rule.locked_candidate(&sudoku, &mut buffer, &mut arena);
+    assert_eq!(res, Some((1, vec![3, 6].as_slice())))
+
 }
 
 #[test]
