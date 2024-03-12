@@ -384,7 +384,7 @@ impl Rule for RowRule {
                     row = position / sudoku.size;
 
                     for box_pos in (0..sudoku.size).map(|i| {
-                        position - (sudoku.size * ((position / sudoku.size) % sub_s))
+                        position //- (sudoku.size * ((position / sudoku.size) % sub_s))
                             + (i % sub_s)
                             + (sudoku.size * (i / sub_s))
                     }) {
@@ -536,7 +536,7 @@ impl Rule for ColumnRule {
                     column = position % sudoku.size;
 
                     for box_pos in (0..sudoku.size).map(|i| {
-                        position - (sudoku.size * ((position / sudoku.size) % sub_s))
+                        position // - (sudoku.size * ((position / sudoku.size) % sub_s))
                             + (i % sub_s)
                             + (sudoku.size * (i / sub_s))
                     }) {
