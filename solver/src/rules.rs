@@ -1,4 +1,4 @@
-use bumpalo::collections::Vec as BumpVec;
+use allocator_api2::vec::Vec as AlloVec;
 use bumpalo::Bump;
 use integer_sqrt::IntegerSquareRoot;
 use std::cell::RefCell;
@@ -166,8 +166,8 @@ impl Rule for SquareRule {
             sq_type: SqType,
             arena: &'arena Bump,
             sudoku: &Sudoku,
-        ) -> BumpVec<'arena, usize> {
-            let mut data = BumpVec::new_in(arena);
+        ) -> AlloVec<usize, &'arena Bump> {
+            let mut data = AlloVec::new_in(arena);
 
             for l_x in 0..sub_size {
                 for l_y in 0..sub_size {
@@ -190,7 +190,7 @@ impl Rule for SquareRule {
 
         for value in 1..sudoku.size as u16 + 1 {
             //Tjek for vandret
-            let mut masks_y = BumpVec::new_in(&arena);
+            let mut masks_y = AlloVec::<_, &Bump>::new_in(arena);
             for sq_y in 0..sub_size {
                 masks_y.clear();
                 for sq_x in 0..sub_size {
@@ -239,7 +239,7 @@ impl Rule for SquareRule {
                 }
             }
             //Tjek for lodret
-            let mut masks_x = BumpVec::new_in(&arena);
+            let mut masks_x = AlloVec::<_, &Bump>::new_in(&arena);
             for sq_x in 0..sub_size {
                 masks_x.clear();
                 for sq_y in 0..sub_size {
@@ -797,11 +797,11 @@ impl Rule for DiagonalRule {
             'find_box: for position in (0..sub_s).map(|i| (i * sub_s) * (sudoku.size + 1)) {
                 candidate_found = false;
                 buffer.clear();
-                
+
                 // calculate all indexes in the current box
-                for box_pos in (0..sudoku.size).map(|i| {
-                    position + (i % sub_s) + (sudoku.size * (i / sub_s))
-                }) {
+                for box_pos in
+                    (0..sudoku.size).map(|i| position + (i % sub_s) + (sudoku.size * (i / sub_s)))
+                {
                     // if the box position is not on the diagonal and contains the value this is not a locked candidate
                     if box_pos % (sudoku.size + 1) != 0
                         && sudoku.cells[box_pos].available.contains(&value)
@@ -848,9 +848,9 @@ impl Rule for DiagonalRule {
                 candidate_found = false;
                 buffer.clear();
 
-                for box_pos in (0..sudoku.size).map(|i| {
-                    position + (i % sub_s) + (sudoku.size * (i / sub_s))
-                }) {
+                for box_pos in
+                    (0..sudoku.size).map(|i| position + (i % sub_s) + (sudoku.size * (i / sub_s)))
+                {
                     // if the box position is not on the diagonal and contains the value this is not a locked candidate
                     if box_pos % (sudoku.size - 1) != 0
                         && sudoku.cells[box_pos].available.contains(&value)
@@ -1068,7 +1068,6 @@ fn locked_diagonal_candidate() {
     let mut arena = Bump::new();
     let res = diagonal_rule.locked_candidate(&sudoku, &mut buffer, &mut arena);
     assert_eq!(res, Some((1, vec![3, 6].as_slice())))
-
 }
 
 #[test]
