@@ -289,6 +289,7 @@ impl Sudoku {
 
         #[cfg(debug_assertions)]
         {
+            println!("arena capacity: {}",arena.chunk_capacity()) ;
             println!("branch count: {branch_count}");
             println!("backtracks: {backtracks}");
         }

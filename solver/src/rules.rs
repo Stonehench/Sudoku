@@ -289,6 +289,7 @@ impl Rule for SquareRule {
                 }
             }
         }
+        arena.reset();
         None
     }
 }
