@@ -351,11 +351,11 @@ impl Sudoku {
 
             let solutions = ctx.wait_for_solutions();
 
-            println!("Found {} with {count} removed", solutions);
+            //println!("Found {} with {count} removed", solutions);
 
             if solutions > 1 {
                 if currents_left == 0 {
-                    println!("FAILED TO FIND NEW UNIQUE WITHIN LIMITS!!");
+                    //println!("FAILED TO FIND NEW UNIQUE WITHIN LIMITS!!");
                     break;
                 } else {
                     currents_left -= 1;
@@ -366,10 +366,10 @@ impl Sudoku {
             currents_left = ATTEMPT_COUNT;
 
             sudoku.cells[removed_index] = Cell::new_with_range(1..sudoku.size as u16 + 1);
-            println!("Removed {removed_index}");
+            //println!("Removed {removed_index}");
             count += 1;
         }
-        println!("Removed {count} in {:?}", timer.elapsed());
+        //println!("Removed {count} in {:?}", timer.elapsed());
 
         for cell in &mut sudoku.cells {
             cell.locked_in = false;
