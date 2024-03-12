@@ -151,6 +151,7 @@ impl Rule for SquareRule {
         buffer: &'buf mut Vec<usize>,
         arena: &mut Bump,
     ) -> Option<(u16, &'buf [usize])> {
+        arena.reset();
         let sub_size = sudoku.size.integer_sqrt();
         enum SqType {
             Row,
@@ -167,7 +168,7 @@ impl Rule for SquareRule {
             arena: &'arena Bump,
             sudoku: &Sudoku,
         ) -> AlloVec<usize, &'arena Bump> {
-            let mut data = AlloVec::new_in(arena);
+            let mut data = AlloVec::with_capacity_in(sub_size, arena);
 
             for l_x in 0..sub_size {
                 for l_y in 0..sub_size {
@@ -230,8 +231,6 @@ impl Rule for SquareRule {
                             }
 
                             if !buffer.is_empty() {
-                                drop(masks_y);
-                                arena.reset();
                                 return Some((value, buffer));
                             }
                         }
@@ -279,9 +278,6 @@ impl Rule for SquareRule {
                             }
 
                             if !buffer.is_empty() {
-                                drop(masks_x);
-                                drop(masks_y);
-                                arena.reset();
                                 return Some((value, buffer));
                             }
                         }
@@ -289,7 +285,6 @@ impl Rule for SquareRule {
                 }
             }
         }
-        arena.reset();
         None
     }
 }
@@ -348,7 +343,7 @@ impl Rule for RowRule {
         &self,
         sudoku: &Sudoku,
         buffer: &'buf mut Vec<usize>,
-        _arena: &mut Bump,
+        arena: &mut Bump,
     ) -> Option<(u16, &'buf [usize])> {
         // locked candidate only really applies when square rule is in the ruleset
         // There are certain patterns of available numbers that may all eliminate a certain cell
@@ -367,7 +362,13 @@ impl Rule for RowRule {
             Some(false) => return None,
             Some(true) => {}
         }
-        //let mut found_column_position: Vec<usize> = vec![];
+        //Hey kat hvis du har lyst til at bruge found_column position kan du gøre det nu!!
+
+        arena.reset();
+        compile_error!("HEY KATINKA KIG HER!!");
+        let mut found_column_position: AlloVec<usize, &Bump> =
+            AlloVec::with_capacity_in(100, &arena);
+
         let mut candidate_found: bool;
         let sub_s = sudoku.size.integer_sqrt();
         let mut row;
