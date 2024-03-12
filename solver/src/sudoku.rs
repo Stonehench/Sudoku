@@ -325,7 +325,6 @@ impl Sudoku {
         let mut count = 0;
 
         let mut currents_left = ATTEMPT_COUNT;
-        let timer = Instant::now();
         loop {
             if let Some(progess) = &progess {
                 progess.send(count).unwrap();
