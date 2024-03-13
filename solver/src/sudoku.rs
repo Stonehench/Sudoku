@@ -110,6 +110,10 @@ impl Display for SudokuSolveError {
     }
 }
 
+lazy_static! {
+    static ref ARENA_POOL: Mutex<Vec<Bump>> = Mutex::new(vec![]);
+}
+
 impl Sudoku {
     pub fn new(size: usize, mut rules: Vec<DynRule>) -> Self {
         if !rules.iter().any(|r| r.get_name() == "ColumnRule") {
@@ -164,6 +168,16 @@ impl Sudoku {
         Ok(())
     }
 
+    fn get_arena() -> Bump {
+        let mut lock = ARENA_POOL.lock().unwrap();
+
+        if let Some(bump) = lock.pop() {
+            return bump;
+        }
+
+        Bump::new()
+    }
+
     pub fn solve(
         &mut self,
         ctx: Option<&AllSolutionsContext>,
@@ -190,7 +204,7 @@ impl Sudoku {
 
         let mut branch_stack: Vec<(Vec<Cell>, PriorityQueue<usize, Entropy>)> = vec![];
         let mut ret_buffer = vec![];
-        let mut arena = Bump::new();
+        let mut arena = Self::get_arena();
 
         'main: while let Some((index, entropy)) = pri_queue.pop() {
             match entropy.0 {
@@ -300,6 +314,9 @@ impl Sudoku {
             println!("branch count: {branch_count}");
             println!("backtracks: {backtracks}");
         }
+
+        let mut lock = ARENA_POOL.lock().unwrap();
+        lock.push(arena);
 
         if let Some(ctx) = ctx {
             ctx.solutions
