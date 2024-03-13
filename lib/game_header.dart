@@ -4,7 +4,8 @@ import 'package:sudoku/menu.dart';
 
 class GameHeader extends StatefulWidget {
   String rules;
-  GameHeader(this.rules);
+  GameHeader(this.rules, {super.key});
+
   @override
   State<GameHeader> createState() => _DigitSelectState();
 }
@@ -19,12 +20,12 @@ class _DigitSelectState extends State<GameHeader> {
               showDialog(
                 context: context,
                 builder: (context) => AlertDialog(
-                  title: Text("Rules"),
+                  title: const Text("Rules"),
                   content: Text(widget.rules),
                 ),
               );
             },
-            child: Text("Rules")),
+            child: const Text("Rules")),
         Text("Standard Sudoku", style: TextStyle(fontSize: 24)),
       ],
     );
