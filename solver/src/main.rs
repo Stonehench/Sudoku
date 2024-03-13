@@ -4,6 +4,7 @@ use std::{
     time::Instant,
 };
 
+use crate::rules::SquareRule;
 use sudoku::Sudoku;
 
 mod rules;
@@ -71,4 +72,27 @@ fn benchmark() {
     }
     let avg_time = timer.elapsed() / COUNT;
     println!("Avg solve time for {COUNT} solves: {avg_time:?}");
+
+    const GEN_COUNT: u32 = COUNT / 50;
+
+    let timer = Instant::now();
+    for _ in 0..GEN_COUNT {
+        Sudoku::generate_with_size(4, vec![Box::new(SquareRule)], None).unwrap();
+    }
+    let avg_time_4x4 = timer.elapsed() / GEN_COUNT;
+    println!("Avg generate time for {GEN_COUNT} 4x4: {avg_time_4x4:?}");
+
+    let timer = Instant::now();
+    for _ in 0..GEN_COUNT {
+        Sudoku::generate_with_size(9, vec![Box::new(SquareRule)], None).unwrap();
+    }
+    let avg_time_9x9 = timer.elapsed() / GEN_COUNT;
+    println!("Avg generate time for {GEN_COUNT} 9x9: {avg_time_9x9:?}");
+
+    let timer = Instant::now();
+    for _ in 0..GEN_COUNT {
+        Sudoku::generate_with_size(16, vec![Box::new(SquareRule)], None).unwrap();
+    }
+    let avg_time_16x16 = timer.elapsed() / GEN_COUNT;
+    println!("Avg generate time for {GEN_COUNT} 16x16: {avg_time_16x16:?}");
 }
