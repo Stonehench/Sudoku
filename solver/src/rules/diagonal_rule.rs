@@ -2,18 +2,13 @@ use super::Rule;
 use crate::sudoku::{DynRule, Sudoku};
 use bumpalo::Bump;
 use integer_sqrt::IntegerSquareRoot;
-use std::cell::RefCell;
 use std::fmt::Debug;
 
 #[derive(Debug, Clone)]
-pub struct DiagonalRule {
-    pub has_locked: RefCell<Option<bool>>,
-}
+pub struct DiagonalRule;
 impl DiagonalRule {
     pub fn new() -> Box<dyn Rule + Send> {
-        Box::new(DiagonalRule {
-            has_locked: RefCell::new(None),
-        })
+        Box::new(Self)
     }
 }
 
@@ -103,26 +98,16 @@ impl Rule for DiagonalRule {
         None
     }
 
+    fn needs_square_for_locked(&self) -> bool {
+        true
+    }
+
     fn locked_candidate<'buf>(
         &self,
         sudoku: &Sudoku,
         buffer: &'buf mut Vec<usize>,
         _arena: &mut Bump,
     ) -> Option<(u16, &'buf [usize])> {
-        let has_locked = *self.has_locked.borrow();
-
-        match has_locked {
-            None => {
-                let has_squares = sudoku.rules.iter().any(|r| r.get_name() == "SquareRule");
-                *self.has_locked.borrow_mut() = Some(has_squares);
-                if !has_squares {
-                    return None;
-                }
-            }
-            Some(false) => return None,
-            Some(true) => {}
-        }
-
         let sub_s = sudoku.size.integer_sqrt();
 
         // keep track of wether or not a possible candidate has been found in the box
@@ -315,19 +300,23 @@ fn locked_diagonal_candidate() {
     let mut buffer = vec![];
     let mut arena = Bump::new();
     let res = diagonal_rule.locked_candidate(&sudoku, &mut buffer, &mut arena);
-    assert_eq!(res, Some((15, vec![0, 17, 34, 51, 136, 153, 170, 187, 204, 221, 238, 255].as_slice())));
+    assert_eq!(
+        res,
+        Some((
+            15,
+            vec![0, 17, 34, 51, 136, 153, 170, 187, 204, 221, 238, 255].as_slice()
+        ))
+    );
 
     // locked candidate 16x16
     sudoku = Sudoku::new(16, vec![Box::new(SquareRule)]);
 
     let res = diagonal_rule.locked_candidate(&sudoku, &mut buffer, &mut arena);
     assert_eq!(res, None);
-    
 }
 
 #[test]
 fn diagonal_test() {
-
     let diagonalrule = DiagonalRule::new();
     let mut buffer = vec![];
 
@@ -341,7 +330,10 @@ fn diagonal_test() {
     indexes = diagonalrule.updates(9, 16, &mut buffer);
     assert_eq!(indexes, vec![8, 16, 24, 32, 40, 48, 56, 64, 72]);
     indexes = diagonalrule.updates(9, 40, &mut buffer);
-    assert_eq!(indexes, vec![0, 10, 20, 30, 40, 50, 60, 70, 80, 8, 16, 24, 32, 40, 48, 56, 64, 72]);
+    assert_eq!(
+        indexes,
+        vec![0, 10, 20, 30, 40, 50, 60, 70, 80, 8, 16, 24, 32, 40, 48, 56, 64, 72]
+    );
     indexes = diagonalrule.updates(9, 41, &mut buffer);
     assert_eq!(indexes, vec![]);
 
@@ -381,16 +373,27 @@ fn diagonal_test() {
 
     // 16x16
     indexes = diagonalrule.updates(16, 0, &mut buffer);
-    assert_eq!(indexes, vec![0, 17, 34, 51, 68, 85, 102, 119, 136, 153, 170, 187, 204, 221, 238, 255]);
+    assert_eq!(
+        indexes,
+        vec![0, 17, 34, 51, 68, 85, 102, 119, 136, 153, 170, 187, 204, 221, 238, 255]
+    );
     indexes = diagonalrule.updates(16, 255, &mut buffer);
-    assert_eq!(indexes, vec![0, 17, 34, 51, 68, 85, 102, 119, 136, 153, 170, 187, 204, 221, 238, 255]);
+    assert_eq!(
+        indexes,
+        vec![0, 17, 34, 51, 68, 85, 102, 119, 136, 153, 170, 187, 204, 221, 238, 255]
+    );
     indexes = diagonalrule.updates(16, 15, &mut buffer);
-    assert_eq!(indexes, vec![15, 30, 45, 60, 75, 90, 105, 120, 135, 150, 165, 180, 195, 210, 225, 240]);
+    assert_eq!(
+        indexes,
+        vec![15, 30, 45, 60, 75, 90, 105, 120, 135, 150, 165, 180, 195, 210, 225, 240]
+    );
     indexes = diagonalrule.updates(16, 240, &mut buffer);
-    assert_eq!(indexes, vec![15, 30, 45, 60, 75, 90, 105, 120, 135, 150, 165, 180, 195, 210, 225, 240]);
+    assert_eq!(
+        indexes,
+        vec![15, 30, 45, 60, 75, 90, 105, 120, 135, 150, 165, 180, 195, 210, 225, 240]
+    );
     indexes = diagonalrule.updates(16, 111, &mut buffer);
     assert_eq!(indexes, vec![]);
-
 }
 
 #[test]

@@ -4,14 +4,12 @@ use std::{
     time::Instant,
 };
 
-use rand::random;
 use rules::square_rule::SquareRule;
 use sudoku::Sudoku;
 
-use crate::{rules::knight_rule::KnightRule, sudoku::DynRule};
 
-mod rules;
-mod sudoku;
+pub mod rules;
+pub mod sudoku;
 
 fn main() {
     let pre_read = Instant::now();
