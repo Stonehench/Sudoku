@@ -23,8 +23,7 @@ class _SudokuAppState extends State<SudokuApp> {
       theme: ThemeData.dark(),
       initialRoute: '/menu',
       routes: {
-        '/menu': (context) => const Menu(),
-        '/board': (context) => const GameView(),
+        '/menu': (context) => Menu(),
       },
     );
   }
