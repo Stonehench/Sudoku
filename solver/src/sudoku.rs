@@ -174,6 +174,7 @@ impl Sudoku {
         if let Some(bump) = lock.pop() {
             return bump;
         }
+        drop(lock);
 
         Bump::new()
     }

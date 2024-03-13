@@ -274,3 +274,31 @@ fn square_test() {
 
     assert_eq!(indexes, vec![0, 1, 2, 9, 10, 11, 18, 19, 20])
 }
+
+#[test]
+fn square_16x_locked() {
+    let mut sudoku = Sudoku::new(16, vec![SquareRule::new()]);
+    
+
+    sudoku.set_cell(1, 0).unwrap();
+    sudoku.set_cell(2, 1).unwrap();
+    sudoku.set_cell(3, 2).unwrap();
+    sudoku.set_cell(4, 3).unwrap();
+    sudoku.set_cell(5, 4).unwrap();
+    sudoku.set_cell(6, 5).unwrap();
+    sudoku.set_cell(7, 6).unwrap();
+    sudoku.set_cell(8, 7).unwrap();
+    sudoku.set_cell(9, 8).unwrap();
+    sudoku.set_cell(10, 9).unwrap();
+    sudoku.set_cell(11, 10).unwrap();
+    sudoku.set_cell(12, 11).unwrap();
+    println!("{sudoku}");
+    
+    let mut buffer = vec![];
+    let mut arena = Bump::new();
+
+    let squarerule = SquareRule;
+    let res = squarerule.locked_candidate(&sudoku, &mut buffer, &mut arena);
+    println!("{res:?}");
+    assert_eq!(res, Some((13, vec![28,29,30,31,44,45,46,47,60,61,62,63].as_slice())))
+}
