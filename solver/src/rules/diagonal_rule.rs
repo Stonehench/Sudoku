@@ -110,6 +110,24 @@ impl Rule for DiagonalRule {
         buffer: &'buf mut Vec<usize>,
         _arena: &mut Bump,
     ) -> Option<(u16, &'buf [usize])> {
+
+
+        let has_locked = *self.has_locked.borrow();
+
+        match has_locked {
+            None => {
+                let has_squares = sudoku.rules.iter().any(|r| r.get_name() == "SquareRule");
+                *self.has_locked.borrow_mut() = Some(has_squares);
+                if !has_squares {
+                    return None;
+                }
+            }
+            Some(false) => return None,
+            Some(true) => {}
+        }
+
+
+
         let sub_s = sudoku.size.integer_sqrt();
 
         // keep track of wether or not a possible candidate has been found in the box
