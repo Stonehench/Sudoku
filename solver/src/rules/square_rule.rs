@@ -1,7 +1,7 @@
 use super::Rule;
 use bumpalo::Bump;
 use integer_sqrt::IntegerSquareRoot;
-use std::fmt::Debug;
+
 
 use crate::sudoku::{DynRule, Sudoku};
 
@@ -86,7 +86,7 @@ impl Rule for SquareRule {
         buffer: &'buf mut Vec<usize>,
         arena: &mut Bump,
     ) -> Option<(u16, &'buf [usize])> {
-        println!("Entering locked square");
+        //println!("Entering locked square");
         arena.reset();
         let sub_s = sudoku.size.integer_sqrt();
         for value in 1..sudoku.size as u16 {
@@ -120,11 +120,15 @@ impl Rule for SquareRule {
                             if y == row {
                                 break;
                             }
-                            buffer.push(x + y * sudoku.size);
+                            if sudoku.cells[x + y * sudoku.size].available.contains(&value){
+                                buffer.push(x + y * sudoku.size);
+                            }
                         }
                     }
-                    println!("square locked found in ROW");
-                    return Some((value, buffer));
+                    //println!("square locked found in ROW");
+                    if !buffer.is_empty(){
+                        return Some((value, buffer));
+                    }
                 }
             }
 
@@ -158,15 +162,19 @@ impl Rule for SquareRule {
                             if x == col {
                                 break;
                             }
-                            buffer.push(x + y * sudoku.size);
+                            if sudoku.cells[x + y * sudoku.size].available.contains(&value){
+                                buffer.push(x + y * sudoku.size);
+                            }
                         }
                     }
-                    println!("square locked found in COLUMN");
-                    return Some((value, buffer));
+                    //println!("square locked found in COLUMN");
+                    if !buffer.is_empty(){
+                        return Some((value, buffer));
+                    }
                 }
             }
         }
-        println!("LOCKED SQUARE!! FOUND NONE");
+        //println!("LOCKED SQUARE!! FOUND NONE");
         None
     }
 }
@@ -204,6 +212,7 @@ fn square_test() {
 
 #[test]
 fn square_16x_locked() {
+    use std::{borrow::{Borrow, BorrowMut}, fmt::Debug};
     let mut sudoku = Sudoku::new(16, vec![SquareRule::new()]);
 
     sudoku.set_cell(1, 0).unwrap();
@@ -290,14 +299,31 @@ fn square_16x_locked() {
     sudoku.set_cell(6, 53).unwrap();
 
     let res = squarerule.locked_candidate(&sudoku, &mut buffer, &mut arena);
-    println!("{res:?}");
     assert_eq!(res, 
         Some((7,
+        vec![60,69,78,61,70,79].as_slice()))
+    );
+
+    if let Some((value, remove_indecies)) = res{
+        for index in remove_indecies {
+            let cell = sudoku.cells[*index].borrow_mut();
+            cell.available.remove(6);
+        }
+    }
+
+    println!("{sudoku}");
+
+
+    let res = squarerule.locked_candidate(&sudoku, &mut buffer, &mut arena);
+    assert_eq!(res, 
+        Some((8,
         vec![60,69,78,61,70,79].as_slice()))
     );
 
     sudoku = Sudoku::new(4, vec![SquareRule::new()]);
     let res = squarerule.locked_candidate(&sudoku, &mut buffer, &mut arena);
     assert_eq!(res, None);
+    
+
 }
  
