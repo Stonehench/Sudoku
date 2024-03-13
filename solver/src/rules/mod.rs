@@ -53,6 +53,10 @@ pub trait Rule: Debug {
     fn to_x_rule(&mut self) -> Option<&mut XRule> {
         None
     }
+
+    fn needs_square_for_locked(&self) -> bool {
+        false
+    }
 }
 
 impl FromStr for DynRule {

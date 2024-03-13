@@ -2,20 +2,15 @@ use super::Rule;
 use allocator_api2::vec::Vec as AlloVec;
 use bumpalo::Bump;
 use integer_sqrt::IntegerSquareRoot;
-use std::cell::RefCell;
 use std::fmt::Debug;
 
 use crate::sudoku::{DynRule, Sudoku};
 
 #[derive(Debug, Clone)]
-pub struct ColumnRule {
-    pub has_locked: RefCell<Option<bool>>,
-}
+pub struct ColumnRule;
 impl ColumnRule {
     pub fn new() -> Box<dyn Rule + Send> {
-        Box::new(ColumnRule {
-            has_locked: RefCell::new(None),
-        })
+        Box::new(ColumnRule)
     }
 }
 
@@ -60,29 +55,16 @@ impl Rule for ColumnRule {
         None
     }
 
+    fn needs_square_for_locked(&self) -> bool {
+        true
+    }
+
     fn locked_candidate<'buf>(
         &self,
         sudoku: &Sudoku,
         buffer: &'buf mut Vec<usize>,
         arena: &mut Bump,
     ) -> Option<(u16, &'buf [usize])> {
-        // locked candidate only really applies when square rule is in the ruleset
-        // There are certain patterns of available numbers that may all eliminate a certain cell
-
-        //This NEEDS to be on a different line, since it has to drop the borrow BEFORE matching.
-        let has_locked = *self.has_locked.borrow();
-
-        match has_locked {
-            None => {
-                let has_squares = sudoku.rules.iter().any(|r| r.get_name() == "SquareRule");
-                *self.has_locked.borrow_mut() = Some(has_squares);
-                if !has_squares {
-                    return None;
-                }
-            }
-            Some(false) => return None,
-            Some(true) => {}
-        }
         arena.reset();
 
         let sub_s = sudoku.size.integer_sqrt();

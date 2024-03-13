@@ -4,10 +4,7 @@ use rand::random;
 use rules::square_rule::SquareRule;
 use sudoku::Sudoku;
 
-use crate::{
-    rules::{diagonal_rule::DiagonalRule, knight_rule::KnightRule},
-    sudoku::DynRule,
-};
+use crate::{rules::knight_rule::KnightRule, sudoku::DynRule};
 
 mod rules;
 mod sudoku;

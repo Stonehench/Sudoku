@@ -174,6 +174,8 @@ impl Sudoku {
         #[cfg(debug_assertions)]
         let mut backtracks = 0;
 
+        let has_square = self.rules.iter().any(|r| r.get_name() == "SquareRule");
+
         let mut pri_queue = if let Some(pri_queue) = pri_queue {
             pri_queue
         } else {
@@ -227,7 +229,13 @@ impl Sudoku {
                     }
 
                     //Locked candidates
-                    for rule in &self.rules {
+                    for rule in self.rules.iter().filter(|r| {
+                        if r.needs_square_for_locked() {
+                            has_square
+                        } else {
+                            true
+                        }
+                    }) {
                         if let Some((n, removable_indexes)) =
                             rule.locked_candidate(self, &mut ret_buffer, &mut arena)
                         {
@@ -266,7 +274,7 @@ impl Sudoku {
                     cloned_queue.push(index, Entropy(entropy.0 - 1));
 
                     if let Some(ctx) = ctx {
-                        #[cfg(not(debug_assertions))]
+                        //#[cfg(not(debug_assertions))]
                         if ctx.solutions.load(std::sync::atomic::Ordering::Relaxed) >= 2 {
                             return Err(SudokuSolveError::AlreadyManySolutions);
                         }
