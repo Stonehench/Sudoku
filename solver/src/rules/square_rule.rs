@@ -304,7 +304,8 @@ fn square_16x_locked() {
         vec![60,69,78,61,70,79].as_slice()))
     );
 
-    if let Some((value, remove_indecies)) = res{
+    // remove the 7's from the avalible, such that it should become 8 that is the value in the next return
+    if let Some((_value, remove_indecies)) = res{
         for index in remove_indecies {
             let cell = sudoku.cells[*index].borrow_mut();
             cell.available.remove(6);
