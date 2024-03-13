@@ -144,8 +144,8 @@ fn x_hidden_math_test() {
 
 #[test]
 fn locked_x_candidate() {
-    let mut sudoku = Sudoku::new(4, vec![]);
-    let x_rule = XRule {
+    let mut sudoku = Sudoku::new(4, vec![Box::new(crate::rules::square_rule::SquareRule),]);
+    let mut x_rule = XRule {
         x_clue: vec![(1 as usize, 2 as usize)],
     };
 
@@ -154,5 +154,18 @@ fn locked_x_candidate() {
     let mut buffer = vec![];
     let mut arena = Bump::new();
     let res = x_rule.locked_candidate(&sudoku, &mut buffer, &mut arena);
-    assert_eq!(res, Some((4, vec![2].as_slice())))
+    assert_eq!(res, Some((4, vec![2].as_slice())));
+    
+    
+    
+    sudoku = Sudoku::new(4, vec![Box::new(crate::rules::square_rule::SquareRule)]);
+    x_rule = XRule {
+        x_clue: vec![(5 as usize, 6 as usize),(5 as usize, 9 as usize)],
+    };
+
+    sudoku.set_cell(1, 0).unwrap();
+    println!("{sudoku}");
+
+    let res = x_rule.locked_candidate(&sudoku, &mut buffer, &mut arena);
+    assert_eq!(res, Some((4, vec![6, 9].as_slice())))
 }
