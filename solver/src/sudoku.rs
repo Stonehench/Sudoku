@@ -5,7 +5,6 @@ use std::{
     ops::Range,
     str::FromStr,
     sync::{atomic::AtomicUsize, mpsc, Arc, Mutex},
-    time::Instant,
 };
 
 use bumpalo::Bump;
@@ -16,10 +15,7 @@ use rand::random;
 use regex_macro::regex;
 use threadpool::ThreadPool;
 
-use crate::rules::{
-    column_rule::ColumnRule, diagonal_rule::DiagonalRule, knight_rule::KnightRule,
-    row_rule::RowRule, square_rule::SquareRule, x_rule::XRule, Rule,
-};
+use crate::rules::{column_rule::ColumnRule, row_rule::RowRule, square_rule::SquareRule, Rule};
 
 pub type DynRule = Box<dyn Rule + Send>;
 
@@ -562,7 +558,7 @@ fn solve_4x4_xdiagonal_sudoku() {
 }
 #[test]
 fn generate_4x4_xdiagonal() {
-    let xrule = XRule {
+    let xrule = crate::rules::x_rule::XRule {
         x_clue: vec![/*
             (0, 4),
             (1, 5),
@@ -576,11 +572,7 @@ fn generate_4x4_xdiagonal() {
     };
     let mut sudoku = Sudoku::generate_with_size(
         4,
-        vec![
-            Box::new(SquareRule),
-            DiagonalRule::new(),
-            Box::new(xrule),
-        ],
+        vec![Box::new(SquareRule), crate::rules::diagonal_rule::DiagonalRule::new(), Box::new(xrule)],
         None,
     )
     .unwrap();
@@ -712,8 +704,8 @@ fn generate_sudoku_x() {
         4,
         vec![
             Box::new(SquareRule),
-            Box::new(KnightRule),
-            Box::new(XRule {
+            Box::new(crate::rules::knight_rule::KnightRule),
+            Box::new(crate::rules::x_rule::XRule {
                 x_clue: vec![(0, 1), (4, 5), (4, 8), (8, 9)],
             }),
         ],
