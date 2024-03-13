@@ -217,7 +217,7 @@ impl Rule for DiagonalRule {
 }
 
 
-
+//########################### TEST ###############################
 
 #[test]
 fn locked_diagonal_candidate() {
