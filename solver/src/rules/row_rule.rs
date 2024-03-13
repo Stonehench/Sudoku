@@ -6,6 +6,7 @@ use std::cell::RefCell;
 use std::{fmt::Debug, str::FromStr};
 
 use crate::sudoku::{DynRule, Sudoku};
+
 #[derive(Debug, Clone)]
 
 pub struct RowRule {
