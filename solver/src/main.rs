@@ -1,4 +1,8 @@
-use std::{env::args, fs, time::Instant};
+use std::{
+    env::{self, args},
+    fs,
+    time::Instant,
+};
 
 use rand::random;
 use rules::square_rule::SquareRule;
@@ -52,36 +56,25 @@ fn main() {
 }
 
 fn benchmark(also_generate: bool) {
-    const COUNT: u32 = 10;
-
-    fn random_rules() -> Vec<DynRule> {
-        let mut rules: Vec<DynRule> = vec![];
-        if random() {
-            //rules.push(DiagonalRule::new());
-        }
-        if random() {
-            rules.push(SquareRule::new());
-        }
-        if random() {
-            rules.push(KnightRule::new());
-        }
-
-        rules
+    let mut path = env::current_dir().unwrap();
+    if !path.ends_with("solver") {
+        path.push("solver");
     }
+    path.push("./sudokuBenchmark");
+    let source = fs::read_to_string(path).unwrap();
 
-    println!("Generating...");
-    let mut sudokus: Vec<Sudoku> = (0..COUNT)
-        .filter_map(|_| Sudoku::generate_with_size(9, random_rules(), None).ok())
-        .collect();
-    println!("Generated {} sudokus", sudokus.len());
+    let sudoku: Sudoku = source.parse().unwrap();
+
+    const COUNT: u32 = 1000;
+
+    let clones: Vec<_> = (0..COUNT).map(|_| sudoku.clone()).collect();
 
     let timer = Instant::now();
-    for sudoku in &mut sudokus {
-        println!("Solving with: {:#?}", sudoku.rules);
+    for mut sudoku in clones {
         sudoku.solve(None, None).unwrap();
     }
-    let avg_time = timer.elapsed() / sudokus.len() as u32;
-    println!("Avg solve time for {} solves: {avg_time:?}", sudokus.len());
+    let avg_time = timer.elapsed() / COUNT;
+    println!("Avg solve time for {COUNT} solves: {avg_time:?}");
 
     if also_generate {
         const GEN_COUNT: u32 = COUNT / 50;
