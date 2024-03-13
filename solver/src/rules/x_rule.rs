@@ -1,9 +1,6 @@
 use super::Rule;
-use allocator_api2::vec::Vec as AlloVec;
 use bumpalo::Bump;
-use integer_sqrt::IntegerSquareRoot;
-use std::cell::RefCell;
-use std::{fmt::Debug, str::FromStr};
+use std::fmt::Debug;
 
 use crate::sudoku::{DynRule, Sudoku};
 
