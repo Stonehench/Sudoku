@@ -1,7 +1,7 @@
 use super::Rule;
 use std::fmt::Debug;
 
-use crate::sudoku::{DynRule, Sudoku};
+use crate::sudoku::DynRule;
 
 #[derive(Debug, Clone)]
 pub struct KnightRule;
@@ -80,13 +80,11 @@ impl Rule for KnightRule {
     }
 }
 
-
 //########################### TEST ###############################
-
 
 #[test]
 fn knight_test() {
-    let sudoku = Sudoku::new(9, vec![]);
+    let sudoku = crate::sudoku::Sudoku::new(9, vec![]);
 
     let knightrule = KnightRule;
     let mut buffer = vec![];
@@ -100,4 +98,3 @@ fn knight_test() {
 
     assert_eq!(indexes, vec![21, 23, 29, 33, 47, 51, 57, 59])
 }
-

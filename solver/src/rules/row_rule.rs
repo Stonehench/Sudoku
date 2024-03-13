@@ -5,7 +5,7 @@ use integer_sqrt::IntegerSquareRoot;
 use std::cell::RefCell;
 use std::fmt::Debug;
 
-use crate::{rules::square_rule::SquareRule, sudoku::{DynRule, Sudoku}};
+use crate::sudoku::{DynRule, Sudoku};
 
 #[derive(Debug, Clone)]
 
@@ -157,13 +157,11 @@ impl Rule for RowRule {
     }
 }
 
-
 //########################### TEST ###############################
-
 
 #[test]
 fn locked_row_candidate() {
-    let mut sudoku = Sudoku::new(9, vec![Box::new(SquareRule)]);
+    let mut sudoku = Sudoku::new(9, vec![Box::new(crate::rules::square_rule::SquareRule)]);
     let row_rule = RowRule::new();
 
     sudoku.set_cell(1, 9).unwrap();
@@ -178,8 +176,7 @@ fn locked_row_candidate() {
 
     assert_eq!(res, Some((2, vec![3, 4, 5, 6, 7, 8].as_slice())));
 
-
-    sudoku = Sudoku::new(9, vec![Box::new(SquareRule)]);
+    sudoku = Sudoku::new(9, vec![Box::new(crate::rules::square_rule::SquareRule)]);
 
     sudoku.set_cell(1, 60).unwrap();
     sudoku.set_cell(8, 61).unwrap();
@@ -193,10 +190,9 @@ fn locked_row_candidate() {
     assert_eq!(res, Some((2, vec![63, 64, 65, 66, 67, 68].as_slice())))
 }
 
-
 #[test]
 fn row_hidden_math_test() {
-    let mut sudoku = Sudoku::new(9, vec![Box::new(SquareRule)]);
+    let mut sudoku = Sudoku::new(9, vec![Box::new(crate::rules::square_rule::SquareRule)]);
 
     sudoku.set_cell(2, 1).unwrap();
     sudoku.set_cell(1, 56).unwrap();
@@ -209,7 +205,6 @@ fn row_hidden_math_test() {
     let res = rowrule.hidden_singles(&sudoku);
     assert_eq!(res, Some((1, 0)))
 }
-
 
 #[test]
 fn row_test() {

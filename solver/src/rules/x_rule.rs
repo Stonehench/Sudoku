@@ -2,7 +2,7 @@ use super::Rule;
 use bumpalo::Bump;
 use std::fmt::Debug;
 
-use crate::{rules::square_rule::SquareRule, sudoku::{DynRule, Sudoku}};
+use crate::sudoku::{DynRule, Sudoku};
 
 #[derive(Debug, Clone)]
 pub struct XRule {
@@ -105,7 +105,7 @@ impl Rule for XRule {
 
 #[test]
 fn locked_square_x_candidate() {
-    let mut sudoku = Sudoku::new(9, vec![Box::new(SquareRule)]);
+    let mut sudoku = Sudoku::new(9, vec![Box::new(crate::rules::square_rule::SquareRule)]);
 
     let removes = vec![
         0, 2, 4, 5, 7, 8, 9, 11, 12, 14, 15, 16, 18, 19, 20, 21, 22, 24, 25, 26,
@@ -116,18 +116,24 @@ fn locked_square_x_candidate() {
     }
     let mut buffer = vec![];
     let mut arena = Bump::new();
-    let res = SquareRule.locked_candidate(&sudoku, &mut buffer, &mut arena);
+    let res =
+        crate::rules::square_rule::SquareRule.locked_candidate(&sudoku, &mut buffer, &mut arena);
 
     assert_eq!(res, Some((1, vec![3, 13].as_slice())));
 }
-
 
 #[test]
 fn x_hidden_math_test() {
     let x_rule = XRule {
         x_clue: vec![(1 as usize, 2 as usize)],
     };
-    let mut sudoku = Sudoku::new(4, vec![Box::new(SquareRule), Box::new(x_rule.clone())]);
+    let mut sudoku = Sudoku::new(
+        4,
+        vec![
+            Box::new(crate::rules::square_rule::SquareRule),
+            Box::new(x_rule.clone()),
+        ],
+    );
 
     sudoku.set_cell(1, 1).unwrap();
     println!("{sudoku}");

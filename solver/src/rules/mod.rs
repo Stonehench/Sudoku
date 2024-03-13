@@ -1,12 +1,7 @@
-use allocator_api2::vec::Vec as AlloVec;
 use bumpalo::Bump;
-use integer_sqrt::IntegerSquareRoot;
-use std::cell::RefCell;
 use std::{fmt::Debug, str::FromStr};
 use crate::rules::x_rule::XRule;
 use crate::rules::diagonal_rule::DiagonalRule;
-use crate::rules::row_rule::RowRule;
-use crate::rules::column_rule::ColumnRule;
 use crate::rules::square_rule::SquareRule;
 use crate::rules::knight_rule::KnightRule;
 
@@ -90,71 +85,3 @@ impl FromStr for DynRule {
         }
     }
 }
-
-#[test]
-fn locked_column_candidate() {
-    let mut sudoku = Sudoku::new(9, vec![Box::new(SquareRule)]);
-    let column_rule = ColumnRule::new();
-    let mut buffer = vec![];
-    let mut arena = Bump::new();
-
-    sudoku.set_cell(1, 0).unwrap();
-    sudoku.set_cell(2, 25).unwrap();
-    sudoku.set_cell(3, 9).unwrap();
-    sudoku.set_cell(4, 11).unwrap();
-    sudoku.set_cell(5, 2).unwrap();
-    sudoku.set_cell(7, 20).unwrap();
-
-    let mut res = column_rule.locked_candidate(&sudoku, &mut buffer, &mut arena);
-    assert_eq!(res, Some((2, vec![28, 37, 46, 55, 64, 73].as_slice())));
-    
-    sudoku = Sudoku::new(9, vec![Box::new(SquareRule)]);
-    sudoku.set_cell(1, 1).unwrap();
-    sudoku.set_cell(2, 25).unwrap();
-    sudoku.set_cell(3, 10).unwrap();
-    sudoku.set_cell(4, 11).unwrap();
-    sudoku.set_cell(5, 2).unwrap();
-    sudoku.set_cell(7, 20).unwrap();
-    buffer = vec![];
-    arena = Bump::new();
-    res = column_rule.locked_candidate(&sudoku, &mut buffer, &mut arena);
-
-    assert_eq!(res, Some((2, vec![27, 36, 45, 54, 63, 72].as_slice())));
-
-    sudoku.set_cell(2, 42).unwrap();
-    sudoku.set_cell(2, 48).unwrap();
-    res = column_rule.locked_candidate(&sudoku, &mut buffer, &mut arena);
-    assert_eq!(res, Some((2, vec![27, 54, 63, 72].as_slice())))
-}
-
-
-#[test]
-fn column_test() {
-    let sudoku = Sudoku::new(9, vec![]);
-
-    let columnrule = ColumnRule::new();
-    let mut buffer = vec![];
-    let indexes = columnrule.updates(sudoku.size, 11, &mut buffer);
-    println!("{indexes:?}");
-
-    assert_eq!(indexes, vec![2, 11, 20, 29, 38, 47, 56, 65, 74])
-}
-
-
-
-#[test]
-fn column_hidden_math_test() {
-    let mut sudoku = Sudoku::new(9, vec![Box::new(SquareRule)]);
-
-    sudoku.set_cell(2, 9).unwrap();
-    sudoku.set_cell(1, 24).unwrap();
-    sudoku.set_cell(1, 28).unwrap();
-    sudoku.set_cell(1, 56).unwrap();
-
-    println!("\n\n{sudoku}");
-
-    let columnrule = ColumnRule::new();
-    let res = columnrule.hidden_singles(&sudoku);
-    assert_eq!(res, Some((1, 0)))
-}
-

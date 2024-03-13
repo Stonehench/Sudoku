@@ -1,10 +1,9 @@
 use super::Rule;
-use allocator_api2::vec::Vec as AlloVec;
+use crate::sudoku::{DynRule, Sudoku};
 use bumpalo::Bump;
 use integer_sqrt::IntegerSquareRoot;
 use std::cell::RefCell;
-use std::{fmt::Debug, str::FromStr};
-use crate::sudoku::{DynRule, Sudoku};
+use std::fmt::Debug;
 
 #[derive(Debug, Clone)]
 pub struct DiagonalRule {
@@ -110,8 +109,6 @@ impl Rule for DiagonalRule {
         buffer: &'buf mut Vec<usize>,
         _arena: &mut Bump,
     ) -> Option<(u16, &'buf [usize])> {
-
-
         let has_locked = *self.has_locked.borrow();
 
         match has_locked {
@@ -125,8 +122,6 @@ impl Rule for DiagonalRule {
             Some(false) => return None,
             Some(true) => {}
         }
-
-
 
         let sub_s = sudoku.size.integer_sqrt();
 
@@ -243,7 +238,6 @@ impl Rule for DiagonalRule {
     }
 }
 
-
 //########################### TEST ###############################
 
 #[test]
@@ -299,8 +293,6 @@ fn locked_diagonal_candidate() {
     let mut arena = Bump::new();
     let res = diagonal_rule.locked_candidate(&sudoku, &mut buffer, &mut arena);
     assert_eq!(res, Some((1, vec![8, 16, 24, 56, 64, 72].as_slice())));
-
-
 }
 
 #[test]
@@ -363,7 +355,6 @@ fn diagonal_test() {
     indexes = diagonalrule.updates(sudoku_small.size, 15, &mut buffer);
     assert_eq!(indexes, vec![0, 5, 10, 15]);
 }
-
 
 #[test]
 fn diagonal_hidden_math_test() {
