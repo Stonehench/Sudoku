@@ -2,14 +2,21 @@ import 'package:flutter/material.dart';
 import 'dart:math';
 
 import 'package:flutter/services.dart';
+import 'package:sudoku/game_state.dart';
 import 'package:sudoku/gameloader.dart';
 import 'package:sudoku/src/rust/api/simple.dart';
 
 class Menu extends StatefulWidget {
-  const Menu({super.key});
+  Menu({super.key});
 
   @override
   State<Menu> createState() => _MenuState();
+
+  Set<String> gameModes = {};
+
+  getGameRules() {
+    return gameModes;
+  }
 }
 
 class _MenuState extends State<Menu> {
@@ -40,7 +47,7 @@ class _MenuState extends State<Menu> {
     }
   }
 
-  Set<String> gameModes = {};
+  //Set<String> gameModes = {};
 
   final List<(String, String, bool)> rules = [
     ("Square rule", "SquareRule", true),
@@ -58,28 +65,30 @@ class _MenuState extends State<Menu> {
       if (!initialized) {
         initialized = true;
         if (def) {
-          gameModes.add(realname);
+          widget.gameModes.add(realname);
         }
       }
 
-      list.add(Row(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Text(name),
-          Checkbox(
-            value: gameModes.contains(realname),
-            onChanged: (v) {
-              setState(() {
-                if (v == true) {
-                  gameModes.add(realname);
-                } else {
-                  gameModes.remove(realname);
-                }
-              });
-            },
-          ),
-        ],
-      ));
+      list.add(
+        Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Text(name),
+            Checkbox(
+              value: widget.gameModes.contains(realname),
+              onChanged: (v) {
+                setState(() {
+                  if (v == true) {
+                    widget.gameModes.add(realname);
+                  } else {
+                    widget.gameModes.remove(realname);
+                  }
+                });
+              },
+            ),
+          ],
+        ),
+      );
     }
 
     return list;
@@ -112,17 +121,21 @@ class _MenuState extends State<Menu> {
             TextButton(
               onPressed: () {
                 setState(() {
-                  sizeText = "${size}x$size";  
+                  sizeText = "${size}x$size";
                 });
-                
 
-                Future<String?> sudokuSource =
-                    generateWithSize(size: size, rulesSrc: gameModes.toList());
+                Future<String?> sudokuSource = generateWithSize(
+                    size: size, rulesSrc: widget.gameModes.toList());
                 //inputTextController.clear();
                 () async {
-                  var res = await Navigator.of(context).push(MaterialPageRoute(
-                    builder: (context) => GameLoader(sudokuSource),
-                  ));
+                  var rulesAsString =
+                      widget.gameModes.fold("", (prev, e) => prev + e + "\n");
+                  var res = await Navigator.of(context).push(
+                    MaterialPageRoute(
+                      builder: (context) =>
+                          GameLoader(sudokuSource, rulesAsString),
+                    ),
+                  );
                   if (res != null) {
                     setState(() {
                       sizeText = res.toString();

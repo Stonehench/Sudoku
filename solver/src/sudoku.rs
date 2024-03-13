@@ -4,7 +4,7 @@ use std::{
     num::ParseIntError,
     ops::Range,
     str::FromStr,
-    sync::{atomic::AtomicUsize, mpsc, Arc, Mutex},
+    sync::{atomic::AtomicUsize, mpsc, Arc, Mutex}, time::Instant,
 };
 
 use bumpalo::Bump;
@@ -371,7 +371,9 @@ impl Sudoku {
         }
 
         const ATTEMPT_COUNT: usize = 25;
-        const RETRY_LIMIT: usize = 70;
+
+        #[cfg(debug_assertions)]
+        let timer = Instant::now();
 
         let mut count = 0;
 
@@ -379,10 +381,6 @@ impl Sudoku {
         loop {
             if let Some(progess) = &progess {
                 progess.send(count).unwrap();
-            }
-
-            if count >= RETRY_LIMIT {
-                break;
             }
 
             let removed_index = random::<usize>() % sudoku.cells.len();
@@ -400,11 +398,8 @@ impl Sudoku {
 
             let solutions = ctx.wait_for_solutions();
 
-            //println!("Found {} with {count} removed", solutions);
-
             if solutions > 1 {
                 if currents_left == 0 {
-                    //println!("FAILED TO FIND NEW UNIQUE WITHIN LIMITS!!");
                     break;
                 } else {
                     currents_left -= 1;
@@ -415,10 +410,11 @@ impl Sudoku {
             currents_left = ATTEMPT_COUNT;
 
             sudoku.cells[removed_index] = Cell::new_with_range(1..sudoku.size as u16 + 1);
-            //println!("Removed {removed_index}");
             count += 1;
         }
-        //println!("Removed {count} in {:?}", timer.elapsed());
+
+        #[cfg(debug_assertions)]
+        println!("Removed {count} in {:?}", timer.elapsed());
 
         for cell in &mut sudoku.cells {
             cell.locked_in = false;

@@ -14,7 +14,6 @@ class GameState extends ChangeNotifier {
     return _instance!;
   }
 
-  
   GameState(String sudokuSource, this.xPositions) {
     board = sudokuSource
         .split(",")
