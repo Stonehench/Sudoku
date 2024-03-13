@@ -212,7 +212,6 @@ fn square_test() {
 
 #[test]
 fn square_16x_locked() {
-    use std::{borrow::{Borrow, BorrowMut}, fmt::Debug};
     let mut sudoku = Sudoku::new(16, vec![SquareRule::new()]);
 
     sudoku.set_cell(1, 0).unwrap();
@@ -307,7 +306,7 @@ fn square_16x_locked() {
     // remove the 7's from the avalible, such that it should become 8 that is the value in the next return
     if let Some((_value, remove_indecies)) = res{
         for index in remove_indecies {
-            let cell = sudoku.cells[*index].borrow_mut();
+            let cell = &mut sudoku.cells[*index];
             cell.available.remove(6);
         }
     }
