@@ -346,7 +346,6 @@ impl Rule for RowRule {
         arena: &mut Bump,
     ) -> Option<(u16, &'buf [usize])> {
         // locked candidate only really applies when square rule is in the ruleset
-        // There are certain patterns of available numbers that may all eliminate a certain cell
 
         //This NEEDS to be on a different line, since it has to drop the borrow BEFORE matching.
         let has_locked = *self.has_locked.borrow();
@@ -363,62 +362,62 @@ impl Rule for RowRule {
             Some(true) => {}
         }
         //Hey kat hvis du har lyst til at bruge found_column position kan du gøre det nu!!
-
         arena.reset();
-        compile_error!("HEY KATINKA KIG HER!!");
-        let mut found_column_position: AlloVec<usize, &Bump> =
+
+        let mut box_indecies: AlloVec<usize, &Bump> =
             AlloVec::with_capacity_in(100, &arena);
 
         let mut candidate_found: bool;
         let sub_s = sudoku.size.integer_sqrt();
         let mut row;
 
-        for value in 1..=sudoku.size as u16 {
-            // this is almost identical to the implementation for Coulumn go there for explanatory comments
-            'find_box: for position in
-                (0..sudoku.size).map(|i| i * sub_s + (sudoku.size * (sub_s - 1) * (i / sub_s)))
-            {
-                //found_column_position.clear();
-                candidate_found = false;
-                buffer.clear();
+        // this is almost identical to the implementation for Coulumn go there for explanatory comments
+        for position in (0..sudoku.size).map(|i| i * sub_s + (sudoku.size * (sub_s - 1) * (i / sub_s)))
+        {   
+            // reset all values from previous box
+            box_indecies.clear();
 
-                for sub_row in 0..sub_s {
-                    row = position / sudoku.size;
+            // calculate the current box indecies
+            // I'm not sure if this is the absolute best place to use the Allocated vector
+            // but there for sure is potential
+            for i in (0..sudoku.size).map(|i| {position + (i % sub_s) + (sudoku.size * (i / sub_s)) }){
+                box_indecies.push(i);
+            }
+            
 
-                    for box_pos in (0..sudoku.size).map(|i| {
-                        position //- (sudoku.size * ((position / sudoku.size) % sub_s))
-                            + (i % sub_s)
-                            + (sudoku.size * (i / sub_s))
-                    }) {
-                        if box_pos / sub_s != sub_row
-                            && sudoku.cells[box_pos].available.contains(&value)
-                        {
-                            continue 'find_box;
-                        } else if box_pos / sub_s == sub_row
+            for value in 1..=sudoku.size as u16 {
+                // looking for a new candidate clear any old data
+                'sub_r: for sub_row in 0..sub_s {
+                    candidate_found = false;
+                    buffer.clear();
+
+                    row = (position / sudoku.size) + sub_row;
+
+                    // this loop searces each cell in a given box to check if the value is present in the avaibleble
+                    for &box_pos in box_indecies.iter() {
+                        if box_pos / sudoku.size % sub_s != sub_row 
+                            && sudoku.cells[box_pos].available.contains(&value) 
+                        {   
+                            //println!("Found value {value} outside sub {sub_row} real row {row} at pos {box_pos} box {position}");
+                            continue 'sub_r;
+
+                        } else if box_pos / sudoku.size % sub_s == sub_row
                             && sudoku.cells[box_pos].available.contains(&value)
                             && !sudoku.cells[box_pos].locked_in
                         {
-                            //found_column_position.push(box_pos);
+                            //println!("Candidate {value} in sub {sub_row} real row {row} at pos {box_pos} box {position}");
                             candidate_found = true;
                         }
                     }
 
                     if candidate_found {
                         // push the indexes outside of the box to the buffer
-                        // only indexes containing the value should be pushed
                         for remove_index in (0..(sudoku.size))
                             .map(|i| i + (sudoku.size * row)) // indexes of the row
-                            .filter(|index| {
-                                index
-                                    - (sudoku.size * ((index / sudoku.size) % sub_s))
-                                    - (index % sub_s)
-                                    != position
-                            })
-                        // but not in the box
+                            .filter(|index| { !box_indecies.contains(index)}) // but not in the box
                         {
                             if sudoku.cells[remove_index].available.contains(&value) {
-                                // only push indexes that contain the value
-                                buffer.push(remove_index)
+                                buffer.push(remove_index) // only push indexes that contain the value
                             }
                         }
                         if !buffer.is_empty() {
@@ -496,7 +495,7 @@ impl Rule for ColumnRule {
         &self,
         sudoku: &Sudoku,
         buffer: &'buf mut Vec<usize>,
-        _arena: &mut Bump,
+        arena: &mut Bump,
     ) -> Option<(u16, &'buf [usize])> {
         // locked candidate only really applies when square rule is in the ruleset
         // There are certain patterns of available numbers that may all eliminate a certain cell
@@ -515,39 +514,49 @@ impl Rule for ColumnRule {
             Some(false) => return None,
             Some(true) => {}
         }
+        arena.reset();
+
+        let mut box_indecies: AlloVec<usize, &Bump> =
+            AlloVec::with_capacity_in(100, &arena);
 
         let mut candidate_found: bool;
         let sub_s = sudoku.size.integer_sqrt();
         let mut column;
 
-        for value in 1..=sudoku.size as u16 {
-            // look through every column
-            // for there to be a locked candidate in a colums
-            // all 'available' for a number in a box must be contained in that column
 
-            // first check the square, then remove from the column
-            // find all the top right corners of squares
-            'find_box: for position in
-                (0..sudoku.size).map(|i| i * sub_s + (sudoku.size * (sub_s - 1) * (i / sub_s)))
-            {
-                candidate_found = false;
-                buffer.clear();
+        // look through every column
+        // for there to be a locked candidate in a colums
+        // all 'available' for a number in a box must be contained in that column
 
-                for sub_column in 0..sub_s {
+        // first check the square, then remove from the column
+        // find all the top right corners of squares
+        for position in
+            (0..sudoku.size).map(|i| i * sub_s + (sudoku.size * (sub_s - 1) * (i / sub_s)))
+        {
+            
+            // reset all values from previous box
+            box_indecies.clear();
+
+            // calculate the current box indecies
+            for i in (0..sudoku.size).map(|i| {position + (i % sub_s) + (sudoku.size * (i / sub_s)) }){
+                box_indecies.push(i);
+            }
+            for value in 1..=sudoku.size as u16 {
+                // looking for a new candidate clear any old data
+
+                'sub_c: for sub_column in 0..sub_s {
+                    candidate_found = false;
+                    buffer.clear();
+
                     // get the true column number
-                    column = position % sudoku.size;
+                    column = position % sudoku.size + sub_column;
 
-                    for box_pos in (0..sudoku.size).map(|i| {
-                        position // - (sudoku.size * ((position / sudoku.size) % sub_s))
-                            + (i % sub_s)
-                            + (sudoku.size * (i / sub_s))
-                    }) {
+                    for &box_pos in box_indecies.iter() {
                         // if the box position is not in the same sub_column and contains the value this is not a locked candidate
                         if box_pos % sub_s != sub_column
                             && sudoku.cells[box_pos].available.contains(&value)
-                        {
-                            continue 'find_box;
-
+                        {   
+                            continue 'sub_c;
                         // if the box position is in the same coolumn and contains the value this, there is potential
                         } else if box_pos % sub_s == sub_column
                             && sudoku.cells[box_pos].available.contains(&value)
@@ -562,13 +571,7 @@ impl Rule for ColumnRule {
                         // only indexes containing the value should be pushed
                         for remove_index in (0..(sudoku.size))
                             .map(|i| (i * sudoku.size) + column) // indexes of the column
-                            .filter(|index| {
-                                index
-                                    - (sudoku.size * ((index / sudoku.size) % sub_s))
-                                    - (index % sub_s)
-                                    != position
-                            })
-                        // but not in the box
+                            .filter(|index| { !box_indecies.contains(index)}) // but not in the box
                         {
                             if sudoku.cells[remove_index].available.contains(&value) {
                                 // only push indexes that contain the value
@@ -981,16 +984,29 @@ impl Rule for KnightRule {
 fn locked_column_candidate() {
     let mut sudoku = Sudoku::new(9, vec![Box::new(SquareRule)]);
     let column_rule = ColumnRule::new();
+    let mut buffer = vec![];
+    let mut arena = Bump::new();
 
+    sudoku.set_cell(1, 0).unwrap();
+    sudoku.set_cell(2, 25).unwrap();
+    sudoku.set_cell(3, 9).unwrap();
+    sudoku.set_cell(4, 11).unwrap();
+    sudoku.set_cell(5, 2).unwrap();
+    sudoku.set_cell(7, 20).unwrap();
+
+    let mut res = column_rule.locked_candidate(&sudoku, &mut buffer, &mut arena);
+    assert_eq!(res, Some((2, vec![28, 37, 46, 55, 64, 73].as_slice())));
+    
+    sudoku = Sudoku::new(9, vec![Box::new(SquareRule)]);
     sudoku.set_cell(1, 1).unwrap();
     sudoku.set_cell(2, 25).unwrap();
     sudoku.set_cell(3, 10).unwrap();
     sudoku.set_cell(4, 11).unwrap();
     sudoku.set_cell(5, 2).unwrap();
     sudoku.set_cell(7, 20).unwrap();
-    let mut buffer = vec![];
-    let mut arena = Bump::new();
-    let mut res = column_rule.locked_candidate(&sudoku, &mut buffer, &mut arena);
+    buffer = vec![];
+    arena = Bump::new();
+    res = column_rule.locked_candidate(&sudoku, &mut buffer, &mut arena);
 
     assert_eq!(res, Some((2, vec![27, 36, 45, 54, 63, 72].as_slice())));
 
@@ -1013,9 +1029,23 @@ fn locked_row_candidate() {
     sudoku.set_cell(7, 20).unwrap();
     let mut buffer = vec![];
     let mut arena = Bump::new();
-    let res = row_rule.locked_candidate(&sudoku, &mut buffer, &mut arena);
+    let mut res = row_rule.locked_candidate(&sudoku, &mut buffer, &mut arena);
 
-    assert_eq!(res, Some((2, vec![3, 4, 5, 6, 7, 8].as_slice())))
+    assert_eq!(res, Some((2, vec![3, 4, 5, 6, 7, 8].as_slice())));
+
+
+    sudoku = Sudoku::new(9, vec![Box::new(SquareRule)]);
+
+    sudoku.set_cell(1, 60).unwrap();
+    sudoku.set_cell(8, 61).unwrap();
+    sudoku.set_cell(3, 78).unwrap();
+    sudoku.set_cell(4, 79).unwrap();
+    sudoku.set_cell(2, 44).unwrap();
+
+    println!("{sudoku}");
+    res = row_rule.locked_candidate(&sudoku, &mut buffer, &mut arena);
+
+    assert_eq!(res, Some((2, vec![63, 64, 65, 66, 67, 68].as_slice())))
 }
 #[test]
 fn locked_x_candidate() {
