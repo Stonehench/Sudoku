@@ -5,7 +5,8 @@ import 'package:sudoku/game_view.dart';
 import 'package:sudoku/src/rust/api/simple.dart';
 
 class GameLoader extends StatefulWidget {
-  const GameLoader(this.sudokuSource, {super.key});
+  String rules;
+  GameLoader(this.sudokuSource, this.rules, {super.key});
 
   final Future<String?> sudokuSource;
 
@@ -38,7 +39,7 @@ class _GameLoaderState extends State<GameLoader> {
         GameState.setInstance(GameState(source, xPositions));
         setState(() {
           Navigator.of(context).pushReplacement(MaterialPageRoute(
-            builder: (context) => const GameView(),
+            builder: (context) => GameView(widget.rules),
           ));
         });
       }();
