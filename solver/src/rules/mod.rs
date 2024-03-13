@@ -67,7 +67,7 @@ impl FromStr for DynRule {
         match s {
             "SquareRule" => Ok(Box::new(SquareRule)),
             "KnightsMove" => Ok(Box::new(KnightRule)),
-            "DiagonalRule" => Ok(Box::new(DiagonalRule)),
+            "DiagonalRule" => Ok(DiagonalRule::new()),
             _ => {
                 let mut rule_params = s.split(';').map(str::trim);
                 match rule_params.next() {

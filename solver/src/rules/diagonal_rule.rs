@@ -7,7 +7,16 @@ use std::{fmt::Debug, str::FromStr};
 use crate::sudoku::{DynRule, Sudoku};
 
 #[derive(Debug, Clone)]
-pub struct DiagonalRule;
+pub struct DiagonalRule {
+    pub has_locked: RefCell<Option<bool>>,
+}
+impl DiagonalRule {
+    pub fn new() -> Box<dyn Rule + Send> {
+        Box::new(DiagonalRule {
+            has_locked: RefCell::new(None),
+        })
+    }
+}
 
 impl Rule for DiagonalRule {
     fn updates<'buf>(
@@ -223,7 +232,7 @@ impl Rule for DiagonalRule {
 fn locked_diagonal_candidate() {
     use crate::rules::square_rule::SquareRule;
     let mut sudoku = Sudoku::new(9, vec![Box::new(SquareRule)]);
-    let diagonal_rule = DiagonalRule;
+    let diagonal_rule = DiagonalRule::new();
 
     sudoku.set_cell(2, 1).unwrap();
     sudoku.set_cell(3, 2).unwrap();
@@ -257,14 +266,30 @@ fn locked_diagonal_candidate() {
     let mut buffer = vec![];
     let mut arena = Bump::new();
     let res = diagonal_rule.locked_candidate(&sudoku, &mut buffer, &mut arena);
-    assert_eq!(res, Some((1, vec![3, 6].as_slice())))
+    assert_eq!(res, Some((1, vec![3, 6].as_slice())));
+
+    // a locked candidate in the middle square
+    sudoku = Sudoku::new(9, vec![Box::new(SquareRule)]);
+
+    sudoku.set_cell(2, 30).unwrap();
+    sudoku.set_cell(3, 31).unwrap();
+    sudoku.set_cell(4, 39).unwrap();
+    sudoku.set_cell(5, 41).unwrap();
+    sudoku.set_cell(6, 50).unwrap();
+    sudoku.set_cell(7, 49).unwrap();
+    let mut buffer = vec![];
+    let mut arena = Bump::new();
+    let res = diagonal_rule.locked_candidate(&sudoku, &mut buffer, &mut arena);
+    assert_eq!(res, Some((1, vec![8, 16, 24, 56, 64, 72].as_slice())));
+
+
 }
 
 #[test]
 fn diagonal_test() {
     let sudoku = Sudoku::new(9, vec![]);
 
-    let diagonalrule = DiagonalRule;
+    let diagonalrule = DiagonalRule::new();
     let mut buffer = vec![];
 
     let mut indexes = diagonalrule.updates(sudoku.size, 11, &mut buffer);
@@ -325,7 +350,7 @@ fn diagonal_test() {
 #[test]
 fn diagonal_hidden_math_test() {
     use crate::rules::square_rule::SquareRule;
-    let mut sudoku = Sudoku::new(9, vec![Box::new(SquareRule), Box::new(DiagonalRule)]);
+    let mut sudoku = Sudoku::new(9, vec![Box::new(SquareRule), DiagonalRule::new()]);
 
     sudoku.set_cell(1, 27).unwrap();
     sudoku.set_cell(1, 39).unwrap();
@@ -334,7 +359,7 @@ fn diagonal_hidden_math_test() {
 
     println!("{sudoku}");
 
-    let diagonalrule = DiagonalRule;
+    let diagonalrule = DiagonalRule::new();
     let res = diagonalrule.hidden_singles(&sudoku);
     assert_eq!(res, Some((1, 20)))
 }
