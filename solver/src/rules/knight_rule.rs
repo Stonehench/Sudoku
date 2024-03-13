@@ -6,6 +6,12 @@ use crate::sudoku::DynRule;
 #[derive(Debug, Clone)]
 pub struct KnightRule;
 
+impl KnightRule {
+    pub fn new() -> DynRule {
+        Box::new(Self)
+    }
+}
+
 impl Rule for KnightRule {
     fn updates<'buf>(
         &self,

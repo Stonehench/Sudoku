@@ -9,6 +9,12 @@ use crate::sudoku::{DynRule, Sudoku};
 #[derive(Debug, Clone)]
 pub struct SquareRule;
 
+impl SquareRule {
+    pub fn new() -> DynRule {
+        Box::new(Self)
+    }
+}
+
 impl Rule for SquareRule {
     fn updates<'buf>(
         &self,
@@ -219,7 +225,6 @@ impl Rule for SquareRule {
     }
 }
 
-
 //########################### TEST ###############################
 
 #[test]
@@ -238,7 +243,6 @@ fn square_hidden_math_test() {
     println!("{res:?}");
     assert_eq!(res, Some((1, 20)))
 }
-
 
 #[test]
 fn locked_square_y_candidate() {
@@ -270,4 +274,3 @@ fn square_test() {
 
     assert_eq!(indexes, vec![0, 1, 2, 9, 10, 11, 18, 19, 20])
 }
-

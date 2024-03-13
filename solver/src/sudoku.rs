@@ -15,7 +15,7 @@ use rand::random;
 use regex_macro::regex;
 use threadpool::ThreadPool;
 
-use crate::rules::{column_rule::ColumnRule, row_rule::RowRule, square_rule::SquareRule, Rule};
+use crate::rules::{column_rule::ColumnRule, row_rule::RowRule, Rule};
 
 pub type DynRule = Box<dyn Rule + Send>;
 
@@ -420,7 +420,7 @@ impl FromStr for Sudoku {
     type Err = ParseSudokuError;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
-        let mut rules: Vec<DynRule> = vec![Box::new(SquareRule)];
+        let mut rules: Vec<DynRule> = vec![];
 
         //WTFFF
         let sudoku_source = match regex!(r"(\r\n|\n)(\r\n|\n)")
@@ -572,7 +572,11 @@ fn generate_4x4_xdiagonal() {
     };
     let mut sudoku = Sudoku::generate_with_size(
         4,
-        vec![Box::new(SquareRule), crate::rules::diagonal_rule::DiagonalRule::new(), Box::new(xrule)],
+        vec![
+            Box::new(crate::rules::square_rule::SquareRule),
+            crate::rules::diagonal_rule::DiagonalRule::new(),
+            Box::new(xrule),
+        ],
         None,
     )
     .unwrap();
@@ -622,7 +626,7 @@ fn solve_test() {
 
 #[test]
 fn random_gen() {
-    let mut sudoku = Sudoku::new(9, vec![Box::new(SquareRule)]);
+    let mut sudoku = Sudoku::new(9, vec![Box::new(crate::rules::square_rule::SquareRule)]);
     sudoku.solve(None, None).unwrap();
     let pre = sudoku.to_string();
     println!("Pre:\n{}", pre);
@@ -692,7 +696,12 @@ fn find_all_solutions() {
 #[test]
 fn generate_sudoku() {
     let timer = std::time::Instant::now();
-    let sudoku = Sudoku::generate_with_size(9, vec![Box::new(SquareRule)], None).unwrap();
+    let sudoku = Sudoku::generate_with_size(
+        9,
+        vec![Box::new(crate::rules::square_rule::SquareRule)],
+        None,
+    )
+    .unwrap();
 
     println!("{sudoku} at {:?}", timer.elapsed());
 }
@@ -703,7 +712,7 @@ fn generate_sudoku_x() {
     let sudoku = Sudoku::generate_with_size(
         4,
         vec![
-            Box::new(SquareRule),
+            Box::new(crate::rules::square_rule::SquareRule),
             Box::new(crate::rules::knight_rule::KnightRule),
             Box::new(crate::rules::x_rule::XRule {
                 x_clue: vec![(0, 1), (4, 5), (4, 8), (8, 9)],
