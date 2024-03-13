@@ -87,14 +87,15 @@ impl Rule for ColumnRule {
 
         let sub_s = sudoku.size.integer_sqrt();
 
-        let mut locations: AlloVec<(usize, usize), &Bump> =
-            AlloVec::with_capacity_in(sudoku.size, &arena);
+        let mut locations: AlloVec<usize, &Bump> = AlloVec::with_capacity_in(sudoku.size, &arena);
 
         for value in 1..=sudoku.size as u16 {
             for sq_y in 0..sub_s {
                 for sq_x in 0..sub_s {
+                    // reset all values from previous square
                     locations.clear();
 
+                    // Tests all cells in square if they contain value
                     for l_x in 0..sub_s {
                         for l_y in 0..sub_s {
                             let x = l_x + sq_x * sub_s;
@@ -102,41 +103,17 @@ impl Rule for ColumnRule {
                             let i = x + y * sudoku.size;
 
                             if sudoku.cells[i].available.contains(&value) {
-                                locations.push((l_x, l_y));
+                                locations.push(l_x);
                             }
                         }
                     }
 
-                    //Tjek om alle er på samme column, eller alle er på samme row
-
-                    //horizontalt. De har alle samme y koordinat
-                    if !locations.is_empty()
-                        && locations.iter().all(|(_, l_y)| *l_y == locations[0].1)
-                    {
-                        buffer.clear();
-                        let y = locations[0].1 + sq_y * sub_s;
-
-                        for x in (0..sudoku.size)
-                            .filter(|x| *x < sq_x * sub_s || *x >= (sq_x + 1) * sub_s)
-                        {
-                            let i = x + y * sudoku.size;
-                            let cell = &sudoku.cells[i];
-                            if !cell.locked_in && cell.available.contains(&value) {
-                                buffer.push(i);
-                            }
-                        }
-
-                        if !buffer.is_empty() {
-                            return Some((value, buffer));
-                        }
-                    }
+                    //Tjek om alle er på samme column
 
                     //verticalt. De har alle samme x koordinat
-                    if !locations.is_empty()
-                        && locations.iter().all(|(l_x, _)| *l_x == locations[0].0)
-                    {
+                    if !locations.is_empty() && locations.iter().all(|l_x| *l_x == locations[0]) {
                         buffer.clear();
-                        let x = locations[0].0 + sq_x * sub_s;
+                        let x = locations[0] + sq_x * sub_s;
 
                         for y in (0..sudoku.size)
                             .filter(|y| *y < sq_y * sub_s || *y >= (sq_y + 1) * sub_s)
@@ -155,73 +132,6 @@ impl Rule for ColumnRule {
                 }
             }
         }
-
-        // look through every column
-        // for there to be a locked candidate in a colums
-        // all 'available' for a number in a box must be contained in that column
-
-        // first check the square, then remove from the column
-        // find all the top right corners of squares
-
-        /*
-        let mut column;
-        for position in
-            (0..sudoku.size).map(|i| i * sub_s + (sudoku.size * (sub_s - 1) * (i / sub_s)))
-        {
-            // reset all values from previous box
-            box_indecies.clear();
-
-            // calculate the current box indecies
-            for i in (0..sudoku.size).map(|i| position + (i % sub_s) + (sudoku.size * (i / sub_s)))
-            {
-                box_indecies.push(i);
-            }
-            for value in 1..=sudoku.size as u16 {
-                // looking for a new candidate clear any old data
-
-                'sub_c: for sub_column in 0..sub_s {
-                    candidate_found = false;
-                    buffer.clear();
-
-                    // get the true column number
-                    column = position % sudoku.size + sub_column;
-
-                    for &box_pos in box_indecies.iter() {
-                        // if the box position is not in the same sub_column and contains the value this is not a locked candidate
-                        if box_pos % sub_s != sub_column
-                            && sudoku.cells[box_pos].available.contains(&value)
-                        {
-                            continue 'sub_c;
-                        // if the box position is in the same coolumn and contains the value this, there is potential
-                        } else if box_pos % sub_s == sub_column
-                            && sudoku.cells[box_pos].available.contains(&value)
-                            && !sudoku.cells[box_pos].locked_in
-                        {
-                            candidate_found = true;
-                        }
-                    }
-
-                    if candidate_found {
-                        // push the indexes outside of the box to the buffer
-                        // only indexes containing the value should be pushed
-                        for remove_index in (0..(sudoku.size))
-                            .map(|i| (i * sudoku.size) + column) // indexes of the column
-                            .filter(|index| !box_indecies.contains(index))
-                        // but not in the box
-                        {
-                            if sudoku.cells[remove_index].available.contains(&value) {
-                                // only push indexes that contain the value
-                                buffer.push(remove_index)
-                            }
-                        }
-                        if !buffer.is_empty() {
-                            return Some((value, buffer));
-                        }
-                    }
-                }
-            }
-        }
-         */
         None
     }
 

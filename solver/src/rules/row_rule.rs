@@ -80,65 +80,47 @@ impl Rule for RowRule {
             Some(false) => return None,
             Some(true) => {}
         }
-        //Hey kat hvis du har lyst til at bruge found_column position kan du gøre det nu!!
+
         arena.reset();
 
-        let mut box_indecies: AlloVec<usize, &Bump> = AlloVec::with_capacity_in(100, &arena);
-
-        let mut candidate_found: bool;
         let sub_s = sudoku.size.integer_sqrt();
-        let mut row;
 
-        // this is almost identical to the implementation for Coulumn go there for explanatory comments
-        for position in
-            (0..sudoku.size).map(|i| i * sub_s + (sudoku.size * (sub_s - 1) * (i / sub_s)))
-        {
-            // reset all values from previous box
-            box_indecies.clear();
+        let mut locations: AlloVec<usize, &Bump> = AlloVec::with_capacity_in(sudoku.size, &arena);
 
-            // calculate the current box indecies
-            // I'm not sure if this is the absolute best place to use the Allocated vector
-            // but there for sure is potential
-            for i in (0..sudoku.size).map(|i| position + (i % sub_s) + (sudoku.size * (i / sub_s)))
-            {
-                box_indecies.push(i);
-            }
+        for value in 1..=sudoku.size as u16 {
+            for sq_y in 0..sub_s {
+                for sq_x in 0..sub_s {
+                    locations.clear();
 
-            for value in 1..=sudoku.size as u16 {
-                // looking for a new candidate clear any old data
-                'sub_r: for sub_row in 0..sub_s {
-                    candidate_found = false;
-                    buffer.clear();
+                    for l_x in 0..sub_s {
+                        for l_y in 0..sub_s {
+                            let x = l_x + sq_x * sub_s;
+                            let y = l_y + sq_y * sub_s;
+                            let i = x + y * sudoku.size;
 
-                    row = (position / sudoku.size) + sub_row;
-
-                    // this loop searces each cell in a given box to check if the value is present in the avaibleble
-                    for &box_pos in box_indecies.iter() {
-                        if box_pos / sudoku.size % sub_s != sub_row
-                            && sudoku.cells[box_pos].available.contains(&value)
-                        {
-                            //println!("Found value {value} outside sub {sub_row} real row {row} at pos {box_pos} box {position}");
-                            continue 'sub_r;
-                        } else if box_pos / sudoku.size % sub_s == sub_row
-                            && sudoku.cells[box_pos].available.contains(&value)
-                            && !sudoku.cells[box_pos].locked_in
-                        {
-                            //println!("Candidate {value} in sub {sub_row} real row {row} at pos {box_pos} box {position}");
-                            candidate_found = true;
+                            if sudoku.cells[i].available.contains(&value) {
+                                locations.push(l_y);
+                            }
                         }
                     }
 
-                    if candidate_found {
-                        // push the indexes outside of the box to the buffer
-                        for remove_index in (0..(sudoku.size))
-                            .map(|i| i + (sudoku.size * row)) // indexes of the row
-                            .filter(|index| !box_indecies.contains(index))
-                        // but not in the box
+                    //Tjek om alle er på samme row
+
+                    //verticalt. De har alle samme x koordinat
+                    if !locations.is_empty() && locations.iter().all(|l_y| *l_y == locations[0]) {
+                        buffer.clear();
+                        let y = locations[0] + sq_y * sub_s;
+
+                        for x in (0..sudoku.size)
+                            .filter(|x| *x < sq_x * sub_s || *x >= (sq_x + 1) * sub_s)
                         {
-                            if sudoku.cells[remove_index].available.contains(&value) {
-                                buffer.push(remove_index) // only push indexes that contain the value
+                            let i = x + y * sudoku.size;
+                            let cell = &sudoku.cells[i];
+                            if !cell.locked_in && cell.available.contains(&value) {
+                                buffer.push(i);
                             }
                         }
+
                         if !buffer.is_empty() {
                             return Some((value, buffer));
                         }
