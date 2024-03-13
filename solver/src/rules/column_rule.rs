@@ -3,7 +3,7 @@ use allocator_api2::vec::Vec as AlloVec;
 use bumpalo::Bump;
 use integer_sqrt::IntegerSquareRoot;
 use std::cell::RefCell;
-use std::{fmt::Debug, str::FromStr};
+use std::fmt::Debug;
 
 use crate::sudoku::{DynRule, Sudoku};
 
@@ -85,13 +85,11 @@ impl Rule for ColumnRule {
         }
         arena.reset();
 
-        let mut box_indecies: AlloVec<usize, &Bump> =
-            AlloVec::with_capacity_in(100, &arena);
+        let mut box_indecies: AlloVec<usize, &Bump> = AlloVec::with_capacity_in(100, &arena);
 
         let mut candidate_found: bool;
         let sub_s = sudoku.size.integer_sqrt();
         let mut column;
-
 
         // look through every column
         // for there to be a locked candidate in a colums
@@ -102,12 +100,12 @@ impl Rule for ColumnRule {
         for position in
             (0..sudoku.size).map(|i| i * sub_s + (sudoku.size * (sub_s - 1) * (i / sub_s)))
         {
-            
             // reset all values from previous box
             box_indecies.clear();
 
             // calculate the current box indecies
-            for i in (0..sudoku.size).map(|i| {position + (i % sub_s) + (sudoku.size * (i / sub_s)) }){
+            for i in (0..sudoku.size).map(|i| position + (i % sub_s) + (sudoku.size * (i / sub_s)))
+            {
                 box_indecies.push(i);
             }
             for value in 1..=sudoku.size as u16 {
@@ -124,7 +122,7 @@ impl Rule for ColumnRule {
                         // if the box position is not in the same sub_column and contains the value this is not a locked candidate
                         if box_pos % sub_s != sub_column
                             && sudoku.cells[box_pos].available.contains(&value)
-                        {   
+                        {
                             continue 'sub_c;
                         // if the box position is in the same coolumn and contains the value this, there is potential
                         } else if box_pos % sub_s == sub_column
@@ -140,7 +138,8 @@ impl Rule for ColumnRule {
                         // only indexes containing the value should be pushed
                         for remove_index in (0..(sudoku.size))
                             .map(|i| (i * sudoku.size) + column) // indexes of the column
-                            .filter(|index| { !box_indecies.contains(index)}) // but not in the box
+                            .filter(|index| !box_indecies.contains(index))
+                        // but not in the box
                         {
                             if sudoku.cells[remove_index].available.contains(&value) {
                                 // only push indexes that contain the value
