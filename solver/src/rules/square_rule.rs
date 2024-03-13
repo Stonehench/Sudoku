@@ -1,5 +1,4 @@
 use super::Rule;
-use allocator_api2::vec::Vec as AlloVec;
 use bumpalo::Bump;
 use integer_sqrt::IntegerSquareRoot;
 use std::fmt::Debug;
@@ -88,139 +87,81 @@ impl Rule for SquareRule {
         arena: &mut Bump,
     ) -> Option<(u16, &'buf [usize])> {
         arena.reset();
-        let sub_size = sudoku.size.integer_sqrt();
-        enum SqType {
-            Row,
-            Column,
-        }
+        let sub_s = sudoku.size.integer_sqrt();
+        for value in 1..sudoku.size as u16 {
+            'row: for row in 0..sudoku.size {
+                let mut found_square = None;
+                for x in 0..sudoku.size {
+                    let index = row * sudoku.size + x;
+                    let cell = &sudoku.cells[index];
 
-        // Hjælper funktion
-        fn locked_in_sq<'arena>(
-            sq_y: usize,
-            sq_x: usize,
-            sub_size: usize,
-            value: u16,
-            sq_type: SqType,
-            arena: &'arena Bump,
-            sudoku: &Sudoku,
-        ) -> AlloVec<usize, &'arena Bump> {
-            let mut data = AlloVec::with_capacity_in(sub_size, arena);
-
-            for l_x in 0..sub_size {
-                for l_y in 0..sub_size {
-                    let x = l_x + sq_x * sub_size;
-                    let y = l_y + sq_y * sub_size;
-                    let i = x + y * sudoku.size;
-                    let cell = &sudoku.cells[i];
                     if !cell.locked_in && cell.available.contains(&value) {
-                        data.push(match sq_type {
-                            SqType::Row => l_x,
-                            SqType::Column => l_y,
-                        });
-                    }
-                }
-            }
-            data.dedup();
-            data.sort();
-            data
-        }
-
-        for value in 1..sudoku.size as u16 + 1 {
-            //Tjek for vandret
-            let mut masks_y = AlloVec::<_, &Bump>::new_in(arena);
-            for sq_y in 0..sub_size {
-                masks_y.clear();
-                for sq_x in 0..sub_size {
-                    masks_y.push(locked_in_sq(
-                        sq_y,
-                        sq_x,
-                        sub_size,
-                        value,
-                        SqType::Column,
-                        arena,
-                        sudoku,
-                    ))
-                }
-
-                //Tjek om der er nogle af dem som er 100% ens
-                for l in 0..sub_size {
-                    for r in l + 1..sub_size {
-                        if !masks_y[l].is_empty()
-                            && masks_y[l].len() < sub_size
-                            && masks_y[l] == masks_y[r]
-                        {
-                            //println!("HORIZONTAL {value}: {:?} = {:?} at {l} {r}", masks_y[l], masks_y[r]);
-                            buffer.clear();
-
-                            for n_sq_x in (0..sub_size).filter(|sq_x| *sq_x != l && *sq_x != r) {
-                                for l_x in 0..sub_size {
-                                    for l_y in (0..sub_size).filter(|y| masks_y[l].contains(y)) {
-                                        let x = l_x + n_sq_x * sub_size;
-                                        let y = l_y + sq_y * sub_size;
-                                        let i = x + y * sudoku.size;
-                                        let cell = &sudoku.cells[i];
-                                        if cell.available.contains(&value) {
-                                            buffer.push(i);
-                                        }
-                                    }
-                                }
+                        if let Some(found_square) = found_square {
+                            let current_square = x / sub_s;
+                            if found_square != current_square {
+                                break 'row;
                             }
-
-                            if !buffer.is_empty() {
-                                return Some((value, buffer));
-                            }
+                        } else {
+                            found_square = Some(x / sub_s);
                         }
                     }
                 }
-            }
-            //Tjek for lodret
-            let mut masks_x = AlloVec::<_, &Bump>::new_in(&arena);
-            for sq_x in 0..sub_size {
-                masks_x.clear();
-                for sq_y in 0..sub_size {
-                    masks_x.push(locked_in_sq(
-                        sq_y,
-                        sq_x,
-                        sub_size,
-                        value,
-                        SqType::Row,
-                        arena,
-                        sudoku,
-                    ))
+
+                if let Some(sq_x) = found_square {
+                    let sq_y = row / sub_s;
+                    buffer.clear();
+
+                    for l_y in 0..sub_s {
+                        for l_x in 0..sub_s {
+                            let x = l_x + sq_x * sub_s;
+                            let y = l_y + sq_y * sub_s;
+                            if y == row {
+                                break;
+                            }
+                            buffer.push(x + y * sudoku.size);
+                        }
+                    }
+                    return Some((value, buffer));
                 }
+            }
 
-                //Tjek om der er nogle af dem som er 100% identisk
-                for l in 0..sub_size {
-                    for r in l + 1..sub_size {
-                        if !masks_x[l].is_empty()
-                            && masks_x[l].len() < sub_size
-                            && masks_x[l] == masks_x[r]
-                        {
-                            //println!("VERTICAL {value}: {:?} = {:?} at {l} {r}", masks_x[l], masks_x[r]);
-                            buffer.clear();
+            'col: for col in 0..sudoku.size {
+                let mut found_square = None;
+                for y in 0..sudoku.size {
+                    let index = y * sudoku.size + col;
+                    let cell = &sudoku.cells[index];
 
-                            for n_sq_y in (0..sub_size).filter(|sq_y| *sq_y != l && *sq_y != r) {
-                                for l_x in (0..sub_size).filter(|x| masks_x[l].contains(x)) {
-                                    for l_y in 0..sub_size {
-                                        let x = l_x + sq_x * sub_size;
-                                        let y = l_y + n_sq_y * sub_size;
-                                        let i = x + y * sudoku.size;
-                                        let cell = &sudoku.cells[i];
-                                        if cell.available.contains(&value) {
-                                            buffer.push(i);
-                                        }
-                                    }
-                                }
+                    if !cell.locked_in && cell.available.contains(&value) {
+                        if let Some(found_square) = found_square {
+                            let current_square = y / sub_s;
+                            if found_square != current_square {
+                                break 'col;
                             }
-
-                            if !buffer.is_empty() {
-                                return Some((value, buffer));
-                            }
+                        } else {
+                            found_square = Some(y / sub_s);
                         }
                     }
                 }
+
+                if let Some(sq_y) = found_square {
+                    let sq_x = col / sub_s;
+                    buffer.clear();
+
+                    for l_x in 0..sub_s {
+                        for l_y in 0..sub_s {
+                            let x = l_x + sq_x * sub_s;
+                            let y = l_y + sq_y * sub_s;
+                            if x == col {
+                                break;
+                            }
+                            buffer.push(x + y * sudoku.size);
+                        }
+                    }
+                    return Some((value, buffer));
+                }
             }
         }
+
         None
     }
 }
@@ -245,25 +186,6 @@ fn square_hidden_math_test() {
 }
 
 #[test]
-fn locked_square_y_candidate() {
-    let mut sudoku = Sudoku::new(9, vec![Box::new(SquareRule)]);
-
-    let removes = vec![
-        0, 2, 9, 10, 18, 19, 20, 27, 28, 36, 37, 38, 45, 47, 54, 56, 64, 65, 72, 73,
-    ];
-
-    for index in removes {
-        sudoku.cells[index].available.retain(|n| *n != 1);
-    }
-
-    let mut buffer = vec![];
-    let mut arena = Bump::new();
-    let res = SquareRule.locked_candidate(&sudoku, &mut buffer, &mut arena);
-
-    assert_eq!(res, Some((1, vec![55, 74].as_slice())));
-}
-
-#[test]
 fn square_test() {
     let sudoku = Sudoku::new(9, vec![]);
 
@@ -278,7 +200,6 @@ fn square_test() {
 #[test]
 fn square_16x_locked() {
     let mut sudoku = Sudoku::new(16, vec![SquareRule::new()]);
-    
 
     sudoku.set_cell(1, 0).unwrap();
     sudoku.set_cell(2, 1).unwrap();
@@ -293,12 +214,45 @@ fn square_16x_locked() {
     sudoku.set_cell(11, 10).unwrap();
     sudoku.set_cell(12, 11).unwrap();
     println!("{sudoku}");
-    
+
     let mut buffer = vec![];
     let mut arena = Bump::new();
 
     let squarerule = SquareRule;
     let res = squarerule.locked_candidate(&sudoku, &mut buffer, &mut arena);
     println!("{res:?}");
-    assert_eq!(res, Some((13, vec![28,29,30,31,44,45,46,47,60,61,62,63].as_slice())))
+    assert_eq!(
+        res,
+        Some((
+            13,
+            vec![28, 29, 30, 31, 44, 45, 46, 47, 60, 61, 62, 63].as_slice()
+        ))
+    );
+
+    sudoku = Sudoku::new(16, vec![SquareRule::new()]);
+
+    sudoku.set_cell(1, 0).unwrap();
+    sudoku.set_cell(2, 16).unwrap();
+    sudoku.set_cell(3, 32).unwrap();
+    sudoku.set_cell(4, 48).unwrap();
+    sudoku.set_cell(5, 64).unwrap();
+    sudoku.set_cell(6, 80).unwrap();
+    sudoku.set_cell(7, 96).unwrap();
+    sudoku.set_cell(8, 112).unwrap();
+    sudoku.set_cell(9, 128).unwrap();
+    sudoku.set_cell(10, 144).unwrap();
+    sudoku.set_cell(11, 160).unwrap();
+    sudoku.set_cell(12, 176).unwrap();
+    println!("{sudoku}");
+
+    let squarerule = SquareRule;
+    let res = squarerule.locked_candidate(&sudoku, &mut buffer, &mut arena);
+    println!("{res:?}");
+    assert_eq!(
+        res,
+        Some((
+            13,
+            vec![193, 209, 225, 241, 194, 210, 226, 242, 195, 211, 227, 243].as_slice()
+        ))
+    )
 }
