@@ -86,10 +86,12 @@ impl Rule for SquareRule {
         buffer: &'buf mut Vec<usize>,
         arena: &mut Bump,
     ) -> Option<(u16, &'buf [usize])> {
+        
         arena.reset();
         let sub_s = sudoku.size.integer_sqrt();
         for value in 1..sudoku.size as u16 {
             'row: for row in 0..sudoku.size {
+
                 let mut found_square = None;
                 for x in 0..sudoku.size {
                     let index = row * sudoku.size + x;
@@ -99,7 +101,7 @@ impl Rule for SquareRule {
                         if let Some(found_square) = found_square {
                             let current_square = x / sub_s;
                             if found_square != current_square {
-                                break 'row;
+                                continue 'row;
                             }
                         } else {
                             found_square = Some(x / sub_s);
@@ -127,6 +129,7 @@ impl Rule for SquareRule {
 
             'col: for col in 0..sudoku.size {
                 let mut found_square = None;
+
                 for y in 0..sudoku.size {
                     let index = y * sudoku.size + col;
                     let cell = &sudoku.cells[index];
@@ -135,7 +138,7 @@ impl Rule for SquareRule {
                         if let Some(found_square) = found_square {
                             let current_square = y / sub_s;
                             if found_square != current_square {
-                                break 'col;
+                                continue 'col;
                             }
                         } else {
                             found_square = Some(y / sub_s);
@@ -161,7 +164,7 @@ impl Rule for SquareRule {
                 }
             }
         }
-
+        println!("LOCKED SQUARE!! FOUND NONE");
         None
     }
 }
@@ -213,7 +216,6 @@ fn square_16x_locked() {
     sudoku.set_cell(10, 9).unwrap();
     sudoku.set_cell(11, 10).unwrap();
     sudoku.set_cell(12, 11).unwrap();
-    println!("{sudoku}");
 
     let mut buffer = vec![];
     let mut arena = Bump::new();
@@ -243,7 +245,6 @@ fn square_16x_locked() {
     sudoku.set_cell(10, 144).unwrap();
     sudoku.set_cell(11, 160).unwrap();
     sudoku.set_cell(12, 176).unwrap();
-    println!("{sudoku}");
 
     let squarerule = SquareRule;
     let res = squarerule.locked_candidate(&sudoku, &mut buffer, &mut arena);
@@ -254,5 +255,33 @@ fn square_16x_locked() {
             13,
             vec![193, 209, 225, 241, 194, 210, 226, 242, 195, 211, 227, 243].as_slice()
         ))
-    )
+    );
+
+    sudoku = Sudoku::new(16, vec![SquareRule::new()]);
+
+    let res = squarerule.locked_candidate(&sudoku, &mut buffer, &mut arena);
+    println!("{res:?}");
+    assert_eq!(res, None);
+
+    
+    sudoku = Sudoku::new(9, vec![SquareRule::new()]);
+    sudoku.set_cell(1, 9).unwrap();
+    sudoku.set_cell(2, 10).unwrap();
+    sudoku.set_cell(3, 11).unwrap();
+    sudoku.set_cell(4, 12).unwrap();
+    sudoku.set_cell(5, 13).unwrap();
+    sudoku.set_cell(6, 14).unwrap();
+
+    let res = squarerule.locked_candidate(&sudoku, &mut buffer, &mut arena);
+    println!("{res:?}");
+    assert_eq!(res, 
+        Some((7,
+        vec![6,7,8,24,25,26].as_slice()))
+    );
+    
+
+    sudoku = Sudoku::new(4, vec![SquareRule::new()]);
+    let res = squarerule.locked_candidate(&sudoku, &mut buffer, &mut arena);
+    assert_eq!(res, None);
 }
+ 
