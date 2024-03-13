@@ -578,7 +578,7 @@ fn generate_4x4_xdiagonal() {
         4,
         vec![
             Box::new(SquareRule),
-            Box::new(DiagonalRule),
+            DiagonalRule::new(),
             Box::new(xrule),
         ],
         None,

@@ -218,3 +218,56 @@ impl Rule for SquareRule {
         None
     }
 }
+
+
+//########################### TEST ###############################
+
+#[test]
+fn square_hidden_math_test() {
+    let mut sudoku = Sudoku::new(9, vec![Box::new(SquareRule)]);
+
+    sudoku.set_cell(1, 27).unwrap();
+    sudoku.set_cell(1, 55).unwrap();
+    sudoku.set_cell(1, 8).unwrap();
+    sudoku.set_cell(1, 12).unwrap();
+
+    println!("{sudoku}");
+
+    let squarerule = SquareRule;
+    let res = squarerule.hidden_singles(&sudoku);
+    println!("{res:?}");
+    assert_eq!(res, Some((1, 20)))
+}
+
+
+#[test]
+fn locked_square_y_candidate() {
+    let mut sudoku = Sudoku::new(9, vec![Box::new(SquareRule)]);
+
+    let removes = vec![
+        0, 2, 9, 10, 18, 19, 20, 27, 28, 36, 37, 38, 45, 47, 54, 56, 64, 65, 72, 73,
+    ];
+
+    for index in removes {
+        sudoku.cells[index].available.retain(|n| *n != 1);
+    }
+
+    let mut buffer = vec![];
+    let mut arena = Bump::new();
+    let res = SquareRule.locked_candidate(&sudoku, &mut buffer, &mut arena);
+
+    assert_eq!(res, Some((1, vec![55, 74].as_slice())));
+}
+
+#[test]
+fn square_test() {
+    let sudoku = Sudoku::new(9, vec![]);
+
+    let squarerule = SquareRule;
+    let mut buffer = vec![];
+    let indexes = squarerule.updates(sudoku.size, 11, &mut buffer);
+    println!("{indexes:?}");
+
+    assert_eq!(indexes, vec![0, 1, 2, 9, 10, 11, 18, 19, 20])
+}
+

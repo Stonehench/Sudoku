@@ -79,3 +79,25 @@ impl Rule for KnightRule {
         "KnightRule"
     }
 }
+
+
+//########################### TEST ###############################
+
+
+#[test]
+fn knight_test() {
+    let sudoku = Sudoku::new(9, vec![]);
+
+    let knightrule = KnightRule;
+    let mut buffer = vec![];
+    let indexes = knightrule.updates(sudoku.size, 11, &mut buffer);
+    println!("{indexes:?}");
+
+    assert_eq!(indexes, vec![0, 4, 18, 22, 28, 30]);
+
+    let indexes = knightrule.updates(sudoku.size, 40, &mut buffer);
+    println!("{indexes:?}");
+
+    assert_eq!(indexes, vec![21, 23, 29, 33, 47, 51, 57, 59])
+}
+
