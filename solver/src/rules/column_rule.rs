@@ -85,11 +85,76 @@ impl Rule for ColumnRule {
         }
         arena.reset();
 
-        let mut box_indecies: AlloVec<usize, &Bump> = AlloVec::with_capacity_in(100, &arena);
-
-        let mut candidate_found: bool;
         let sub_s = sudoku.size.integer_sqrt();
-        let mut column;
+
+        let mut locations: AlloVec<(usize, usize), &Bump> =
+            AlloVec::with_capacity_in(sudoku.size, &arena);
+
+        for value in 1..=sudoku.size as u16 {
+            for sq_y in 0..sub_s {
+                for sq_x in 0..sub_s {
+                    locations.clear();
+
+                    for l_x in 0..sub_s {
+                        for l_y in 0..sub_s {
+                            let x = l_x + sq_x * sub_s;
+                            let y = l_y + sq_y * sub_s;
+                            let i = x + y * sudoku.size;
+
+                            if sudoku.cells[i].available.contains(&value) {
+                                locations.push((l_x, l_y));
+                            }
+                        }
+                    }
+
+                    //Tjek om alle er på samme column, eller alle er på samme row
+
+                    //horizontalt. De har alle samme y koordinat
+                    if !locations.is_empty()
+                        && locations.iter().all(|(_, l_y)| *l_y == locations[0].1)
+                    {
+                        buffer.clear();
+                        let y = locations[0].1 + sq_y * sub_s;
+
+                        for x in (0..sudoku.size)
+                            .filter(|x| *x < sq_x * sub_s || *x >= (sq_x + 1) * sub_s)
+                        {
+                            let i = x + y * sudoku.size;
+                            let cell = &sudoku.cells[i];
+                            if !cell.locked_in && cell.available.contains(&value) {
+                                buffer.push(i);
+                            }
+                        }
+
+                        if !buffer.is_empty() {
+                            return Some((value, buffer));
+                        }
+                    }
+
+                    //verticalt. De har alle samme x koordinat
+                    if !locations.is_empty()
+                        && locations.iter().all(|(l_x, _)| *l_x == locations[0].0)
+                    {
+                        buffer.clear();
+                        let x = locations[0].0 + sq_x * sub_s;
+
+                        for y in (0..sudoku.size)
+                            .filter(|y| *y < sq_y * sub_s || *y >= (sq_y + 1) * sub_s)
+                        {
+                            let i = x + y * sudoku.size;
+                            let cell = &sudoku.cells[i];
+                            if !cell.locked_in && cell.available.contains(&value) {
+                                buffer.push(i);
+                            }
+                        }
+
+                        if !buffer.is_empty() {
+                            return Some((value, buffer));
+                        }
+                    }
+                }
+            }
+        }
 
         // look through every column
         // for there to be a locked candidate in a colums
@@ -97,6 +162,9 @@ impl Rule for ColumnRule {
 
         // first check the square, then remove from the column
         // find all the top right corners of squares
+
+        /*
+        let mut column;
         for position in
             (0..sudoku.size).map(|i| i * sub_s + (sudoku.size * (sub_s - 1) * (i / sub_s)))
         {
@@ -153,6 +221,7 @@ impl Rule for ColumnRule {
                 }
             }
         }
+         */
         None
     }
 
