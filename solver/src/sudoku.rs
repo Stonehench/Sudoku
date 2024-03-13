@@ -4,10 +4,10 @@ use std::{
     num::ParseIntError,
     ops::Range,
     str::FromStr,
-    sync::{atomic::AtomicUsize, mpsc, Arc, Mutex},
-    time::Instant,
+    sync::{atomic::AtomicUsize, mpsc, Arc, Mutex}, time::Instant,
 };
 
+use bumpalo::Bump;
 use integer_sqrt::IntegerSquareRoot;
 use lazy_static::lazy_static;
 use priority_queue::PriorityQueue;
@@ -15,7 +15,7 @@ use rand::random;
 use regex_macro::regex;
 use threadpool::ThreadPool;
 
-use crate::rules::{ColumnRule, RowRule, Rule, SquareRule};
+use crate::rules::{column_rule::ColumnRule, row_rule::RowRule, Rule};
 
 pub type DynRule = Box<dyn Rule + Send>;
 
@@ -110,13 +110,17 @@ impl Display for SudokuSolveError {
     }
 }
 
+lazy_static! {
+    static ref ARENA_POOL: Mutex<Vec<Bump>> = Mutex::new(vec![]);
+}
+
 impl Sudoku {
     pub fn new(size: usize, mut rules: Vec<DynRule>) -> Self {
         if !rules.iter().any(|r| r.get_name() == "ColumnRule") {
-            rules.push(Box::new(ColumnRule));
+            rules.push(ColumnRule::new());
         }
         if !rules.iter().any(|r| r.get_name() == "RowRule") {
-            rules.push(Box::new(RowRule));
+            rules.push(RowRule::new());
         }
         Self {
             size,
@@ -164,6 +168,17 @@ impl Sudoku {
         Ok(())
     }
 
+    fn get_arena() -> Bump {
+        let mut lock = ARENA_POOL.lock().unwrap();
+
+        if let Some(bump) = lock.pop() {
+            return bump;
+        }
+        drop(lock);
+
+        Bump::new()
+    }
+
     pub fn solve(
         &mut self,
         ctx: Option<&AllSolutionsContext>,
@@ -173,6 +188,8 @@ impl Sudoku {
         let mut branch_count = 0;
         #[cfg(debug_assertions)]
         let mut backtracks = 0;
+
+        let has_square = self.rules.iter().any(|r| r.get_name() == "SquareRule");
 
         let mut pri_queue = if let Some(pri_queue) = pri_queue {
             pri_queue
@@ -188,6 +205,7 @@ impl Sudoku {
 
         let mut branch_stack: Vec<(Vec<Cell>, PriorityQueue<usize, Entropy>)> = vec![];
         let mut ret_buffer = vec![];
+        let mut arena = Self::get_arena();
 
         'main: while let Some((index, entropy)) = pri_queue.pop() {
             match entropy.0 {
@@ -225,6 +243,35 @@ impl Sudoku {
                         }
                     }
 
+                    //Locked candidates
+                    for rule in self.rules.iter().filter(|r| {
+                        if r.needs_square_for_locked() {
+                            has_square
+                        } else {
+                            true
+                        }
+                    }) {
+                        if let Some((n, removable_indexes)) =
+                            rule.locked_candidate(self, &mut ret_buffer, &mut arena)
+                        {
+                            #[cfg(debug_assertions)] // I debug mode tjekker vi om locked_candidates ikke er tomme
+                            assert!(!removable_indexes.is_empty());
+
+                            //Put nuværende cell tilbage i priority queue
+                            pri_queue.push(index, entropy);
+
+                            for remove_index in removable_indexes {
+                                self.cells[*remove_index].remove(n)?;
+                                pri_queue.change_priority(
+                                    remove_index,
+                                    Entropy(self.cells[*remove_index].available.len()),
+                                );
+                            }
+
+                            continue 'main;
+                        }
+                    }
+
                     //Der er flere muligheder for hvad der kan vælges. Derfor pushes state på branch stacken og der vælges en mulighed
                     //Vælg random
                     let choice = random::<usize>() % entropy.0;
@@ -242,7 +289,7 @@ impl Sudoku {
                     cloned_queue.push(index, Entropy(entropy.0 - 1));
 
                     if let Some(ctx) = ctx {
-                        #[cfg(not(debug_assertions))]
+                        //#[cfg(not(debug_assertions))]
                         if ctx.solutions.load(std::sync::atomic::Ordering::Relaxed) >= 2 {
                             return Err(SudokuSolveError::AlreadyManySolutions);
                         }
@@ -264,9 +311,13 @@ impl Sudoku {
 
         #[cfg(debug_assertions)]
         {
+            println!("arena capacity: {}", arena.chunk_capacity());
             println!("branch count: {branch_count}");
             println!("backtracks: {backtracks}");
         }
+
+        let mut lock = ARENA_POOL.lock().unwrap();
+        lock.push(arena);
 
         if let Some(ctx) = ctx {
             ctx.solutions
@@ -333,8 +384,7 @@ impl Sudoku {
             }
 
             let removed_index = random::<usize>() % sudoku.cells.len();
-            if sudoku.cells[removed_index].available.len() == sudoku.size
-            {
+            if sudoku.cells[removed_index].available.len() == sudoku.size {
                 //println!("Skipping already hit");
                 continue;
             }
@@ -392,7 +442,7 @@ impl FromStr for Sudoku {
     type Err = ParseSudokuError;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
-        let mut rules: Vec<DynRule> = vec![Box::new(SquareRule)];
+        let mut rules: Vec<DynRule> = vec![];
 
         //WTFFF
         let sudoku_source = match regex!(r"(\r\n|\n)(\r\n|\n)")
@@ -530,7 +580,7 @@ fn solve_4x4_xdiagonal_sudoku() {
 }
 #[test]
 fn generate_4x4_xdiagonal() {
-    let xrule = crate::rules::XRule {
+    let xrule = crate::rules::x_rule::XRule {
         x_clue: vec![/*
             (0, 4),
             (1, 5),
@@ -545,8 +595,8 @@ fn generate_4x4_xdiagonal() {
     let mut sudoku = Sudoku::generate_with_size(
         4,
         vec![
-            Box::new(SquareRule),
-            Box::new(crate::rules::DiagonalRule),
+            Box::new(crate::rules::square_rule::SquareRule),
+            crate::rules::diagonal_rule::DiagonalRule::new(),
             Box::new(xrule),
         ],
         None,
@@ -598,7 +648,7 @@ fn solve_test() {
 
 #[test]
 fn random_gen() {
-    let mut sudoku = Sudoku::new(9, vec![Box::new(SquareRule)]);
+    let mut sudoku = Sudoku::new(9, vec![Box::new(crate::rules::square_rule::SquareRule)]);
     sudoku.solve(None, None).unwrap();
     let pre = sudoku.to_string();
     println!("Pre:\n{}", pre);
@@ -668,21 +718,25 @@ fn find_all_solutions() {
 #[test]
 fn generate_sudoku() {
     let timer = std::time::Instant::now();
-    let sudoku = Sudoku::generate_with_size(9, vec![Box::new(SquareRule)], None).unwrap();
+    let sudoku = Sudoku::generate_with_size(
+        9,
+        vec![Box::new(crate::rules::square_rule::SquareRule)],
+        None,
+    )
+    .unwrap();
 
     println!("{sudoku} at {:?}", timer.elapsed());
 }
 
 #[test]
 fn generate_sudoku_x() {
-    use crate::rules::{KnightRule, SquareRule, XRule};
     let timer = std::time::Instant::now();
     let sudoku = Sudoku::generate_with_size(
         4,
         vec![
-            Box::new(SquareRule),
-            Box::new(KnightRule),
-            Box::new(XRule {
+            Box::new(crate::rules::square_rule::SquareRule),
+            Box::new(crate::rules::knight_rule::KnightRule),
+            Box::new(crate::rules::x_rule::XRule {
                 x_clue: vec![(0, 1), (4, 5), (4, 8), (8, 9)],
             }),
         ],

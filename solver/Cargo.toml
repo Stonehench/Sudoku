@@ -14,7 +14,8 @@ regex-macro = "*"
 threadpool = "*"
 num_cpus = "*"
 lazy_static = "*"
-
+bumpalo = {version = "*", features = ["allocator-api2"]}
+allocator-api2 ="*"
 
 [profile.release]
 debug=true

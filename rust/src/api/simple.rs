@@ -4,10 +4,9 @@ use std::sync::{mpsc, Mutex};
 use std::time::Duration;
 
 use lazy_static::lazy_static;
-use rand::random;
 use solver::sudoku::{AllSolutionsContext, DynRule, Sudoku};
 
-use crate::appstate::{get_state, AppState};
+use crate::appstate::get_state;
 
 pub fn generate_with_size(size: usize, rules_src: Vec<String>) -> Option<String> {
     let mut state = get_state();
@@ -28,7 +27,6 @@ pub fn generate_with_size(size: usize, rules_src: Vec<String>) -> Option<String>
     if let Some(x_rule) = sudoku.rules.iter_mut().find_map(|r| r.to_x_rule()) {
         state.x_positions = x_rule.x_clue.clone();
     }
-
 
     let mut solved = sudoku.clone();
     solved.solve(None, None).ok()?;
