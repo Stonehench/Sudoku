@@ -4,7 +4,7 @@ use std::{
     time::Instant,
 };
 
-use crate::rules::SquareRule;
+use rules::square_rule::SquareRule;
 use sudoku::Sudoku;
 
 mod rules;

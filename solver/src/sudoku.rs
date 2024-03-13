@@ -16,7 +16,10 @@ use rand::random;
 use regex_macro::regex;
 use threadpool::ThreadPool;
 
-use crate::rules::{ColumnRule, RowRule, Rule, SquareRule};
+use crate::rules::{
+    column_rule::ColumnRule, diagonal_rule::DiagonalRule, knight_rule::KnightRule,
+    row_rule::RowRule, square_rule::SquareRule, x_rule::XRule, Rule,
+};
 
 pub type DynRule = Box<dyn Rule + Send>;
 
@@ -241,8 +244,8 @@ impl Sudoku {
                             for remove_index in removable_indexes {
                                 self.cells[*remove_index].remove(n)?;
                                 pri_queue.change_priority(
-                                        remove_index,
-                                        Entropy(self.cells[*remove_index].available.len()),
+                                    remove_index,
+                                    Entropy(self.cells[*remove_index].available.len()),
                                 );
                             }
 
@@ -289,7 +292,7 @@ impl Sudoku {
 
         #[cfg(debug_assertions)]
         {
-            println!("arena capacity: {}",arena.chunk_capacity()) ;
+            println!("arena capacity: {}", arena.chunk_capacity());
             println!("branch count: {branch_count}");
             println!("backtracks: {backtracks}");
         }
@@ -559,7 +562,7 @@ fn solve_4x4_xdiagonal_sudoku() {
 }
 #[test]
 fn generate_4x4_xdiagonal() {
-    let xrule = crate::rules::XRule {
+    let xrule = XRule {
         x_clue: vec![/*
             (0, 4),
             (1, 5),
@@ -575,7 +578,7 @@ fn generate_4x4_xdiagonal() {
         4,
         vec![
             Box::new(SquareRule),
-            Box::new(crate::rules::DiagonalRule),
+            Box::new(DiagonalRule),
             Box::new(xrule),
         ],
         None,
@@ -704,7 +707,6 @@ fn generate_sudoku() {
 
 #[test]
 fn generate_sudoku_x() {
-    use crate::rules::{KnightRule, SquareRule, XRule};
     let timer = std::time::Instant::now();
     let sudoku = Sudoku::generate_with_size(
         4,
