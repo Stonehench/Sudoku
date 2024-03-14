@@ -108,4 +108,16 @@ fn knight_test() {
 
     let indexes = knightrule.updates(16, 255, &mut buffer);
     assert_eq!(indexes, vec![(254 - 16 - 16), (253 - 16)]);
+
+    let indexes = knightrule.updates(4, 0, &mut buffer);
+    assert_eq!(indexes, vec![6, 9]);
+
+    let indexes = knightrule.updates(4, 15, &mut buffer);
+    assert_eq!(indexes, vec![(14 - 8), (13 - 4)]);
+
+    let indexes = knightrule.updates(4, 3, &mut buffer);
+    assert_eq!(indexes, vec![5, 10]);
+
+    let indexes = knightrule.updates(4, 12, &mut buffer);
+    assert_eq!(indexes, vec![(13 - 8),(14 - 4)]);
 }
