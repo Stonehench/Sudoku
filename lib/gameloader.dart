@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_spinkit/flutter_spinkit.dart';
 import 'package:sudoku/game_state.dart';
@@ -53,6 +55,10 @@ class _GameLoaderState extends State<GameLoader> {
             removed = progress;
           });
         }
+      } else {
+        Timer(const Duration(milliseconds: 500), () {
+          setState(() {});
+        });
       }
     }();
 
