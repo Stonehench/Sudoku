@@ -102,5 +102,10 @@ fn knight_test() {
     let indexes = knightrule.updates(sudoku.size, 40, &mut buffer);
     println!("{indexes:?}");
 
-    assert_eq!(indexes, vec![21, 23, 29, 33, 47, 51, 57, 59])
+    assert_eq!(indexes, vec![21, 23, 29, 33, 47, 51, 57, 59]);
+
+    let indexes = knightrule.updates(9, 0, &mut buffer);
+    println!("{indexes:?}");
+
+    assert_eq!(indexes, vec![11, 19]);
 }

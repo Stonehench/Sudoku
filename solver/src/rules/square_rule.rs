@@ -205,9 +205,10 @@ fn square_test() {
     let squarerule = SquareRule;
     let mut buffer = vec![];
     let indexes = squarerule.updates(sudoku.size, 11, &mut buffer);
-    println!("{indexes:?}");
+    assert_eq!(indexes, vec![0, 1, 2, 9, 10, 11, 18, 19, 20]);
 
-    assert_eq!(indexes, vec![0, 1, 2, 9, 10, 11, 18, 19, 20])
+    let indexes = squarerule.updates(16, 255, &mut buffer);
+    assert_eq!(indexes, vec![204, 205, 206, 207, 220, 221, 222, 223, 236, 237, 238, 239, 252, 253, 254, 255])
 }
 
 #[test]
