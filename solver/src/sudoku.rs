@@ -390,7 +390,7 @@ impl Sudoku {
 
         const ATTEMPT_COUNT: usize = 25;
 
-        #[cfg(debug_assertions)]
+        //#[cfg(debug_assertions)]
         let timer = Instant::now();
 
         let mut count = 0;
@@ -423,7 +423,7 @@ impl Sudoku {
 
             let solutions = ctx.wait_for_solutions();
 
-            if solutions > 1 {
+            if solutions != 1 {
                 if currents_left == 0 {
                     break;
                 } else {
@@ -440,7 +440,7 @@ impl Sudoku {
             count += 1;
         }
 
-        #[cfg(debug_assertions)]
+        //#[cfg(debug_assertions)]
         println!("Removed {count} in {:?}", timer.elapsed());
 
         for cell in &mut sudoku.cells {
