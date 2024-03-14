@@ -70,7 +70,10 @@ abstract class RustLibApi extends BaseApi {
   Future<void> closeThreads({dynamic hint});
 
   Future<String?> generateWithSize(
-      {required int size, required List<String> rulesSrc, dynamic hint});
+      {required int size,
+      required List<String> rulesSrc,
+      required String difficulty,
+      dynamic hint});
 
   Future<List<(int, int)>> getXPositions({dynamic hint});
 
@@ -140,12 +143,16 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
 
   @override
   Future<String?> generateWithSize(
-      {required int size, required List<String> rulesSrc, dynamic hint}) {
+      {required int size,
+      required List<String> rulesSrc,
+      required String difficulty,
+      dynamic hint}) {
     return handler.executeNormal(NormalTask(
       callFfi: (port_) {
         final serializer = SseSerializer(generalizedFrbRustBinding);
         sse_encode_usize(size, serializer);
         sse_encode_list_String(rulesSrc, serializer);
+        sse_encode_String(difficulty, serializer);
         pdeCallFfi(generalizedFrbRustBinding, serializer,
             funcId: 1, port: port_);
       },
@@ -154,7 +161,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
         decodeErrorData: null,
       ),
       constMeta: kGenerateWithSizeConstMeta,
-      argValues: [size, rulesSrc],
+      argValues: [size, rulesSrc, difficulty],
       apiImpl: this,
       hint: hint,
     ));
@@ -162,7 +169,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
 
   TaskConstMeta get kGenerateWithSizeConstMeta => const TaskConstMeta(
         debugName: "generate_with_size",
-        argNames: ["size", "rulesSrc"],
+        argNames: ["size", "rulesSrc", "difficulty"],
       );
 
   @override

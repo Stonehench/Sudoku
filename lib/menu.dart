@@ -95,12 +95,14 @@ class _MenuState extends State<Menu> {
     false,
     true,
     false,
+    false,
   ];
 
-  List<Widget> difficulitiesNames = [
-    const Text("Easy"),
-    const Text("Medium"),
-    const Text("Hard"),
+  List<String> difficulitiesNames = [
+    "Easy",
+    "Medium",
+    "Hard",
+    "Expert",
   ];
 
   Widget difficulitiesWidgets() {
@@ -111,7 +113,7 @@ class _MenuState extends State<Menu> {
           for (int i = 0; i < difficulitiesValues.length; i++) {
             difficulitiesValues[i] = i == index;
             if (i == index) {
-              gameDifficulty = difficulitiesNames[index].toString();
+              gameDifficulty = difficulitiesNames[index];
             }
           }
         });
@@ -123,7 +125,7 @@ class _MenuState extends State<Menu> {
         minWidth: 80.0,
       ),
       isSelected: difficulitiesValues,
-      children: difficulitiesNames,
+      children: difficulitiesNames.map((e) => Text(e)).toList(),
     );
   }
 
@@ -161,8 +163,10 @@ class _MenuState extends State<Menu> {
                   sizeText = "${size}x$size";
                 });
 
-                Future<String?> sudokuSource =
-                    generateWithSize(size: size, rulesSrc: gameModes.toList());
+                Future<String?> sudokuSource = generateWithSize(
+                    size: size,
+                    rulesSrc: gameModes.toList(),
+                    difficulty: gameDifficulty);
                 //inputTextController.clear();
                 () async {
                   var res = await Navigator.of(context).push(

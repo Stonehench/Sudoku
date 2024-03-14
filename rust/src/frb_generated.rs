@@ -126,12 +126,14 @@ fn wire_generate_with_size_impl(
                 flutter_rust_bridge::for_generated::SseDeserializer::new(message);
             let api_size = <usize>::sse_decode(&mut deserializer);
             let api_rules_src = <Vec<String>>::sse_decode(&mut deserializer);
+            let api_difficulty = <String>::sse_decode(&mut deserializer);
             deserializer.end();
             move |context| {
                 transform_result_sse((move || {
                     Result::<_, ()>::Ok(crate::api::simple::generate_with_size(
                         api_size,
                         api_rules_src,
+                        api_difficulty,
                     ))
                 })())
             }
