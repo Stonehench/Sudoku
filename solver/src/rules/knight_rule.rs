@@ -95,17 +95,17 @@ fn knight_test() {
     let knightrule = KnightRule;
     let mut buffer = vec![];
     let indexes = knightrule.updates(sudoku.size, 11, &mut buffer);
-    println!("{indexes:?}");
-
     assert_eq!(indexes, vec![0, 4, 18, 22, 28, 30]);
 
     let indexes = knightrule.updates(sudoku.size, 40, &mut buffer);
-    println!("{indexes:?}");
-
     assert_eq!(indexes, vec![21, 23, 29, 33, 47, 51, 57, 59]);
 
     let indexes = knightrule.updates(9, 0, &mut buffer);
-    println!("{indexes:?}");
-
     assert_eq!(indexes, vec![11, 19]);
+
+    let indexes = knightrule.updates(16, 0, &mut buffer);
+    assert_eq!(indexes, vec![18, 33]);
+
+    let indexes = knightrule.updates(16, 255, &mut buffer);
+    assert_eq!(indexes, vec![(254 - 16 - 16), (253 - 16)]);
 }
