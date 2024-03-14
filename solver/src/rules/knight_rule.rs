@@ -1,14 +1,12 @@
-use super::Rule;
+use super::{DynRule, Rule};
 use std::fmt::Debug;
-
-use crate::sudoku::DynRule;
 
 #[derive(Debug, Clone)]
 pub struct KnightRule;
 
 impl KnightRule {
     pub fn new() -> DynRule {
-        Box::new(Self)
+        DynRule(Box::new(Self))
     }
 }
 
@@ -78,7 +76,7 @@ impl Rule for KnightRule {
     }
 
     fn boxed_clone(&self) -> DynRule {
-        Box::new(self.clone())
+        DynRule(Box::new(self.clone()))
     }
 
     fn get_name(&self) -> &'static str {
@@ -119,5 +117,5 @@ fn knight_test() {
     assert_eq!(indexes, vec![5, 10]);
 
     let indexes = knightrule.updates(4, 12, &mut buffer);
-    assert_eq!(indexes, vec![(13 - 8),(14 - 4)]);
+    assert_eq!(indexes, vec![(13 - 8), (14 - 4)]);
 }

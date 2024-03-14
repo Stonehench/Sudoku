@@ -1,16 +1,15 @@
-use super::Rule;
+use super::{DynRule, Rule};
 use bumpalo::Bump;
 use integer_sqrt::IntegerSquareRoot;
 
-
-use crate::sudoku::{DynRule, Sudoku};
+use crate::sudoku::Sudoku;
 
 #[derive(Debug, Clone)]
 pub struct SquareRule;
 
 impl SquareRule {
     pub fn new() -> DynRule {
-        Box::new(Self)
+        DynRule(Box::new(Self))
     }
 }
 
@@ -73,7 +72,11 @@ impl Rule for SquareRule {
     }
 
     fn boxed_clone(&self) -> DynRule {
-        Box::new(self.clone())
+        DynRule(Box::new(self.clone()))
+    }
+
+    fn priority(&self) -> super::ExecutionPriority {
+        super::ExecutionPriority::Low
     }
 
     fn get_name(&self) -> &'static str {
@@ -91,7 +94,6 @@ impl Rule for SquareRule {
         let sub_s = sudoku.size.integer_sqrt();
         for value in 1..sudoku.size as u16 {
             'row: for row in 0..sudoku.size {
-
                 let mut found_square = None;
                 for x in 0..sudoku.size {
                     let index = row * sudoku.size + x;
@@ -120,13 +122,13 @@ impl Rule for SquareRule {
                             if y == row {
                                 break;
                             }
-                            if sudoku.cells[x + y * sudoku.size].available.contains(&value){
+                            if sudoku.cells[x + y * sudoku.size].available.contains(&value) {
                                 buffer.push(x + y * sudoku.size);
                             }
                         }
                     }
                     //println!("square locked found in ROW");
-                    if !buffer.is_empty(){
+                    if !buffer.is_empty() {
                         return Some((value, buffer));
                     }
                 }
@@ -162,13 +164,13 @@ impl Rule for SquareRule {
                             if x == col {
                                 break;
                             }
-                            if sudoku.cells[x + y * sudoku.size].available.contains(&value){
+                            if sudoku.cells[x + y * sudoku.size].available.contains(&value) {
                                 buffer.push(x + y * sudoku.size);
                             }
                         }
                     }
                     //println!("square locked found in COLUMN");
-                    if !buffer.is_empty(){
+                    if !buffer.is_empty() {
                         return Some((value, buffer));
                     }
                 }
@@ -183,7 +185,7 @@ impl Rule for SquareRule {
 
 #[test]
 fn square_hidden_math_test() {
-    let mut sudoku = Sudoku::new(9, vec![Box::new(SquareRule)]);
+    let mut sudoku = Sudoku::new(9, vec![SquareRule::new()]);
 
     sudoku.set_cell(1, 27).unwrap();
     sudoku.set_cell(1, 55).unwrap();
@@ -208,7 +210,10 @@ fn square_test() {
     assert_eq!(indexes, vec![0, 1, 2, 9, 10, 11, 18, 19, 20]);
 
     let indexes = squarerule.updates(16, 255, &mut buffer);
-    assert_eq!(indexes, vec![204, 205, 206, 207, 220, 221, 222, 223, 236, 237, 238, 239, 252, 253, 254, 255])
+    assert_eq!(
+        indexes,
+        vec![204, 205, 206, 207, 220, 221, 222, 223, 236, 237, 238, 239, 252, 253, 254, 255]
+    )
 }
 
 #[test]
@@ -274,7 +279,6 @@ fn square_16x_locked() {
     println!("{res:?}");
     assert_eq!(res, None);
 
-    
     sudoku = Sudoku::new(9, vec![SquareRule::new()]);
     sudoku.set_cell(1, 9).unwrap();
     sudoku.set_cell(2, 10).unwrap();
@@ -285,11 +289,8 @@ fn square_16x_locked() {
 
     let res = squarerule.locked_candidate(&sudoku, &mut buffer, &mut arena);
     println!("{res:?}");
-    assert_eq!(res, 
-        Some((7,
-        vec![6,7,8,24,25,26].as_slice()))
-    );
-    
+    assert_eq!(res, Some((7, vec![6, 7, 8, 24, 25, 26].as_slice())));
+
     sudoku = Sudoku::new(9, vec![SquareRule::new()]);
     sudoku.set_cell(1, 8).unwrap();
     sudoku.set_cell(2, 17).unwrap();
@@ -299,13 +300,10 @@ fn square_16x_locked() {
     sudoku.set_cell(6, 53).unwrap();
 
     let res = squarerule.locked_candidate(&sudoku, &mut buffer, &mut arena);
-    assert_eq!(res, 
-        Some((7,
-        vec![60,69,78,61,70,79].as_slice()))
-    );
+    assert_eq!(res, Some((7, vec![60, 69, 78, 61, 70, 79].as_slice())));
 
     // remove the 7's from the avalible, such that it should become 8 that is the value in the next return
-    if let Some((_value, remove_indecies)) = res{
+    if let Some((_value, remove_indecies)) = res {
         for index in remove_indecies {
             let cell = &mut sudoku.cells[*index];
             cell.available.remove(6);
@@ -314,17 +312,10 @@ fn square_16x_locked() {
 
     println!("{sudoku}");
 
-
     let res = squarerule.locked_candidate(&sudoku, &mut buffer, &mut arena);
-    assert_eq!(res, 
-        Some((8,
-        vec![60,69,78,61,70,79].as_slice()))
-    );
+    assert_eq!(res, Some((8, vec![60, 69, 78, 61, 70, 79].as_slice())));
 
     sudoku = Sudoku::new(4, vec![SquareRule::new()]);
     let res = squarerule.locked_candidate(&sudoku, &mut buffer, &mut arena);
     assert_eq!(res, None);
-    
-
 }
- 

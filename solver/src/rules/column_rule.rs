@@ -1,16 +1,16 @@
-use super::Rule;
+use super::{DynRule, Rule};
 use allocator_api2::vec::Vec as AlloVec;
 use bumpalo::Bump;
 use integer_sqrt::IntegerSquareRoot;
 use std::fmt::Debug;
 
-use crate::sudoku::{DynRule, Sudoku};
+use crate::sudoku::Sudoku;
 
 #[derive(Debug, Clone)]
 pub struct ColumnRule;
 impl ColumnRule {
-    pub fn new() -> Box<dyn Rule + Send> {
-        Box::new(ColumnRule)
+    pub fn new() -> DynRule {
+        DynRule(Box::new(ColumnRule))
     }
 }
 
@@ -118,7 +118,7 @@ impl Rule for ColumnRule {
     }
 
     fn boxed_clone(&self) -> DynRule {
-        Box::new(self.clone())
+        DynRule(Box::new(self.clone()))
     }
 
     fn get_name(&self) -> &'static str {
@@ -130,7 +130,7 @@ impl Rule for ColumnRule {
 
 #[test]
 fn locked_column_candidate() {
-    let mut sudoku = Sudoku::new(9, vec![Box::new(crate::rules::square_rule::SquareRule)]);
+    let mut sudoku = Sudoku::new(9, vec![super::square_rule::SquareRule::new()]);
     let column_rule = ColumnRule::new();
     let mut buffer = vec![];
     let mut arena = Bump::new();
@@ -145,7 +145,7 @@ fn locked_column_candidate() {
     let mut res = column_rule.locked_candidate(&sudoku, &mut buffer, &mut arena);
     assert_eq!(res, Some((2, vec![28, 37, 46, 55, 64, 73].as_slice())));
 
-    sudoku = Sudoku::new(9, vec![Box::new(crate::rules::square_rule::SquareRule)]);
+    sudoku = Sudoku::new(9, vec![super::square_rule::SquareRule::new()]);
     sudoku.set_cell(1, 1).unwrap();
     sudoku.set_cell(2, 25).unwrap();
     sudoku.set_cell(3, 10).unwrap();
@@ -178,7 +178,7 @@ fn column_test() {
 
 #[test]
 fn column_hidden_math_test() {
-    let mut sudoku = Sudoku::new(9, vec![Box::new(crate::rules::square_rule::SquareRule)]);
+    let mut sudoku = Sudoku::new(9, vec![super::square_rule::SquareRule::new()]);
 
     sudoku.set_cell(2, 9).unwrap();
     sudoku.set_cell(1, 24).unwrap();

@@ -1,20 +1,22 @@
-use bumpalo::Bump;
-use std::{fmt::Debug, str::FromStr};
-use crate::rules::x_rule::XRule;
 use crate::rules::diagonal_rule::DiagonalRule;
-use crate::rules::square_rule::SquareRule;
 use crate::rules::knight_rule::KnightRule;
+use crate::rules::square_rule::SquareRule;
+use crate::rules::x_rule::XRule;
+use bumpalo::Bump;
+use std::{
+    fmt::Debug,
+    ops::{Deref, DerefMut},
+    str::FromStr,
+};
 
+use crate::sudoku::Sudoku;
 
-
-use crate::sudoku::{DynRule, Sudoku};
-
-pub mod square_rule;
 pub mod column_rule;
-pub mod row_rule;
-pub mod knight_rule;
-pub mod x_rule;
 pub mod diagonal_rule;
+pub mod knight_rule;
+pub mod row_rule;
+pub mod square_rule;
+pub mod x_rule;
 
 pub trait Rule: Debug {
     fn updates<'buf>(
@@ -57,6 +59,38 @@ pub trait Rule: Debug {
     fn needs_square_for_locked(&self) -> bool {
         false
     }
+
+    fn priority(&self) -> ExecutionPriority {
+        ExecutionPriority::Medium
+    }
+}
+#[derive(Debug,Clone, Copy,PartialEq, Eq, PartialOrd, Ord)]
+pub enum ExecutionPriority {
+    High = 0,
+    Medium = 1,
+    Low = 2,
+}
+
+#[derive(Debug)]
+pub struct DynRule(Box<dyn Rule + Send>);
+
+impl Clone for DynRule {
+    fn clone(&self) -> Self {
+        self.0.boxed_clone()
+    }
+}
+
+impl Deref for DynRule {
+    type Target = Box<dyn Rule + Send>;
+
+    fn deref(&self) -> &Self::Target {
+        &self.0
+    }
+}
+impl DerefMut for DynRule {
+    fn deref_mut(&mut self) -> &mut Self::Target {
+        &mut self.0
+    }
 }
 
 impl FromStr for DynRule {
@@ -64,13 +98,13 @@ impl FromStr for DynRule {
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         match s {
-            "SquareRule" => Ok(Box::new(SquareRule)),
-            "KnightsMove" => Ok(Box::new(KnightRule)),
+            "SquareRule" => Ok(SquareRule::new()),
+            "KnightsMove" => Ok(KnightRule::new()),
             "DiagonalRule" => Ok(DiagonalRule::new()),
             _ => {
                 let mut rule_params = s.split(';').map(str::trim);
                 match rule_params.next() {
-                    Some("XRule") => Ok(Box::new(XRule {
+                    Some("XRule") => Ok(DynRule(Box::new(XRule {
                         x_clue: rule_params
                             .map(|s| {
                                 let Some((l, r)) = s.split_once(',') else {
@@ -82,7 +116,7 @@ impl FromStr for DynRule {
                                 Ok((l, r))
                             })
                             .collect::<Result<_, _>>()?,
-                    })),
+                    }))),
                     _ => return Err(s.to_owned()),
                 }
             }

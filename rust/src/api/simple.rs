@@ -4,7 +4,8 @@ use std::sync::{mpsc, Mutex};
 use std::time::Duration;
 
 use lazy_static::lazy_static;
-use solver::sudoku::{AllSolutionsContext, Difficulty, DynRule, Sudoku};
+use solver::rules::DynRule;
+use solver::sudoku::{AllSolutionsContext, Difficulty, Sudoku};
 
 use crate::appstate::get_state;
 
@@ -30,9 +31,9 @@ pub fn generate_with_size(
         return None;
     };
 
-    for (index,cell) in sudoku.cells.iter().enumerate() {
+    for (index, cell) in sudoku.cells.iter().enumerate() {
         if cell.available.len() == 1 {
-            print!("{}",cell.available[0]);
+            print!("{}", cell.available[0]);
         } else {
             print!("0");
         }
@@ -41,7 +42,6 @@ pub fn generate_with_size(
             println!("");
         }
     }
-
 
     let mut state = get_state();
     state.x_positions = vec![];
@@ -56,8 +56,6 @@ pub fn generate_with_size(
         println!("Failed to solve generated sudoku: {err}");
         return None;
     };
-
-    
 
     let mut str_buffer = String::new();
 

@@ -1,6 +1,5 @@
 use std::{
     cmp::Ordering,
-    collections::HashSet,
     fmt::{Display, Write},
     num::ParseIntError,
     ops::{Deref, Range},
@@ -18,9 +17,7 @@ use regex_macro::regex;
 use smallvec::{smallvec, SmallVec};
 use threadpool::ThreadPool;
 
-use crate::rules::{column_rule::ColumnRule, row_rule::RowRule, Rule};
-
-pub type DynRule = Box<dyn Rule + Send>;
+use crate::rules::{column_rule::ColumnRule, row_rule::RowRule, DynRule};
 
 pub enum Difficulty {
     Easy,
@@ -157,6 +154,8 @@ impl Sudoku {
         if !rules.iter().any(|r| r.get_name() == "RowRule") {
             rules.push(RowRule::new());
         }
+
+        rules.sort_by_key(|a| a.priority());
 
         Self {
             size,
@@ -400,6 +399,11 @@ impl Sudoku {
         let mut available_to_remove: Vec<_> = (0..sudoku.cells.len()).collect();
 
         loop {
+            if timer.elapsed().as_secs() > 20 {
+                println!("OUT OF GEN TIME!!");
+                break;
+            }
+
             if count >= remove_limit {
                 break;
             }
@@ -608,24 +612,22 @@ fn solve_4x4_xdiagonal_sudoku() {
 }
 #[test]
 fn generate_4x4_xdiagonal() {
-    let xrule = crate::rules::x_rule::XRule {
-        x_clue: vec![/*
-            (0, 4),
-            (1, 5),
-            (2, 6),
-            (3, 7),
-            (8, 12),
-            (9, 13),
-            (10, 14),
-            (11, 15), */
-        ],
-    };
+    let x_clue = vec![/*
+        (0, 4),
+        (1, 5),
+        (2, 6),
+        (3, 7),
+        (8, 12),
+        (9, 13),
+        (10, 14),
+        (11, 15), */
+    ];
     let mut sudoku = Sudoku::generate_with_size(
         4,
         vec![
-            Box::new(crate::rules::square_rule::SquareRule),
+            crate::rules::square_rule::SquareRule::new(),
             crate::rules::diagonal_rule::DiagonalRule::new(),
-            Box::new(xrule),
+            crate::rules::x_rule::XRule::new(x_clue),
         ],
         None,
         Difficulty::Expert,
@@ -677,7 +679,7 @@ fn solve_test() {
 
 #[test]
 fn random_gen() {
-    let mut sudoku = Sudoku::new(9, vec![Box::new(crate::rules::square_rule::SquareRule)]);
+    let mut sudoku = Sudoku::new(9, vec![super::rules::square_rule::SquareRule::new()]);
     sudoku.solve(None, None).unwrap();
     let pre = sudoku.to_string();
     println!("Pre:\n{}", pre);
@@ -749,7 +751,7 @@ fn generate_sudoku() {
     let timer = std::time::Instant::now();
     let sudoku = Sudoku::generate_with_size(
         9,
-        vec![Box::new(crate::rules::square_rule::SquareRule)],
+        vec![super::rules::square_rule::SquareRule::new()],
         None,
         Difficulty::Expert,
     )
@@ -764,11 +766,9 @@ fn generate_sudoku_x() {
     let sudoku = Sudoku::generate_with_size(
         4,
         vec![
-            Box::new(crate::rules::square_rule::SquareRule),
-            Box::new(crate::rules::knight_rule::KnightRule),
-            Box::new(crate::rules::x_rule::XRule {
-                x_clue: vec![(0, 1), (4, 5), (4, 8), (8, 9)],
-            }),
+            super::rules::square_rule::SquareRule::new(),
+            crate::rules::knight_rule::KnightRule::new(),
+            crate::rules::x_rule::XRule::new(vec![(0, 1), (4, 5), (4, 8), (8, 9)]),
         ],
         None,
         Difficulty::Expert,
