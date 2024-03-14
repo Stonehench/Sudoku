@@ -6,8 +6,8 @@ import 'package:sudoku/tool_bar.dart';
 import 'package:sudoku/game_state.dart';
 
 class GameView extends StatelessWidget {
-  String rules;
-  GameView(this.rules, {super.key});
+  final Set<String> rules;
+  const GameView(this.rules, {super.key});
 
   @override
   Widget build(BuildContext context) {

@@ -1,16 +1,16 @@
 import 'package:flutter/material.dart';
-import 'package:sudoku/game_state.dart';
-import 'package:sudoku/menu.dart';
 
 class GameHeader extends StatefulWidget {
-  String rules;
-  GameHeader(this.rules, {super.key});
+  final Set<String> rules;
+  const GameHeader(this.rules, {super.key});
 
   @override
   State<GameHeader> createState() => _DigitSelectState();
 }
 
 class _DigitSelectState extends State<GameHeader> {
+  //var rulesAsString =
+//                      gameModes.fold("", (prev, e) => prev + e + "\n");
   @override
   Widget build(BuildContext context) {
     return Column(
@@ -21,12 +21,16 @@ class _DigitSelectState extends State<GameHeader> {
                 context: context,
                 builder: (context) => AlertDialog(
                   title: const Text("Rules"),
-                  content: Text(widget.rules),
+                  content: IntrinsicHeight(
+                    child: Column(
+                      children: widget.rules.map((e) => Text(e)).toList(),
+                    ),
+                  ),
                 ),
               );
             },
             child: const Text("Rules")),
-        Text("Standard Sudoku", style: TextStyle(fontSize: 24)),
+        const Text("Standard Sudoku", style: TextStyle(fontSize: 24)),
       ],
     );
   }
