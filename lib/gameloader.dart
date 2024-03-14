@@ -8,7 +8,8 @@ import 'package:sudoku/src/rust/api/simple.dart';
 
 class GameLoader extends StatefulWidget {
   final Set<String> rules;
-  const GameLoader(this.sudokuSource, this.rules, {super.key});
+  final String difficulty;
+  const GameLoader(this.sudokuSource, this.rules, this.difficulty, {super.key});
 
   final Future<String?> sudokuSource;
 
@@ -19,11 +20,21 @@ class GameLoader extends StatefulWidget {
 class _GameLoaderState extends State<GameLoader> {
   bool awaiting = false;
   int removed = 0;
-
+  int? targetRemoved;
   @override
   Widget build(BuildContext context) {
     if (!awaiting) {
       awaiting = true;
+
+      () async {
+        var newTargetRemoved =
+            await difficultyValues(difficulty: widget.difficulty);
+        if (newTargetRemoved != null) {
+          setState(() {
+            targetRemoved = newTargetRemoved;
+          });
+        }
+      }();
 
       () async {
         var source = await widget.sudokuSource;
@@ -70,7 +81,9 @@ class _GameLoaderState extends State<GameLoader> {
             SpinKitWave(
               color: Theme.of(context).highlightColor,
             ),
-            Text("$removed / 55")
+            targetRemoved == null
+                ? Text("$removed")
+                : Text("$removed / $targetRemoved")
           ],
         ),
       ),

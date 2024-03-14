@@ -4,11 +4,15 @@ use std::sync::{mpsc, Mutex};
 use std::time::Duration;
 
 use lazy_static::lazy_static;
-use solver::sudoku::{AllSolutionsContext, DynRule, Sudoku};
+use solver::sudoku::{AllSolutionsContext, Difficulty, DynRule, Sudoku};
 
 use crate::appstate::get_state;
 
-pub fn generate_with_size(size: usize, rules_src: Vec<String>, difficulty: String) -> Option<String> {
+pub fn generate_with_size(
+    size: usize,
+    rules_src: Vec<String>,
+    difficulty: String,
+) -> Option<String> {
     let mut state = get_state();
     state.x_positions = vec![];
 
@@ -92,4 +96,13 @@ pub fn init_app() {
 pub fn close_threads() {
     let pool = AllSolutionsContext::get_pool();
     drop(pool);
+}
+
+pub fn difficulty_values(difficulty: String) -> Option<usize> {
+    let app_state = get_state();
+    let size = app_state.current_sudoku.as_ref()?.0.size;
+
+    let difficulty: Difficulty = difficulty.parse().ok()?;
+
+    Some(difficulty.get_removes(size))
 }

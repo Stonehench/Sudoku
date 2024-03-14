@@ -21,7 +21,12 @@ use crate::rules::{column_rule::ColumnRule, row_rule::RowRule, Rule};
 
 pub type DynRule = Box<dyn Rule + Send>;
 
-pub enum Difficulty { Easy, Medium, Hard, Expert }
+pub enum Difficulty {
+    Easy,
+    Medium,
+    Hard,
+    Expert,
+}
 
 impl FromStr for Difficulty {
     type Err = ();
@@ -32,7 +37,18 @@ impl FromStr for Difficulty {
             "Medium" => Ok(Difficulty::Medium),
             "Hard" => Ok(Difficulty::Hard),
             "Expert" => Ok(Difficulty::Expert),
-            _ => Err(())
+            _ => Err(()),
+        }
+    }
+}
+
+impl Difficulty {
+    pub fn get_removes(&self, size: usize) -> usize {
+        match self {
+            Difficulty::Easy => size * size / 2,
+            Difficulty::Medium => (size * size * 2) / 3,
+            Difficulty::Hard => (size * size * 3) / 4,
+            Difficulty::Expert => size * size,
         }
     }
 }
@@ -262,7 +278,6 @@ impl Sudoku {
                         }
                     }
 
-
                     // TODO: Should only work on Hard and Expert in the future
                     //Locked candidates
                     for rule in self.rules.iter().filter(|r| {
@@ -352,7 +367,7 @@ impl Sudoku {
         size: usize,
         rules: Vec<DynRule>,
         progess: Option<mpsc::Sender<usize>>,
-        difficulty: Difficulty
+        difficulty: Difficulty,
     ) -> Result<Self, SudokuSolveError> {
         let mut sudoku = Sudoku::new(size, rules);
         sudoku.solve(None, None)?;
@@ -392,12 +407,7 @@ impl Sudoku {
             }
         }
 
-        let remove_limit = match difficulty{
-            Difficulty::Easy => size * size / 2,
-            Difficulty::Medium => (size * size * 2) / 3,
-            Difficulty::Hard => (size * size * 3) / 4,
-            Difficulty::Expert => size * size,
-        };
+        let remove_limit = difficulty.get_removes(size);
 
         const ATTEMPT_COUNT: usize = 25;
 
@@ -755,7 +765,7 @@ fn generate_sudoku() {
         9,
         vec![Box::new(crate::rules::square_rule::SquareRule)],
         None,
-        Difficulty::Expert
+        Difficulty::Expert,
     )
     .unwrap();
 

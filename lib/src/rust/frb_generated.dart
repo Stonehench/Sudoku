@@ -69,6 +69,8 @@ abstract class RustLibApi extends BaseApi {
 
   Future<void> closeThreads({dynamic hint});
 
+  Future<int?> difficultyValues({required String difficulty, dynamic hint});
+
   Future<String?> generateWithSize(
       {required int size,
       required List<String> rulesSrc,
@@ -139,6 +141,31 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   TaskConstMeta get kCloseThreadsConstMeta => const TaskConstMeta(
         debugName: "close_threads",
         argNames: [],
+      );
+
+  @override
+  Future<int?> difficultyValues({required String difficulty, dynamic hint}) {
+    return handler.executeNormal(NormalTask(
+      callFfi: (port_) {
+        final serializer = SseSerializer(generalizedFrbRustBinding);
+        sse_encode_String(difficulty, serializer);
+        pdeCallFfi(generalizedFrbRustBinding, serializer,
+            funcId: 7, port: port_);
+      },
+      codec: SseCodec(
+        decodeSuccessData: sse_decode_opt_box_autoadd_usize,
+        decodeErrorData: null,
+      ),
+      constMeta: kDifficultyValuesConstMeta,
+      argValues: [difficulty],
+      apiImpl: this,
+      hint: hint,
+    ));
+  }
+
+  TaskConstMeta get kDifficultyValuesConstMeta => const TaskConstMeta(
+        debugName: "difficulty_values",
+        argNames: ["difficulty"],
       );
 
   @override

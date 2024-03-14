@@ -27,3 +27,6 @@ Future<bool> checkLegality(
 
 Future<void> closeThreads({dynamic hint}) =>
     RustLib.instance.api.closeThreads(hint: hint);
+
+Future<int?> difficultyValues({required String difficulty, dynamic hint}) =>
+    RustLib.instance.api.difficultyValues(difficulty: difficulty, hint: hint);
