@@ -16,6 +16,7 @@ num_cpus = "*"
 lazy_static = "*"
 bumpalo = {version = "*", features = ["allocator-api2"]}
 allocator-api2 ="*"
+smallvec = "*"
 
 [profile.release]
 debug=true

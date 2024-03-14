@@ -33,7 +33,7 @@ pub fn generate_with_size(size: usize, rules_src: Vec<String>) -> Option<String>
 
     let mut str_buffer = String::new();
 
-    for cell in &sudoku.cells {
+    for cell in sudoku.cells.iter() {
         match cell.available.as_slice() {
             [value] => str_buffer.push_str(&value.to_string()),
             _ => str_buffer.push('0'),

@@ -4,7 +4,8 @@ use std::{
     num::ParseIntError,
     ops::Range,
     str::FromStr,
-    sync::{atomic::AtomicUsize, mpsc, Arc, Mutex}, time::Instant,
+    sync::{atomic::AtomicUsize, mpsc, Arc, Mutex},
+    time::Instant,
 };
 
 use bumpalo::Bump;
@@ -13,6 +14,7 @@ use lazy_static::lazy_static;
 use priority_queue::PriorityQueue;
 use rand::random;
 use regex_macro::regex;
+use smallvec::{SmallVec16, SmallVec8};
 use threadpool::ThreadPool;
 
 use crate::rules::{column_rule::ColumnRule, row_rule::RowRule, Rule};
@@ -22,8 +24,8 @@ pub type DynRule = Box<dyn Rule + Send>;
 #[derive(Debug)]
 pub struct Sudoku {
     pub size: usize,
-    pub cells: Vec<Cell>,
-    pub rules: Vec<DynRule>,
+    pub cells: SmallVec16<Cell>,
+    pub rules: SmallVec8<DynRule>,
 }
 
 //Det her er ret fucked, men siden vi skal have den laveste entropy ud af vores priority queue skal den sammenligne omvendt
@@ -73,7 +75,12 @@ impl AllSolutionsContext {
         *GLOBAL_POOL.lock().unwrap() = Some(self.pool);
     }
 
-    fn add_branch(&self, old: &Sudoku, cells: Vec<Cell>, new_queue: PriorityQueue<usize, Entropy>) {
+    fn add_branch(
+        &self,
+        old: &Sudoku,
+        cells: SmallVec16<Cell>,
+        new_queue: PriorityQueue<usize, Entropy>,
+    ) {
         let mut new_sudoku = Sudoku {
             cells,
             ..old.clone()
@@ -122,19 +129,22 @@ impl Sudoku {
         if !rules.iter().any(|r| r.get_name() == "RowRule") {
             rules.push(RowRule::new());
         }
+
+        let mut small_rules = SmallVec8::new();
+        small_rules.push_all_move(rules);
         Self {
             size,
             cells: (0..size * size)
                 .map(|_| Cell::new_with_range(1..(size as u16 + 1)))
                 .collect(),
-            rules,
+            rules: small_rules,
         }
     }
 
     pub fn set_cell(&mut self, n: u16, index: usize) -> Result<(), SudokuSolveError> {
         let mut ret_buffer = vec![];
         self.cells[index] = Cell::single(n);
-        for rule in &self.rules {
+        for rule in self.rules.iter() {
             for inner_index in rule
                 .updates(self.size, index, &mut ret_buffer)
                 .into_iter()
@@ -154,7 +164,7 @@ impl Sudoku {
         ret_buffer: &mut Vec<usize>,
     ) -> Result<(), SudokuSolveError> {
         self.cells[index] = Cell::single(n);
-        for rule in &self.rules {
+        for rule in self.rules.iter() {
             for inner_index in rule
                 .updates(self.size, index, ret_buffer)
                 .into_iter()
@@ -203,7 +213,7 @@ impl Sudoku {
             pri_queue
         };
 
-        let mut branch_stack: Vec<(Vec<Cell>, PriorityQueue<usize, Entropy>)> = vec![];
+        let mut branch_stack: Vec<(SmallVec16<Cell>, PriorityQueue<usize, Entropy>)> = vec![];
         let mut ret_buffer = vec![];
         let mut arena = Self::get_arena();
 
@@ -232,7 +242,7 @@ impl Sudoku {
                 _ => {
                     // Der er ikke flere naked singles, så der tjekkes for hidden singles
 
-                    for rule in &self.rules {
+                    for rule in self.rules.iter() {
                         if let Some((n, hidden_index)) = rule.hidden_singles(self) {
                             //Put nuværende cell tilbage i priority queue
                             pri_queue.push(index, entropy);
@@ -334,7 +344,7 @@ impl Sudoku {
     ) -> Result<Self, SudokuSolveError> {
         let mut sudoku = Sudoku::new(size, rules);
         sudoku.solve(None, None)?;
-        for cell in &mut sudoku.cells {
+        for cell in sudoku.cells.iter_mut() {
             cell.locked_in = false;
         }
 
@@ -416,7 +426,7 @@ impl Sudoku {
         #[cfg(debug_assertions)]
         println!("Removed {count} in {:?}", timer.elapsed());
 
-        for cell in &mut sudoku.cells {
+        for cell in sudoku.cells.iter_mut() {
             cell.locked_in = false;
         }
 
@@ -659,7 +669,7 @@ fn random_gen() {
         let index = random::<usize>() % sudoku.cells.len();
         sudoku.cells[index] = Cell::new_with_range(1..(sudoku.size as u16 + 1))
     }
-    for cell in &mut sudoku.cells {
+    for cell in sudoku.cells.iter_mut() {
         cell.locked_in = false;
     }
 
