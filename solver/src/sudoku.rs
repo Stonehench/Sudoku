@@ -21,6 +21,22 @@ use crate::rules::{column_rule::ColumnRule, row_rule::RowRule, Rule};
 
 pub type DynRule = Box<dyn Rule + Send>;
 
+pub enum Difficulty { Easy, Medium, Hard, Expert }
+
+impl FromStr for Difficulty {
+    type Err = ();
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        match s {
+            "Easy" => Ok(Difficulty::Easy),
+            "Medium" => Ok(Difficulty::Medium),
+            "Hard" => Ok(Difficulty::Hard),
+            "Expert" => Ok(Difficulty::Expert),
+            _ => Err(())
+        }
+    }
+}
+
 #[derive(Debug)]
 pub struct Sudoku {
     pub size: usize,
@@ -246,6 +262,8 @@ impl Sudoku {
                         }
                     }
 
+
+                    // TODO: Should only work on Hard and Expert in the future
                     //Locked candidates
                     for rule in self.rules.iter().filter(|r| {
                         if r.needs_square_for_locked() {
@@ -334,6 +352,7 @@ impl Sudoku {
         size: usize,
         rules: Vec<DynRule>,
         progess: Option<mpsc::Sender<usize>>,
+        difficulty: Difficulty
     ) -> Result<Self, SudokuSolveError> {
         let mut sudoku = Sudoku::new(size, rules);
         sudoku.solve(None, None)?;
@@ -373,6 +392,13 @@ impl Sudoku {
             }
         }
 
+        let remove_limit = match difficulty{
+            Difficulty::Easy => size * size / 2,
+            Difficulty::Medium => (size * size * 2) / 3,
+            Difficulty::Hard => (size * size * 3) / 4,
+            Difficulty::Expert => size * size,
+        };
+
         const ATTEMPT_COUNT: usize = 25;
 
         #[cfg(debug_assertions)]
@@ -382,6 +408,9 @@ impl Sudoku {
 
         let mut currents_left = ATTEMPT_COUNT;
         loop {
+            if count >= remove_limit {
+                break;
+            }
             if let Some(progess) = &progess {
                 progess.send(count).unwrap();
             }
@@ -603,6 +632,7 @@ fn generate_4x4_xdiagonal() {
             Box::new(xrule),
         ],
         None,
+        Difficulty::Expert,
     )
     .unwrap();
     println!("{sudoku}");
@@ -725,6 +755,7 @@ fn generate_sudoku() {
         9,
         vec![Box::new(crate::rules::square_rule::SquareRule)],
         None,
+        Difficulty::Expert
     )
     .unwrap();
 
@@ -744,6 +775,7 @@ fn generate_sudoku_x() {
             }),
         ],
         None,
+        Difficulty::Expert,
     )
     .unwrap();
 
