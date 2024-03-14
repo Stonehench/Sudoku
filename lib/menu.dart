@@ -1,3 +1,5 @@
+import 'dart:ffi';
+
 import 'package:flutter/material.dart';
 import 'dart:math';
 
@@ -94,6 +96,44 @@ class _MenuState extends State<Menu> {
     return list;
   }
 
+  String gameDifficulty = "";
+
+  List<bool> difficulitiesValues = <bool>[
+    false,
+    true,
+    false,
+  ];
+
+  List<Widget> difficulitiesNames = [
+    const Text("Easy"),
+    const Text("Medium"),
+    const Text("Hard"),
+  ];
+
+  Widget difficulitiesWidgets() {
+    return ToggleButtons(
+      direction: Axis.horizontal,
+      onPressed: (int index) {
+        setState(() {
+          for (int i = 0; i < difficulitiesValues.length; i++) {
+            difficulitiesValues[i] = i == index;
+            if (i == index) {
+              gameDifficulty = difficulitiesNames[index].toString();
+            }
+          }
+        });
+      },
+      borderRadius: const BorderRadius.all(Radius.circular(8)),
+      borderColor: Colors.transparent,
+      constraints: const BoxConstraints(
+        minHeight: 40.0,
+        minWidth: 80.0,
+      ),
+      isSelected: difficulitiesValues,
+      children: difficulitiesNames,
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -102,6 +142,10 @@ class _MenuState extends State<Menu> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
+            difficulitiesWidgets(),
+            SizedBox(
+              height: 20,
+            ),
             SizedBox(
               width: 250,
               child: TextField(
