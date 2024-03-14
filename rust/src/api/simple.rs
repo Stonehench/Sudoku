@@ -8,7 +8,7 @@ use solver::sudoku::{AllSolutionsContext, DynRule, Sudoku};
 
 use crate::appstate::get_state;
 
-pub fn generate_with_size(size: usize, rules_src: Vec<String>) -> Option<String> {
+pub fn generate_with_size(size: usize, rules_src: Vec<String>, difficulty: String) -> Option<String> {
     let mut state = get_state();
     state.x_positions = vec![];
 
@@ -21,8 +21,8 @@ pub fn generate_with_size(size: usize, rules_src: Vec<String>) -> Option<String>
         .ok()?;
 
     let sender = PROGRESS.lock().unwrap().0.clone();
-
-    let mut sudoku = Sudoku::generate_with_size(size, rules, Some(sender)).ok()?;
+    let difficulty = difficulty.parse().ok()?;
+    let mut sudoku = Sudoku::generate_with_size(size, rules, Some(sender), difficulty).ok()?;
 
     if let Some(x_rule) = sudoku.rules.iter_mut().find_map(|r| r.to_x_rule()) {
         state.x_positions = x_rule.x_clue.clone();
