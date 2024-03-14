@@ -80,7 +80,7 @@ pub fn wait_for_progess() -> Option<usize> {
 pub fn check_legality(position: usize, value: u16) -> bool {
     let state = get_state();
     let (_, sudoku) = state.current_sudoku.as_ref().unwrap();
-    sudoku.cells[position].available == [value]
+    sudoku.cells[position].available.deref() == [value]
 }
 
 #[flutter_rust_bridge::frb(init)]

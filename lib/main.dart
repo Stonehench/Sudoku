@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:sudoku/game_view.dart';
 import 'package:sudoku/menu.dart';
 import 'package:sudoku/src/rust/api/simple.dart';
 import 'package:sudoku/src/rust/frb_generated.dart';

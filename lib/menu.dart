@@ -1,27 +1,20 @@
-import 'dart:ffi';
-
 import 'package:flutter/material.dart';
 import 'dart:math';
 
 import 'package:flutter/services.dart';
-import 'package:sudoku/game_state.dart';
 import 'package:sudoku/gameloader.dart';
 import 'package:sudoku/src/rust/api/simple.dart';
 
 class Menu extends StatefulWidget {
-  Menu({super.key});
+  const Menu({super.key});
 
   @override
   State<Menu> createState() => _MenuState();
-
-  Set<String> gameModes = {};
-
-  getGameRules() {
-    return gameModes;
-  }
 }
 
 class _MenuState extends State<Menu> {
+  Set<String> gameModes = {};
+
   String sizeText = "9x9";
   int size = 9;
   final inputTextController = TextEditingController();
@@ -67,7 +60,7 @@ class _MenuState extends State<Menu> {
       if (!initialized) {
         initialized = true;
         if (def) {
-          widget.gameModes.add(realname);
+          gameModes.add(realname);
         }
       }
 
@@ -77,13 +70,13 @@ class _MenuState extends State<Menu> {
           children: [
             Text(name),
             Checkbox(
-              value: widget.gameModes.contains(realname),
+              value: gameModes.contains(realname),
               onChanged: (v) {
                 setState(() {
                   if (v == true) {
-                    widget.gameModes.add(realname);
+                    gameModes.add(realname);
                   } else {
-                    widget.gameModes.remove(realname);
+                    gameModes.remove(realname);
                   }
                 });
               },
@@ -143,7 +136,7 @@ class _MenuState extends State<Menu> {
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             difficulitiesWidgets(),
-            SizedBox(
+            const SizedBox(
               height: 20,
             ),
             SizedBox(
@@ -168,16 +161,13 @@ class _MenuState extends State<Menu> {
                   sizeText = "${size}x$size";
                 });
 
-                Future<String?> sudokuSource = generateWithSize(
-                    size: size, rulesSrc: widget.gameModes.toList());
+                Future<String?> sudokuSource =
+                    generateWithSize(size: size, rulesSrc: gameModes.toList());
                 //inputTextController.clear();
                 () async {
-                  var rulesAsString =
-                      widget.gameModes.fold("", (prev, e) => prev + e + "\n");
                   var res = await Navigator.of(context).push(
                     MaterialPageRoute(
-                      builder: (context) =>
-                          GameLoader(sudokuSource, rulesAsString),
+                      builder: (context) => GameLoader(sudokuSource, gameModes),
                     ),
                   );
                   if (res != null) {

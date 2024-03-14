@@ -5,8 +5,8 @@ import 'package:sudoku/game_view.dart';
 import 'package:sudoku/src/rust/api/simple.dart';
 
 class GameLoader extends StatefulWidget {
-  String rules;
-  GameLoader(this.sudokuSource, this.rules, {super.key});
+  final Set<String> rules;
+  const GameLoader(this.sudokuSource, this.rules, {super.key});
 
   final Future<String?> sudokuSource;
 
