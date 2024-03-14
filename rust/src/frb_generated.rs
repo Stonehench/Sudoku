@@ -124,11 +124,15 @@ fn wire_difficulty_values_impl(
             };
             let mut deserializer =
                 flutter_rust_bridge::for_generated::SseDeserializer::new(message);
+            let api_size = <usize>::sse_decode(&mut deserializer);
             let api_difficulty = <String>::sse_decode(&mut deserializer);
             deserializer.end();
             move |context| {
                 transform_result_sse((move || {
-                    Result::<_, ()>::Ok(crate::api::simple::difficulty_values(api_difficulty))
+                    Result::<_, ()>::Ok(crate::api::simple::difficulty_values(
+                        api_size,
+                        api_difficulty,
+                    ))
                 })())
             }
         },

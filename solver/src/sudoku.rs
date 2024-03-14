@@ -1,5 +1,6 @@
 use std::{
     cmp::Ordering,
+    collections::HashSet,
     fmt::{Display, Write},
     num::ParseIntError,
     ops::{Deref, Range},
@@ -138,7 +139,7 @@ impl Display for SudokuSolveError {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
             SudokuSolveError::UnsolveableError => write!(f, "No Solution. Failed to pop branch queue when entropy was 0 in cell"),
-            SudokuSolveError::RemovedLockedValue => write!(f, "Something went seriously wrong. Removed the only value in a locked cell\nThis indicates either an unsolveable sudoku or a bug in the rules."),
+            SudokuSolveError::RemovedLockedValue => write!(f, "Something went seriously wrong. Removed the only value in a locked cell\nThis indicates a bug in the rules."),
             SudokuSolveError::AlreadyManySolutions => write!(f, "Has already found more than 1 solution when searching for all solutions. Short circuting"),
         }
     }
@@ -219,11 +220,6 @@ impl Sudoku {
         ctx: Option<&AllSolutionsContext>,
         pri_queue: Option<PriorityQueue<usize, Entropy>>,
     ) -> Result<(), SudokuSolveError> {
-        #[cfg(debug_assertions)]
-        let mut branch_count = 0;
-        #[cfg(debug_assertions)]
-        let mut backtracks = 0;
-
         let has_square = self.rules.iter().any(|r| r.get_name() == "SquareRule");
 
         let mut pri_queue = if let Some(pri_queue) = pri_queue {
@@ -252,11 +248,6 @@ impl Sudoku {
 
                     self.cells = cells;
                     pri_queue = new_pri_queue;
-
-                    #[cfg(debug_assertions)]
-                    {
-                        backtracks += 1;
-                    }
                 }
                 1 => self.update_cell(
                     self.cells[index].available[0],
@@ -336,20 +327,8 @@ impl Sudoku {
                     }
 
                     self.update_cell(n, index, &mut pri_queue, &mut ret_buffer)?;
-
-                    #[cfg(debug_assertions)]
-                    {
-                        branch_count += 1;
-                    }
                 }
             }
-        }
-
-        #[cfg(debug_assertions)]
-        {
-            println!("arena capacity: {}", arena.chunk_capacity());
-            println!("branch count: {branch_count}");
-            println!("backtracks: {backtracks}");
         }
 
         let mut lock = ARENA_POOL.lock().unwrap();
@@ -371,6 +350,7 @@ impl Sudoku {
     ) -> Result<Self, SudokuSolveError> {
         let mut sudoku = Sudoku::new(size, rules);
         sudoku.solve(None, None)?;
+
         for cell in sudoku.cells.iter_mut() {
             cell.locked_in = false;
         }
@@ -388,7 +368,6 @@ impl Sudoku {
                         {
                             // x rule should have (index , left)
                             x_rule.x_clue.push((index, index + 1));
-                            println!("{index}  {}", index + 1)
                         }
                     }
                     if index + sudoku.size >= sudoku.cells.len() {
@@ -400,12 +379,12 @@ impl Sudoku {
                         {
                             // x rule should have (index , below)
                             x_rule.x_clue.push((index, index + sudoku.size));
-                            println!("{index}  {}", index + sudoku.size)
                         }
                     }
                 }
             }
         }
+        println!("Solved rules: {:#?}", sudoku.rules);
 
         let remove_limit = difficulty.get_removes(size);
 
@@ -417,6 +396,9 @@ impl Sudoku {
         let mut count = 0;
 
         let mut currents_left = ATTEMPT_COUNT;
+
+        let mut available_to_remove: Vec<_> = (0..sudoku.cells.len()).collect();
+
         loop {
             if count >= remove_limit {
                 break;
@@ -425,11 +407,12 @@ impl Sudoku {
                 progess.send(count).unwrap();
             }
 
-            let removed_index = random::<usize>() % sudoku.cells.len();
-            if sudoku.cells[removed_index].available.len() == sudoku.size {
-                //println!("Skipping already hit");
-                continue;
+            if available_to_remove.len() == 0 {
+                println!("nothing more to try");
+                break;
             }
+            let removed_index =
+                available_to_remove.remove(random::<usize>() % available_to_remove.len());
 
             let mut solved_clone = sudoku.clone();
 
@@ -445,6 +428,8 @@ impl Sudoku {
                     break;
                 } else {
                     currents_left -= 1;
+                    #[cfg(debug_assertions)]
+                    println!("Attempts left: {currents_left}");
                     continue;
                 }
             }
@@ -458,7 +443,7 @@ impl Sudoku {
         #[cfg(debug_assertions)]
         println!("Removed {count} in {:?}", timer.elapsed());
 
-        for cell in sudoku.cells.iter_mut() {
+        for cell in &mut sudoku.cells {
             cell.locked_in = false;
         }
 
@@ -567,6 +552,7 @@ impl Cell {
     fn remove(&mut self, n: u16) -> Result<(), SudokuSolveError> {
         self.available.retain(|i| *i != n);
         if self.locked_in && self.available.len() == 0 {
+            //panic!("Tried to remove locked value. This is a BUG!!");
             return Err(SudokuSolveError::RemovedLockedValue);
         }
         Ok(())

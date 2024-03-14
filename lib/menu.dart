@@ -172,7 +172,7 @@ class _MenuState extends State<Menu> {
                   var res = await Navigator.of(context).push(
                     MaterialPageRoute(
                       builder: (context) =>
-                          GameLoader(sudokuSource, gameModes, gameDifficulty),
+                          GameLoader(sudokuSource, gameModes, gameDifficulty, size),
                     ),
                   );
                   if (res != null) {

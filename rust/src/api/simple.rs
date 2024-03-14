@@ -13,27 +13,51 @@ pub fn generate_with_size(
     rules_src: Vec<String>,
     difficulty: String,
 ) -> Option<String> {
-    let mut state = get_state();
-    state.x_positions = vec![];
-
     let rules = rules_src
         .iter()
-        //.map(|s| insert_x_locations(size, s, &mut state)) //Savner f# currying lol
         .map(Deref::deref)
         .map(str::parse::<DynRule>)
         .collect::<Result<Vec<_>, _>>()
         .ok()?;
 
     let sender = PROGRESS.lock().unwrap().0.clone();
-    let difficulty = difficulty.parse().ok()?;
-    let mut sudoku = Sudoku::generate_with_size(size, rules, Some(sender), difficulty).ok()?;
+    let Ok(difficulty) = difficulty.parse() else {
+        println!("Failed to parse difficulty: \"{difficulty}\"");
+        return None;
+    };
+    let Ok(mut sudoku) = Sudoku::generate_with_size(size, rules, Some(sender), difficulty) else {
+        println!("Sudoku generation failed!");
+        return None;
+    };
+
+    for (index,cell) in sudoku.cells.iter().enumerate() {
+        if cell.available.len() == 1 {
+            print!("{}",cell.available[0]);
+        } else {
+            print!("0");
+        }
+        print!(",");
+        if index % sudoku.size == 0 {
+            println!("");
+        }
+    }
+
+
+    let mut state = get_state();
+    state.x_positions = vec![];
 
     if let Some(x_rule) = sudoku.rules.iter_mut().find_map(|r| r.to_x_rule()) {
         state.x_positions = x_rule.x_clue.clone();
+        println!("{x_rule:?}");
     }
 
     let mut solved = sudoku.clone();
-    solved.solve(None, None).ok()?;
+    if let Err(err) = solved.solve(None, None) {
+        println!("Failed to solve generated sudoku: {err}");
+        return None;
+    };
+
+    
 
     let mut str_buffer = String::new();
 
@@ -98,10 +122,7 @@ pub fn close_threads() {
     drop(pool);
 }
 
-pub fn difficulty_values(difficulty: String) -> Option<usize> {
-    let app_state = get_state();
-    let size = app_state.current_sudoku.as_ref()?.0.size;
-
+pub fn difficulty_values(size: usize, difficulty: String) -> Option<usize> {
     let difficulty: Difficulty = difficulty.parse().ok()?;
 
     Some(difficulty.get_removes(size))

@@ -9,7 +9,9 @@ import 'package:sudoku/src/rust/api/simple.dart';
 class GameLoader extends StatefulWidget {
   final Set<String> rules;
   final String difficulty;
-  const GameLoader(this.sudokuSource, this.rules, this.difficulty, {super.key});
+  final int size;
+  const GameLoader(this.sudokuSource, this.rules, this.difficulty, this.size,
+      {super.key});
 
   final Future<String?> sudokuSource;
 
@@ -25,16 +27,6 @@ class _GameLoaderState extends State<GameLoader> {
   Widget build(BuildContext context) {
     if (!awaiting) {
       awaiting = true;
-
-      () async {
-        var newTargetRemoved =
-            await difficultyValues(difficulty: widget.difficulty);
-        if (newTargetRemoved != null) {
-          setState(() {
-            targetRemoved = newTargetRemoved;
-          });
-        }
-      }();
 
       () async {
         var source = await widget.sudokuSource;
@@ -56,6 +48,21 @@ class _GameLoaderState extends State<GameLoader> {
           ));
         });
       }();
+
+      () async {
+        var newTargetRemoved = await difficultyValues(
+            size: widget.size, difficulty: widget.difficulty);
+        if (newTargetRemoved != null) {
+          if (mounted) {
+            setState(() {
+              targetRemoved = newTargetRemoved;
+            });
+          }
+        } else {
+          throw "Backend failed to parse GUI difficulty (${widget.difficulty}). This is really fucking weird";
+        }
+      }();
+
     }
 
     () async {
@@ -68,7 +75,9 @@ class _GameLoaderState extends State<GameLoader> {
         }
       } else {
         Timer(const Duration(milliseconds: 500), () {
-          setState(() {});
+          if (mounted) {
+            setState(() {});
+          }
         });
       }
     }();
