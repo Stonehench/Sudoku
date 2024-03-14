@@ -89,7 +89,7 @@ class _MenuState extends State<Menu> {
     return list;
   }
 
-  String gameDifficulty = "";
+  String gameDifficulty = "Medium";
 
   List<bool> difficulitiesValues = <bool>[
     false,
