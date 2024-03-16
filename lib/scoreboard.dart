@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter_spinkit/flutter_spinkit.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:sudoku/account.dart';
 import 'package:uuid/uuid.dart';
 import 'package:http/http.dart' as http;
 
@@ -61,6 +62,12 @@ class _ScoreboardState extends State<Scoreboard> {
     return Scaffold(
       appBar: AppBar(
         title: const Text("Scoreboard"),
+        actions: [
+          TextButton(
+              onPressed: () => Navigator.of(context)
+                  .push(MaterialPageRoute(builder: (context) => Account())),
+              child: Text("Account"))
+        ],
       ),
       body: Center(child: body),
     );

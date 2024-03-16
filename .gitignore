@@ -46,3 +46,5 @@ app.*.map.json
 ./windows
 ./linux
 target/.rustc_info.json
+
+*__py*
