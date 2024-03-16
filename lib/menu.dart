@@ -3,6 +3,7 @@ import 'dart:math';
 
 import 'package:flutter/services.dart';
 import 'package:sudoku/gameloader.dart';
+import 'package:sudoku/scoreboard.dart';
 import 'package:sudoku/src/rust/api/simple.dart';
 
 class Menu extends StatefulWidget {
@@ -132,7 +133,6 @@ class _MenuState extends State<Menu> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Sudoku!')),
       body: Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
@@ -171,8 +171,8 @@ class _MenuState extends State<Menu> {
                 () async {
                   var res = await Navigator.of(context).push(
                     MaterialPageRoute(
-                      builder: (context) =>
-                          GameLoader(sudokuSource, gameModes, gameDifficulty, size),
+                      builder: (context) => GameLoader(
+                          sudokuSource, gameModes, gameDifficulty, size),
                     ),
                   );
                   if (res != null) {
@@ -188,7 +188,11 @@ class _MenuState extends State<Menu> {
               spacing: 20,
               crossAxisAlignment: WrapCrossAlignment.center,
               children: ruleWidgets(),
-            )
+            ),
+            TextButton(
+                onPressed: () => Navigator.of(context).push(MaterialPageRoute(
+                    builder: (context) => const Scoreboard())),
+                child: const Text("Scoreboard"))
           ],
         ),
       ),
