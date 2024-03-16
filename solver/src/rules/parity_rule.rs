@@ -24,7 +24,7 @@ impl Rule for ParityRule {
     ) -> &'buf [usize] {
         buffer.clear();
 
-        // TODO: the other half should only have the opposite patiry left
+        // TODO: the other half should only have the opposite parity left
         // There will have to be done some logic in the solver
 
         buffer
@@ -42,7 +42,7 @@ impl Rule for ParityRule {
         buffer: &'buf mut Vec<usize>,
         _arena: &mut Bump,
     ) -> Option<(u16, &'buf [usize])> {
-        // TODO:
+        // TODO: in a cell where only othe parity remains, the opposite parity should only remain in the other cell
         None
     }
 

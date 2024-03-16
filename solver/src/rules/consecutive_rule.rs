@@ -24,15 +24,14 @@ impl Rule for ConsecutiveRule {
     ) -> &'buf [usize] {
         buffer.clear();
 
-        // TODO: the other half should only have the opposite patiry left
-        // There will have to be done some logic in the solver
+        // TODO: 
 
         buffer
     }
 
     fn hidden_singles(&self, sudoku: &Sudoku) -> Option<(u16, usize)> {
         // TODO: hidden singles should not really do anything
-        // if 
+        // if for every 
         None
     }
 
@@ -79,19 +78,30 @@ fn consecutive_update_test() {
 
 #[test]
 fn consecutive_hidden() {
-        let parity_rule = ParityRule {
-            parity_clue: vec![(1 as usize, 2 as usize)],
+        let consecutive_rule = ConsecutiveRule {
+            consecutive_clue: vec![(1 as usize, 2 as usize)],
         };
         let mut sudoku = Sudoku::new(
             4,
-            vec![super::square_rule::SquareRule::new(), x_rule.boxed_clone()],
+            vec![super::square_rule::SquareRule::new(), consecutive_rule.boxed_clone()],
         );
 
         sudoku.set_cell(1, 1).unwrap();
-        println!("{sudoku}");
 
-        let res = x_rule.hidden_singles(&sudoku);
-        assert_eq!(res, Some((4, 2)))
+        let res = consecutive_rule.hidden_singles(&sudoku);
+        assert_eq!(res, Some((2, 2)));
+
+
+        let mut sudoku = Sudoku::new(
+            4,
+            vec![super::square_rule::SquareRule::new(), consecutive_rule.boxed_clone()],
+        );
+
+        sudoku.set_cell(3, 1).unwrap();
+        sudoku.set_cell(4, 4).unwrap();
+
+        let res = consecutive_rule.hidden_singles(&sudoku);
+        assert_eq!(res, Some((2, 2)))
 }
 
 #[test]
