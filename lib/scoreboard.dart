@@ -52,26 +52,95 @@ class _ScoreboardState extends State<Scoreboard> {
             child: Text(
                 "Failed to fetch scoreboard. Check your internet connection"));
       case LoadingState.success:
-        body = Column(
-          children: scoreboard!.map(scoreItem).toList(),
+        body = ListView(
+          padding: const EdgeInsets.all(5),
+          children: scoreboard!.indexed.map(scoreItem).toList(),
         );
     }
 
     return Scaffold(
-      appBar: AppBar(),
+      appBar: AppBar(
+        title: const Text("Scoreboard"),
+      ),
       body: Center(child: body),
     );
   }
 
-  Widget scoreItem(Score score) {
-    return Text("${score.username} : ${score.value}");
+  TextStyle styleOfPlace(int place, BuildContext context) {
+    if (place == 1) {
+      return const TextStyle(
+          color: Color.fromARGB(255, 255, 165, 0), fontSize: 30);
+    } else if (place == 2) {
+      return const TextStyle(
+          color: Color.fromARGB(255, 192, 192, 192), fontSize: 25);
+    } else if (place == 3) {
+      return const TextStyle(
+          color: Color.fromARGB(255, 205, 127, 50), fontSize: 20);
+    } else {
+      return const TextStyle(fontSize: 18);
+    }
+  }
+
+  Widget scoreItem((int, Score) data) {
+    var (index, score) = data;
+    var place = index + 1;
+
+    var topDecorator = BoxDecoration(
+      borderRadius: const BorderRadius.only(
+          topLeft: Radius.circular(10), topRight: Radius.circular(10)),
+      color: Theme.of(context).focusColor,
+    );
+    var botDecorator = BoxDecoration(
+      borderRadius: const BorderRadius.only(
+          bottomLeft: Radius.circular(10), bottomRight: Radius.circular(10)),
+      color: Theme.of(context).focusColor,
+    );
+
+    var normalDecorator = BoxDecoration(
+      color: Theme.of(context).focusColor,
+    );
+
+    var decoration = place == 1
+        ? topDecorator
+        : (place == scoreboard!.length ? botDecorator : normalDecorator);
+
+    var you = score.you ? [const Text("You!")] : [];
+
+    return Container(
+      decoration: decoration,
+      margin: const EdgeInsets.all(5),
+      height: 50,
+      child: Row(
+        children: [
+          Container(
+            width: 50,
+            margin: const EdgeInsets.fromLTRB(10, 0, 0, 0),
+            child: Text("#$place", style: styleOfPlace(place, context)),
+          ),
+          Text(
+            score.username,
+            style: const TextStyle(fontSize: 18),
+          ),
+          const Spacer(),
+          ...you,
+          Container(
+            padding: const EdgeInsets.fromLTRB(10, 0, 10, 0),
+            child: Text(
+              "${score.value}",
+              style: const TextStyle(fontSize: 20),
+            ),
+          )
+        ],
+      ),
+    );
   }
 }
 
 class Score {
   final String username;
   final int value;
-  const Score(this.username, this.value);
+  final bool you;
+  const Score(this.username, this.value, this.you);
 
   @override
   String toString() {
@@ -79,18 +148,19 @@ class Score {
   }
 }
 
-//Uri serverAddress = Uri.https("jensogkarsten.site/");
-Uri serverAddress = Uri.http("localhost:5000");
+Uri serverAddress = Uri.http("jensogkarsten.site");
+// Uri serverAddress = Uri.http("localhost:5000");
 
 Future<List<Score>?> getScoreBoard() async {
   try {
-    var response = await http.get(serverAddress);
+    var response = await http.get(serverAddress.resolve("scoreboard"));
     var jsonRes = jsonDecode(response.body);
 
     List<Score> scoreBoard = [];
     for (var score in jsonRes as List<dynamic>) {
       var scoreMap = score as Map<String, dynamic>;
-      scoreBoard.add(Score(scoreMap["username"], scoreMap["value"]));
+      scoreBoard
+          .add(Score(scoreMap["username"], scoreMap["value"], scoreMap["you"]));
     }
     return scoreBoard;
   } catch (e) {
