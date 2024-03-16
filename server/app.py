@@ -1,5 +1,23 @@
 from flask import Flask
 
+import mariadb
+import sys
+
+# Connect to MariaDB Platform
+try:
+    conn = mariadb.connect(
+        user="02170",
+        password="123kage",
+        host="jensogkarsten.site",
+        port=3306,
+        database="Scoreboard"
+
+    )
+except mariadb.Error as e:
+    print(f"Error connecting to MariaDB Platform: {e}")
+    sys.exit(1)
+
+
 app = Flask("Sudoku Scoreboard")
 
 
