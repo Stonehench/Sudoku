@@ -10,9 +10,9 @@ try:
         password="123kage",
         host="jensogkarsten.site",
         port=3306,
-        database="Scoreboard"
-
+        database="Scoreboard",
     )
+    conn.autocommit = True
 except mariadb.Error as e:
     print(f"Error connecting to MariaDB Platform: {e}")
     sys.exit(1)
@@ -31,3 +31,23 @@ def hello_world():
         {"username": "Heinzz", "value": 3, "you": False},
         {"username": "Ketchup", "value": 2, "you": False},
     ]
+
+
+@app.route("/login/<user_id>")
+def login(user_id: str):
+    cursor = conn.cursor()
+    cursor.execute("select username from users where user_id = ?", [user_id])
+
+    print(cursor)
+    user = cursor.fetchone()[0]
+    if user:
+        return {"username": user}
+    else:
+        return {}
+
+
+@app.route("/register/<user_id>/<username>")
+def register(user_id: str, username: str):
+    cursor = conn.cursor()
+    cursor.execute("insert into users values (?,?)", [user_id, username])
+    return {}

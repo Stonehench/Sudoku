@@ -2,9 +2,8 @@ import 'dart:convert';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_spinkit/flutter_spinkit.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 import 'package:sudoku/account.dart';
-import 'package:uuid/uuid.dart';
+import 'package:sudoku/api.dart';
 import 'package:http/http.dart' as http;
 
 class Scoreboard extends StatefulWidget {
@@ -65,7 +64,7 @@ class _ScoreboardState extends State<Scoreboard> {
         actions: [
           TextButton(
               onPressed: () => Navigator.of(context)
-                  .push(MaterialPageRoute(builder: (context) => Account())),
+                  .push(MaterialPageRoute(builder: (context) => AccountPage())),
               child: Text("Account"))
         ],
       ),
@@ -155,8 +154,7 @@ class Score {
   }
 }
 
-Uri serverAddress = Uri.http("jensogkarsten.site");
-// Uri serverAddress = Uri.http("localhost:5000");
+
 
 Future<List<Score>?> getScoreBoard() async {
   try {
@@ -174,27 +172,4 @@ Future<List<Score>?> getScoreBoard() async {
     print("Scoreboard fetching failed with $e");
     return null;
   }
-}
-
-String? _id;
-
-Future<String> _get_id() async {
-  if (_id != null) {
-    return _id!;
-  }
-
-  // Obtain shared preferences.
-  final SharedPreferences prefs = await SharedPreferences.getInstance();
-
-  var id = prefs.getString("uuid");
-
-  if (id == null) {
-    var generator = const Uuid();
-    _id = generator.v4();
-    prefs.setString("uuid", _id!);
-  } else {
-    _id = id;
-  }
-
-  return _id!;
 }

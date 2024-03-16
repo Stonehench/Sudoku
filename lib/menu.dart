@@ -66,23 +66,29 @@ class _MenuState extends State<Menu> {
       }
 
       list.add(
-        Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Text(name),
-            Checkbox(
-              value: gameModes.contains(realname),
-              onChanged: (v) {
-                setState(() {
-                  if (v == true) {
-                    gameModes.add(realname);
-                  } else {
-                    gameModes.remove(realname);
-                  }
-                });
-              },
-            ),
-          ],
+        SizedBox(
+          width: 120,
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Text(name),
+              const Spacer(
+                flex: 1,
+              ),
+              Checkbox(
+                value: gameModes.contains(realname),
+                onChanged: (v) {
+                  setState(() {
+                    if (v == true) {
+                      gameModes.add(realname);
+                    } else {
+                      gameModes.remove(realname);
+                    }
+                  });
+                },
+              ),
+            ],
+          ),
         ),
       );
     }
@@ -157,42 +163,50 @@ class _MenuState extends State<Menu> {
               ),
             ),
             Text(sizeText),
-            TextButton(
-              onPressed: () {
-                setState(() {
-                  sizeText = "${size}x$size";
-                });
-
-                Future<String?> sudokuSource = generateWithSize(
-                    size: size,
-                    rulesSrc: gameModes.toList(),
-                    difficulty: gameDifficulty);
-                //inputTextController.clear();
-                () async {
-                  var res = await Navigator.of(context).push(
-                    MaterialPageRoute(
-                      builder: (context) => GameLoader(
-                          sudokuSource, gameModes, gameDifficulty, size),
-                    ),
-                  );
-                  if (res != null) {
-                    setState(() {
-                      sizeText = res.toString();
-                    });
-                  }
-                }();
-              },
-              child: const Text('Create Sudoku'),
-            ),
             Wrap(
               spacing: 20,
               crossAxisAlignment: WrapCrossAlignment.center,
               children: ruleWidgets(),
             ),
-            TextButton(
-                onPressed: () => Navigator.of(context).push(MaterialPageRoute(
-                    builder: (context) => const Scoreboard())),
-                child: const Text("Scoreboard"))
+            const SizedBox(height: 10),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                OutlinedButton(
+                  onPressed: () {
+                    setState(() {
+                      sizeText = "${size}x$size";
+                    });
+
+                    Future<String?> sudokuSource = generateWithSize(
+                        size: size,
+                        rulesSrc: gameModes.toList(),
+                        difficulty: gameDifficulty);
+                    //inputTextController.clear();
+                    () async {
+                      var res = await Navigator.of(context).push(
+                        MaterialPageRoute(
+                          builder: (context) => GameLoader(
+                              sudokuSource, gameModes, gameDifficulty, size),
+                        ),
+                      );
+                      if (res != null) {
+                        setState(() {
+                          sizeText = res.toString();
+                        });
+                      }
+                    }();
+                  },
+                  child: const Text('Create Sudoku'),
+                ),
+                const SizedBox(width: 10,),
+                OutlinedButton(
+                  onPressed: () => Navigator.of(context).push(MaterialPageRoute(
+                      builder: (context) => const Scoreboard())),
+                  child: const Text("Scoreboard"),
+                )
+              ],
+            )
           ],
         ),
       ),
