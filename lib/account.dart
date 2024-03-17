@@ -134,11 +134,14 @@ Future<Account?> getAccount() async {
 
   var res = await http.get(getAccountUri);
 
-  var body = jsonDecode(res.body);
-  String username = body["username"];
-  Account._account = Account(username, userId);
-
-  return Account._account;
+  Map<String, dynamic> body = jsonDecode(res.body);
+  if (body.containsKey("username")) {
+    String username = body["username"];
+    Account._account = Account(username, userId);
+    return Account._account;
+  } else {
+    return null;
+  }
 }
 
 Future<String> _getId() async {

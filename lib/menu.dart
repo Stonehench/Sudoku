@@ -67,7 +67,7 @@ class _MenuState extends State<Menu> {
 
       list.add(
         SizedBox(
-          width: 120,
+          width: 140,
           child: Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
@@ -163,7 +163,8 @@ class _MenuState extends State<Menu> {
             difficulitiesWidgets(),
             const SizedBox(height: 10),
             Wrap(
-              spacing: 20,
+
+              spacing: 5,
               crossAxisAlignment: WrapCrossAlignment.center,
               children: ruleWidgets(),
             ),
@@ -181,7 +182,6 @@ class _MenuState extends State<Menu> {
                         size: size,
                         rulesSrc: gameModes.toList(),
                         difficulty: gameDifficulty);
-                    //inputTextController.clear();
                     () async {
                       var res = await Navigator.of(context).push(
                         MaterialPageRoute(

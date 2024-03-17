@@ -167,10 +167,16 @@ class Score {
 }
 
 Future<List<Score>?> getScoreBoard() async {
-  Account account = (await getAccount())!;
+  Account? account = await getAccount();
   try {
+    String userID;
+    if (account != null) {
+      userID = account.userID;
+    } else {
+      userID = "";
+    }
     var response = await http
-        .get(serverAddress.resolve("/scoreboard?user_id=${account.userID}"));
+        .get(serverAddress.resolve("/scoreboard?user_id=$userID"));
     var jsonRes = jsonDecode(response.body);
 
     List<Score> scoreBoard = [];
