@@ -84,7 +84,9 @@ class _AccountPageState extends State<AccountPage> {
                   OutlinedButton(
                       onPressed: () async {
                         await logout();
-                        setState(() {});
+                        setState(() {
+                          state = AccountLoadState.unrequesed;
+                        });
                       },
                       child: const Text("Logout"))
                 ],

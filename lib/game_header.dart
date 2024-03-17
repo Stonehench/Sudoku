@@ -55,9 +55,23 @@ class _DigitSelectState extends State<GameHeader> {
                             },
                             child: const Text("Login to submit score"))
                         : OutlinedButton(
-                            onPressed: () => Navigator.of(context).push(
-                                MaterialPageRoute(
-                                    builder: (context) => const Scoreboard())),
+                            onPressed: () async {
+                              await Navigator.of(context).push(
+                                  MaterialPageRoute(
+                                      builder: (context) =>
+                                          const Scoreboard()));
+                              account = await getAccount();
+
+                              //Hvis der siden er blevet logged ud
+                              if (account == null) {
+                                if (context.mounted) {
+                                  Navigator.of(context).pop();
+                                  setState(() {
+                                    //Reload
+                                  });
+                                }
+                              }
+                            },
                             child: const Text("Check scoreboard"))
                   ],
                 ),
