@@ -15,7 +15,6 @@ class GameState extends ChangeNotifier {
   }
 
   GameState(String sudokuSource, this.xPositions) {
-
     board = sudokuSource
         .split(",")
         .takeWhile((str) => str.isNotEmpty)
@@ -40,7 +39,6 @@ class GameState extends ChangeNotifier {
   List<int> initialClues = [];
   List<List<int>> drafts = [];
   List<(int, int)> xPositions;
-  
 
   Future<bool> updateDigit(int position) async {
     if (selectedDigit == 0) {
@@ -85,6 +83,10 @@ class GameState extends ChangeNotifier {
   bool digitDone(int n) {
     //TODO: Det her skal måske memoizes. Ingen grund til at gøre det ved HVER update
     return board.where((b) => b == n).length == size;
+  }
+
+  bool gameDone() {
+    return board.every((n) => n != null);
   }
 
   bool drafting = false;

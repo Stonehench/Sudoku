@@ -1,4 +1,9 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
+import 'package:sudoku/account.dart';
+import 'package:sudoku/game_state.dart';
+import 'package:sudoku/scoreboard.dart';
 
 class GameHeader extends StatefulWidget {
   final Set<String> rules;
@@ -9,29 +14,71 @@ class GameHeader extends StatefulWidget {
 }
 
 class _DigitSelectState extends State<GameHeader> {
-  //var rulesAsString =
-//                      gameModes.fold("", (prev, e) => prev + e + "\n");
   @override
   Widget build(BuildContext context) {
-    return Column(
-      children: [
-        TextButton(
-            onPressed: () {
+    return ListenableBuilder(
+      listenable: GameState.getInstance(),
+      builder: (context, _) {
+        if (GameState.getInstance().gameDone()) {
+          Timer(const Duration(milliseconds: 100), () async {
+            Account? account = await getAccount();
+
+            if (context.mounted) {
               showDialog(
                 context: context,
                 builder: (context) => AlertDialog(
-                  title: const Text("Rules"),
-                  content: IntrinsicHeight(
-                    child: Column(
-                      children: widget.rules.map((e) => Text(e)).toList(),
+                  title: const Text("You Win!"),
+                  actions: [
+                    OutlinedButton(
+                      onPressed: () => Navigator.of(context)
+                          .popUntil((route) => route.isFirst),
+                      child: const Text("Home"),
                     ),
-                  ),
+                    account == null
+                        ? OutlinedButton(
+                            onPressed: () async {
+                              await Navigator.of(context).push(
+                                  MaterialPageRoute(
+                                      builder: (context) =>
+                                          const AccountPage()));
+                              setState(() {
+                                //Rebuild to get bettet popup methinks.
+                              });
+                            },
+                            child: const Text("Login to submit score"))
+                        : OutlinedButton(
+                            onPressed: () => Navigator.of(context).push(
+                                MaterialPageRoute(
+                                    builder: (context) => const Scoreboard())),
+                            child: const Text("Check scoreboard"))
+                  ],
                 ),
               );
-            },
-            child: const Text("Rules")),
-        const Text("Standard Sudoku", style: TextStyle(fontSize: 24)),
-      ],
+            }
+          });
+        }
+
+        return Column(
+          children: [
+            TextButton(
+                onPressed: () {
+                  showDialog(
+                    context: context,
+                    builder: (context) => AlertDialog(
+                      title: const Text("Rules"),
+                      content: IntrinsicHeight(
+                        child: Column(
+                          children: widget.rules.map((e) => Text(e)).toList(),
+                        ),
+                      ),
+                    ),
+                  );
+                },
+                child: const Text("Rules")),
+            const Text("Standard Sudoku", style: TextStyle(fontSize: 24)),
+          ],
+        );
+      },
     );
   }
 }
