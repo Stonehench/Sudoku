@@ -49,7 +49,7 @@ class _DigitSelectState extends State<DigitSelect> {
                     (index + 1).toString(),
                     style: TextStyle(
                       fontSize: fontSize,
-                      color: Colors.white,
+                      color: state.digitDone(index+1)? Colors.green  : Colors.white,
                     ),
                   ),
                 ),

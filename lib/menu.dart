@@ -3,6 +3,7 @@ import 'dart:math';
 
 import 'package:flutter/services.dart';
 import 'package:sudoku/gameloader.dart';
+import 'package:sudoku/scoreboard.dart';
 import 'package:sudoku/src/rust/api/simple.dart';
 
 class Menu extends StatefulWidget {
@@ -65,23 +66,29 @@ class _MenuState extends State<Menu> {
       }
 
       list.add(
-        Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Text(name),
-            Checkbox(
-              value: gameModes.contains(realname),
-              onChanged: (v) {
-                setState(() {
-                  if (v == true) {
-                    gameModes.add(realname);
-                  } else {
-                    gameModes.remove(realname);
-                  }
-                });
-              },
-            ),
-          ],
+        SizedBox(
+          width: 140,
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Text(name),
+              const Spacer(
+                flex: 1,
+              ),
+              Checkbox(
+                value: gameModes.contains(realname),
+                onChanged: (v) {
+                  setState(() {
+                    if (v == true) {
+                      gameModes.add(realname);
+                    } else {
+                      gameModes.remove(realname);
+                    }
+                  });
+                },
+              ),
+            ],
+          ),
         ),
       );
     }
@@ -132,15 +139,10 @@ class _MenuState extends State<Menu> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Sudoku!')),
       body: Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            difficulitiesWidgets(),
-            const SizedBox(
-              height: 20,
-            ),
             SizedBox(
               width: 250,
               child: TextField(
@@ -157,37 +159,54 @@ class _MenuState extends State<Menu> {
               ),
             ),
             Text(sizeText),
-            TextButton(
-              onPressed: () {
-                setState(() {
-                  sizeText = "${size}x$size";
-                });
-
-                Future<String?> sudokuSource = generateWithSize(
-                    size: size,
-                    rulesSrc: gameModes.toList(),
-                    difficulty: gameDifficulty);
-                //inputTextController.clear();
-                () async {
-                  var res = await Navigator.of(context).push(
-                    MaterialPageRoute(
-                      builder: (context) =>
-                          GameLoader(sudokuSource, gameModes, gameDifficulty, size),
-                    ),
-                  );
-                  if (res != null) {
-                    setState(() {
-                      sizeText = res.toString();
-                    });
-                  }
-                }();
-              },
-              child: const Text('Create Sudoku'),
-            ),
+            const SizedBox(height: 10),
+            difficulitiesWidgets(),
+            const SizedBox(height: 10),
             Wrap(
-              spacing: 20,
+
+              spacing: 5,
               crossAxisAlignment: WrapCrossAlignment.center,
               children: ruleWidgets(),
+            ),
+            const SizedBox(height: 20),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                OutlinedButton(
+                  onPressed: () {
+                    setState(() {
+                      sizeText = "${size}x$size";
+                    });
+
+                    Future<String?> sudokuSource = generateWithSize(
+                        size: size,
+                        rulesSrc: gameModes.toList(),
+                        difficulty: gameDifficulty);
+                    () async {
+                      var res = await Navigator.of(context).push(
+                        MaterialPageRoute(
+                          builder: (context) => GameLoader(
+                              sudokuSource, gameModes, gameDifficulty, size),
+                        ),
+                      );
+                      if (res != null) {
+                        setState(() {
+                          sizeText = res.toString();
+                        });
+                      }
+                    }();
+                  },
+                  child: const Text('Create Sudoku'),
+                ),
+                const SizedBox(
+                  width: 10,
+                ),
+                OutlinedButton(
+                  onPressed: () => Navigator.of(context).push(MaterialPageRoute(
+                      builder: (context) => const Scoreboard())),
+                  child: const Text("Scoreboard"),
+                )
+              ],
             )
           ],
         ),
