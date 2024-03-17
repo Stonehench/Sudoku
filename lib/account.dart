@@ -19,7 +19,8 @@ class AccountPage extends StatefulWidget {
 class Account {
   static Account? _account;
   final String username;
-  const Account(this.username);
+  final String userID;
+  const Account(this.username, this.userID);
 }
 
 enum AccountLoadState { unrequesed, loading, error, success, noAccount }
@@ -135,7 +136,7 @@ Future<Account?> getAccount() async {
 
   var body = jsonDecode(res.body);
   String username = body["username"];
-  Account._account = Account(username);
+  Account._account = Account(username, userId);
 
   return Account._account;
 }

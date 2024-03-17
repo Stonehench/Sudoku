@@ -63,9 +63,9 @@ class _ScoreboardState extends State<Scoreboard> {
         title: const Text("Scoreboard"),
         actions: [
           TextButton(
-              onPressed: () => Navigator.of(context)
-                  .push(MaterialPageRoute(builder: (context) => AccountPage())),
-              child: Text("Account"))
+              onPressed: () => Navigator.of(context).push(
+                  MaterialPageRoute(builder: (context) => const AccountPage())),
+              child: const Text("Account"))
         ],
       ),
       body: Center(child: body),
@@ -154,11 +154,11 @@ class Score {
   }
 }
 
-
-
 Future<List<Score>?> getScoreBoard() async {
+  Account account = (await getAccount())!;
   try {
-    var response = await http.get(serverAddress.resolve("scoreboard"));
+    var response = await http
+        .get(serverAddress.resolve("/scoreboard?user_id=${account.userID}"));
     var jsonRes = jsonDecode(response.body);
 
     List<Score> scoreBoard = [];

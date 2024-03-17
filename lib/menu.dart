@@ -143,10 +143,6 @@ class _MenuState extends State<Menu> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            difficulitiesWidgets(),
-            const SizedBox(
-              height: 20,
-            ),
             SizedBox(
               width: 250,
               child: TextField(
@@ -163,12 +159,15 @@ class _MenuState extends State<Menu> {
               ),
             ),
             Text(sizeText),
+            const SizedBox(height: 10),
+            difficulitiesWidgets(),
+            const SizedBox(height: 10),
             Wrap(
               spacing: 20,
               crossAxisAlignment: WrapCrossAlignment.center,
               children: ruleWidgets(),
             ),
-            const SizedBox(height: 10),
+            const SizedBox(height: 20),
             Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
@@ -199,7 +198,9 @@ class _MenuState extends State<Menu> {
                   },
                   child: const Text('Create Sudoku'),
                 ),
-                const SizedBox(width: 10,),
+                const SizedBox(
+                  width: 10,
+                ),
                 OutlinedButton(
                   onPressed: () => Navigator.of(context).push(MaterialPageRoute(
                       builder: (context) => const Scoreboard())),

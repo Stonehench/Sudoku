@@ -1,4 +1,4 @@
-from flask import Flask
+from flask import Flask, request
 
 import mariadb
 import sys
@@ -22,15 +22,24 @@ app = Flask("Sudoku Scoreboard")
 
 
 @app.route("/scoreboard")
-def hello_world():
-    return [
-        {"username": "Jens", "value": 13, "you": False},
-        {"username": "Obamma", "value": 12, "you": False},
-        {"username": "Karzten", "value": 9, "you": False},
-        {"username": "FreDDie", "value": 5, "you": True},
-        {"username": "Heinzz", "value": 3, "you": False},
-        {"username": "Ketchup", "value": 2, "you": False},
-    ]
+def scoreboard():
+    cursor = conn.cursor()
+    cursor.execute("select * from userscores")
+
+    if "user_id" in request.args:
+        req_user_id = request.args["user_id"]
+        print(req_user_id)
+    else:
+        req_user_id = ""
+
+    data = []
+
+    for user_id, username, value in cursor:
+        data.append(
+            {"username": username, "value": int(value), "you": req_user_id == user_id}
+        )
+
+    return data
 
 
 @app.route("/login/<user_id>")
@@ -38,7 +47,6 @@ def login(user_id: str):
     cursor = conn.cursor()
     cursor.execute("select username from users where user_id = ?", [user_id])
 
-    print(cursor)
     user = cursor.fetchone()[0]
     if user:
         return {"username": user}
@@ -50,4 +58,11 @@ def login(user_id: str):
 def register(user_id: str, username: str):
     cursor = conn.cursor()
     cursor.execute("insert into users values (?,?)", [user_id, username])
+    return {}
+
+
+@app.route("/add_score/<user_id>/<value>")
+def add_score(user_id: str, value: int):
+    cursor = conn.cursor()
+    cursor.execute("insert into scores (user_id, value) values (?,?)", [user_id, value])
     return {}
