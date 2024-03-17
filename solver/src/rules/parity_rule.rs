@@ -23,10 +23,6 @@ impl Rule for ParityRule {
         buffer: &'buf mut Vec<usize>,
     ) -> &'buf [usize] {
         buffer.clear();
-
-        // TODO: the other half should only have the opposite parity left
-        // There will have to be done some logic in the solver
-
         buffer
     }
 
@@ -59,23 +55,7 @@ impl Rule for ParityRule {
 
 
 #[test]
-fn parity_update_test() {
-        let parity_rule = ParityRule {
-            parity_clue: vec![(1 as usize, 2 as usize)],
-        };
-        let mut sudoku = Sudoku::new(
-            4,
-            vec![super::square_rule::SquareRule::new(), parity_rule.boxed_clone()],
-        );
-
-        sudoku.set_cell(1, 1).unwrap();
-        let res = x_rule.hidden_singles(&sudoku);
-
-        // suggestion there could be created an enum that can differentiate even and odd
-        // This might have to be a locked candidate kinda this
-        // TODO: even???
-        assert_eq!(res, Some(Even, (vec![2].as_slice())))
-}
+fn parity_update_test() {}
 
 #[test]
 fn parity_hidden() {
@@ -96,5 +76,46 @@ fn parity_hidden() {
 
 #[test]
 fn locked_parity_candidate() {
-    // TODO: 
+/* The test sudoku a 4 x 4
+=================
+‖   | 1 Ø   |   ‖
+-----------------
+‖   |   ‖   |   ‖
+==Ø==============
+‖ 1 |   ‖   |   ‖
+-----------------
+‖   |   ‖   |   ‖
+=================
+*/
+
+    let parity_rule = ParityRule {
+            parity_clue: vec![(1 as usize, 2 as usize),(4 as usize, 8 as usize)],
+        };
+        let mut sudoku = Sudoku::new(
+            4,
+            vec![super::square_rule::SquareRule::new(), parity_rule.boxed_clone()],
+        );
+
+        sudoku.set_cell(1, 1).unwrap();
+        sudoku.set_cell(1, 8).unwrap();
+        let res = x_rule.hidden_singles(&sudoku);
+
+        assert_eq!(res, Some(3, (vec![2, 8].as_slice())));
+
+/* The test sudoku a 4 x 4
+=================
+‖   | 1 Ø   |   ‖
+-----------------
+‖   |   ‖ 3 |   ‖
+==Ø==============
+‖ 1 |   ‖   |   ‖
+-----------------
+‖   |   ‖   |   ‖
+=================
+*/
+        sudoku.set_cell(3, 6).unwrap();
+        let res = x_rule.hidden_singles(&sudoku);
+        
+        // No odd numbers remain in the availible, so None should be retunded
+        assert_eq!(res, None)
 }

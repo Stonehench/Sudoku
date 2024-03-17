@@ -25,6 +25,7 @@ impl Rule for XRule {
         buffer.clear();
 
         // Doesen't really affect stuff???
+        // otherwise we obviously already know what the other half should be. Which is handled by the hidden singles
 
         buffer
     }
