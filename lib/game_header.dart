@@ -41,9 +41,17 @@ class _DigitSelectState extends State<GameHeader> {
                                   MaterialPageRoute(
                                       builder: (context) =>
                                           const AccountPage()));
-                              setState(() {
-                                //Rebuild to get bettet popup methinks.
-                              });
+
+                              account = await getAccount();
+
+                              if (account != null) {
+                                if (context.mounted) {
+                                  Navigator.of(context).pop();
+                                  setState(() {
+                                    //Reload
+                                  });
+                                }
+                              }
                             },
                             child: const Text("Login to submit score"))
                         : OutlinedButton(
