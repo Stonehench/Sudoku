@@ -47,9 +47,9 @@ def login(user_id: str):
     cursor = conn.cursor()
     cursor.execute("select username from users where user_id = ?", [user_id])
 
-    user = cursor.fetchone()[0]
+    user = cursor.fetchone()
     if user:
-        return {"username": user}
+        return {"username": user[0]}
     else:
         return {}
 

@@ -68,7 +68,19 @@ class _ScoreboardState extends State<Scoreboard> {
               child: const Text("Account"))
         ],
       ),
-      body: Center(child: body),
+      body: RefreshIndicator(
+          onRefresh: () async {
+            var res = await getScoreBoard();
+            setState(() {
+              if (res == null) {
+                loadingState = LoadingState.failed;
+              } else {
+                scoreboard = res;
+                loadingState = LoadingState.success;
+              }
+            });
+          },
+          child: Center(child: body)),
     );
   }
 
