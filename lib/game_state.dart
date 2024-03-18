@@ -1,7 +1,10 @@
 import 'dart:math';
 
 import 'package:flutter/foundation.dart';
+import 'package:sudoku/account.dart';
+import 'package:sudoku/api.dart';
 import 'package:sudoku/src/rust/api/simple.dart';
+import 'package:http/http.dart' as http;
 
 class GameState extends ChangeNotifier {
   static GameState? _instance;
@@ -87,6 +90,46 @@ class GameState extends ChangeNotifier {
 
   bool gameDone() {
     return board.every((n) => n != null);
+  }
+
+  bool _scoreSubmitted = false;
+  bool _scoreInAir = false;
+
+  Future<int?> trySubmitScore() async {
+    while (_scoreInAir) {
+      //Block  while another request is flying
+      await Future.delayed(const Duration(seconds: 1));
+      print("Blocking request");
+    }
+
+    //TODO: Point fået af at vinde er hardcodet. Det skal være baseret på sværhedsgraden.
+    int value = 3;
+    if (_scoreSubmitted) {
+      notifyListeners();
+      return value;
+    }
+
+    _scoreInAir = true;
+    Account? account = await getAccount();
+    if (account != null) {
+      _scoreSubmitted = true;
+
+      try {
+        await http
+            .get(serverAddress.resolve("/add_score/${account.userID}/$value"));
+        _scoreSubmitted = true;
+        _scoreInAir = false;
+        notifyListeners();
+        return value;
+      } catch (e) {
+        _scoreInAir = false;
+        notifyListeners();
+        return null;
+      }
+    }
+    _scoreInAir = false;
+
+    return null;
   }
 
   bool drafting = false;

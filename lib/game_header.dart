@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:flutter_spinkit/flutter_spinkit.dart';
 import 'package:sudoku/account.dart';
 import 'package:sudoku/game_state.dart';
 import 'package:sudoku/scoreboard.dart';
@@ -14,10 +15,25 @@ class GameHeader extends StatefulWidget {
 }
 
 class _DigitSelectState extends State<GameHeader> {
+  bool loadingPoints = true;
+  int? receivedPoints;
+
   @override
   Widget build(BuildContext context) {
+    GameState state = GameState.getInstance();
+
+    () async {
+      if (loadingPoints) {
+        int? res = await state.trySubmitScore();
+        setState(() {
+          loadingPoints = false;
+          receivedPoints = res;
+        });
+      }
+    }();
+
     return ListenableBuilder(
-      listenable: GameState.getInstance(),
+      listenable: state,
       builder: (context, _) {
         if (GameState.getInstance().gameDone()) {
           Timer(const Duration(milliseconds: 100), () async {
@@ -29,6 +45,13 @@ class _DigitSelectState extends State<GameHeader> {
                 builder: (context) => AlertDialog(
                   title: const Text("You Win!"),
                   actions: [
+                    if (loadingPoints) ...[SpinKitCircle(color: Theme.of(context).highlightColor,)] else ...[
+                      if (receivedPoints == null) ... [
+                        const Text("Failed to submit score")
+                      ] else ...[
+                        Text("Recieved $receivedPoints points!")
+                      ]
+                    ],
                     OutlinedButton(
                       onPressed: () => Navigator.of(context)
                           .popUntil((route) => route.isFirst),
@@ -49,6 +72,7 @@ class _DigitSelectState extends State<GameHeader> {
                                   Navigator.of(context).pop();
                                   setState(() {
                                     //Reload
+                                    loadingPoints = true;
                                   });
                                 }
                               }
@@ -68,6 +92,7 @@ class _DigitSelectState extends State<GameHeader> {
                                   Navigator.of(context).pop();
                                   setState(() {
                                     //Reload
+                                    loadingPoints = true;
                                   });
                                 }
                               }
