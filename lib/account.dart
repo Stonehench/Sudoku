@@ -79,7 +79,17 @@ class _AccountPageState extends State<AccountPage> {
           child: Column(
             children: [
               Row(
-                children: [Text("username: ${Account._account!.username}")],
+                children: [
+                  Text("username: ${Account._account!.username}"),
+                  OutlinedButton(
+                      onPressed: () async {
+                        await logout();
+                        setState(() {
+                          state = AccountLoadState.unrequesed;
+                        });
+                      },
+                      child: const Text("Logout"))
+                ],
               )
             ],
           ),
@@ -121,6 +131,14 @@ class _AccountPageState extends State<AccountPage> {
       body: Center(child: body),
     );
   }
+}
+
+Future<void> logout() async {
+  _userId = null;
+  Account._account = null;
+
+  SharedPreferences preferences = await SharedPreferences.getInstance();
+  await preferences.clear();
 }
 
 String? _userId;

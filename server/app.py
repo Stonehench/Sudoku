@@ -24,7 +24,7 @@ app = Flask("Sudoku Scoreboard")
 @app.route("/scoreboard")
 def scoreboard():
     cursor = conn.cursor()
-    cursor.execute("select * from userscores")
+    cursor.execute("select * from userscores order by value desc")
 
     if "user_id" in request.args:
         req_user_id = request.args["user_id"]

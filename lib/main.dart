@@ -22,7 +22,7 @@ class _SudokuAppState extends State<SudokuApp> {
       theme: ThemeData.dark(),
       initialRoute: '/menu',
       routes: {
-        '/menu': (context) => Menu(),
+        '/menu': (context) => const Menu(),
       },
     );
   }
