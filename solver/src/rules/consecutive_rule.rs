@@ -11,7 +11,7 @@ pub struct ConsecutiveRule {
 
 impl ConsecutiveRule {
     pub fn new(x_clue: Vec<(usize, usize)>) -> DynRule {
-        DynRule(Box::new(ConsecutiveRule { x_clue }))
+        DynRule(Box::new(ConsecutiveRule { consecutive_clue }))
     }
 }
 
@@ -30,8 +30,8 @@ impl Rule for ConsecutiveRule {
     }
 
     fn hidden_singles(&self, sudoku: &Sudoku) -> Option<(u16, usize)> {
-        // TODO: hidden singles should not really do anything
-        // if for every 
+        // TODO: if one side is locked in, and only one of the consecutive numbers remain
+        // this number is garuenteed to be a hidden single
         None
     }
 

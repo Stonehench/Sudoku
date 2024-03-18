@@ -11,7 +11,7 @@ pub struct ParityRule {
 
 impl ParityRule {
     pub fn new(x_clue: Vec<(usize, usize)>) -> DynRule {
-        DynRule(Box::new(ParityRule { x_clue }))
+        DynRule(Box::new(ParityRule { parity_clue }))
     }
 }
 
@@ -38,7 +38,7 @@ impl Rule for ParityRule {
         buffer: &'buf mut Vec<usize>,
         _arena: &mut Bump,
     ) -> Option<(u16, &'buf [usize])> {
-        // TODO: in a cell where only othe parity remains, the opposite parity should only remain in the other cell
+        // TODO: in a cell where only one parity remains, the opposite parity should only remain in the other cell
         None
     }
 
@@ -59,6 +59,17 @@ fn parity_update_test() {}
 
 #[test]
 fn parity_hidden() {
+/* The test sudoku a 4 x 4
+=================
+‖   | 1 Ø   |   ‖
+-----------------
+‖   |   ‖   |   ‖
+=================
+‖   |   ‖   |   ‖
+-----------------
+‖   |   ‖   |   ‖
+=================
+*/
         let parity_rule = ParityRule {
             parity_clue: vec![(1 as usize, 2 as usize)],
         };
