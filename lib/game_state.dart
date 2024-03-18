@@ -105,7 +105,6 @@ class GameState extends ChangeNotifier {
     //TODO: Point fået af at vinde er hardcodet. Det skal være baseret på sværhedsgraden.
     int value = 3;
     if (_scoreSubmitted) {
-      notifyListeners();
       return value;
     }
 
@@ -119,11 +118,10 @@ class GameState extends ChangeNotifier {
             .get(serverAddress.resolve("/add_score/${account.userID}/$value"));
         _scoreSubmitted = true;
         _scoreInAir = false;
-        notifyListeners();
         return value;
       } catch (e) {
+        print(e);
         _scoreInAir = false;
-        notifyListeners();
         return null;
       }
     }

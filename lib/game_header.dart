@@ -45,9 +45,13 @@ class _DigitSelectState extends State<GameHeader> {
                 builder: (context) => AlertDialog(
                   title: const Text("You Win!"),
                   actions: [
-                    if (loadingPoints) ...[SpinKitCircle(color: Theme.of(context).highlightColor,)] else ...[
-                      if (receivedPoints == null) ... [
-                        const Text("Failed to submit score")
+                    if (loadingPoints) ...[
+                      SpinKitCircle(
+                        color: Theme.of(context).highlightColor,
+                      )
+                    ] else ...[
+                      if (receivedPoints == null) ...[
+                        const Text("Failed to submit score"),
                       ] else ...[
                         Text("Recieved $receivedPoints points!")
                       ]
