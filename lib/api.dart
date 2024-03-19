@@ -4,8 +4,8 @@ import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 
-Uri serverAddress = Uri.http("jensogkarsten.site");
-//Uri serverAddress = Uri.http("localhost:5000");
+//Uri serverAddress = Uri.http("jensogkarsten.site");
+Uri serverAddress = Uri.http("localhost:5000");
 
 class Account {
   final String username;
@@ -22,7 +22,7 @@ class AccountState extends ChangeNotifier {
   String? _errorMsg;
   final SharedPreferences _prefs;
 
-  static initialize() async {
+  static Future<void> initialize() async {
     var prefs = await SharedPreferences.getInstance();
     _instance = AccountState(prefs);
   }
@@ -52,7 +52,7 @@ class AccountState extends ChangeNotifier {
     }
   }
 
-  void login(String username, String password) async {
+  Future<bool> login(String username, String password) async {
     try {
       var response = await http.post(serverAddress.resolve("/login"), body: {
         "username": username,
@@ -61,7 +61,7 @@ class AccountState extends ChangeNotifier {
       if (response.statusCode != 200) {
         _errorMsg = "Invalid username or password (probably)";
         notifyListeners();
-        return;
+        return false;
       }
 
       var body = jsonDecode(response.body);
@@ -70,13 +70,16 @@ class AccountState extends ChangeNotifier {
       await _prefs.setString("username", account.username);
       await _prefs.setString("userID", account.userID);
       _account = account;
+      notifyListeners();
+      return true;
     } catch (e) {
       _errorMsg = "Failed to connect to server (probably)";
+      notifyListeners();
+      return false;
     }
-    notifyListeners();
   }
 
-  void register(String username, String password) async {
+  Future<bool> register(String username, String password) async {
     try {
       var response = await http.post(serverAddress.resolve("/register"), body: {
         "username": username,
@@ -85,18 +88,20 @@ class AccountState extends ChangeNotifier {
       if (response.statusCode != 200) {
         _errorMsg = "Username taken (probably)"; //Probably
         notifyListeners();
-        return;
+        return false;
       }
       var body = jsonDecode(response.body);
-
       Account account = Account(username, body["user_id"]);
       await _prefs.setString("username", account.username);
       await _prefs.setString("userID", account.userID);
       _account = account;
+      notifyListeners();
+      return true;
     } catch (e) {
       _errorMsg = "Failed to connect to server (probably)";
+      notifyListeners();
+      return false;
     }
-    notifyListeners();
   }
 
   Future<void> addScore(Account account, int value) async {
@@ -113,5 +118,11 @@ class AccountState extends ChangeNotifier {
     } catch (e) {
       throw "Failed to connect to server (probably)";
     }
+  }
+
+  Future<void> logout() async {
+    _account = null;
+    await _prefs.clear();
+    notifyListeners();
   }
 }

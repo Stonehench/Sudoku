@@ -64,17 +64,20 @@ def login():
 
 
 @app.route("/register", methods=["POST"])
-def register(username: str, password: str):
-    user_id = uuid.uuid4()
+def register():
+    user_id = str(uuid.uuid4())
     username = request.form["username"]
     password = request.form["password"]
 
     cursor = conn.cursor()
     cursor.execute("insert into users values (?,?,?)", [user_id, username, password])
-    return {}
+    return {
+        "username": username,
+        "user_id": user_id,
+    }
 
 
-@app.route("/add_score", methods = ["POST"])
+@app.route("/add_score", methods=["POST"])
 def add_score(user_id: str, value: int):
     user_id = request.form["user_id"]
     value = request.form["value"]

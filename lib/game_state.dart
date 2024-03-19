@@ -1,7 +1,6 @@
 import 'dart:math';
 
 import 'package:flutter/foundation.dart';
-import 'package:sudoku/account.dart';
 import 'package:sudoku/api.dart';
 import 'package:sudoku/src/rust/api/simple.dart';
 import 'package:http/http.dart' as http;
@@ -84,7 +83,6 @@ class GameState extends ChangeNotifier {
   }
 
   bool digitDone(int n) {
-    //TODO: Det her skal måske memoizes. Ingen grund til at gøre det ved HVER update
     return board.where((b) => b == n).length == size;
   }
 
@@ -109,9 +107,9 @@ class GameState extends ChangeNotifier {
     }
 
     _scoreInAir = true;
-    Account? account = await getAccount();
+    Account? account = null;
     if (account != null) {
-      _scoreSubmitted = true;
+      //_scoreSubmitted = true;
 
       try {
         await http
