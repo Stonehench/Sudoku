@@ -162,11 +162,13 @@ class _MenuState extends State<Menu> {
             const SizedBox(height: 10),
             difficulitiesWidgets(),
             const SizedBox(height: 10),
-            Wrap(
-
-              spacing: 5,
-              crossAxisAlignment: WrapCrossAlignment.center,
-              children: ruleWidgets(),
+            SizedBox(
+              width: 300,
+              child: Wrap(
+                spacing: 5,
+                crossAxisAlignment: WrapCrossAlignment.center,
+                children: ruleWidgets(),
+              ),
             ),
             const SizedBox(height: 20),
             Row(
