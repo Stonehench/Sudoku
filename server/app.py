@@ -13,6 +13,7 @@ try:
         database="Scoreboard",
     )
     conn.autocommit = True
+    conn.auto_reconnect = True
 except mariadb.Error as e:
     print(f"Error connecting to MariaDB Platform: {e}")
     sys.exit(1)
