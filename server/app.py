@@ -2,6 +2,7 @@ from flask import Flask, request
 
 import mariadb
 import sys
+import uuid
 
 # Connect to MariaDB Platform
 try:
@@ -43,27 +44,41 @@ def scoreboard():
     return data
 
 
-@app.route("/login/<user_id>")
-def login(user_id: str):
+@app.route("/login", methods=["POST"])
+def login():
+    # user_id = request.form["user_id"]
+    username = request.form["username"]
+    password = request.form["password"]
+
     cursor = conn.cursor()
-    cursor.execute("select username from users where user_id = ?", [user_id])
+    cursor.execute(
+        "select user_id from users where username = ? and password = ?",
+        [username, password],
+    )
 
     user = cursor.fetchone()
     if user:
-        return {"username": user[0]}
+        return {"user_id": user[0]}
     else:
-        return {}
+        return {}, 404
 
 
-@app.route("/register/<user_id>/<username>")
-def register(user_id: str, username: str):
+@app.route("/register", methods=["POST"])
+def register(username: str, password: str):
+    user_id = uuid.uuid4()
+    username = request.form["username"]
+    password = request.form["password"]
+
     cursor = conn.cursor()
-    cursor.execute("insert into users values (?,?)", [user_id, username])
+    cursor.execute("insert into users values (?,?,?)", [user_id, username, password])
     return {}
 
 
-@app.route("/add_score/<user_id>/<value>")
+@app.route("/add_score", methods = ["POST"])
 def add_score(user_id: str, value: int):
+    user_id = request.form["user_id"]
+    value = request.form["value"]
+
     cursor = conn.cursor()
     cursor.execute("insert into scores (user_id, value) values (?,?)", [user_id, value])
     return {}

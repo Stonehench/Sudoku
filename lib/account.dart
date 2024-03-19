@@ -16,12 +16,6 @@ class AccountPage extends StatefulWidget {
   }
 }
 
-class Account {
-  static Account? _account;
-  final String username;
-  final String userID;
-  const Account(this.username, this.userID);
-}
 
 enum AccountLoadState { unrequesed, loading, error, success, noAccount }
 
