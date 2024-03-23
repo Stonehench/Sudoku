@@ -17,6 +17,10 @@ pub mod knight_rule;
 pub mod row_rule;
 pub mod square_rule;
 pub mod x_rule;
+pub mod zipper_rule;
+pub mod consecutive_rule;
+pub mod parity_rule;
+
 
 pub trait Rule: Debug {
     fn updates<'buf>(
@@ -63,8 +67,16 @@ pub trait Rule: Debug {
     fn priority(&self) -> ExecutionPriority {
         ExecutionPriority::Medium
     }
+
+    fn multi_remove<'buf>(
+        &self,
+        _sudoku: &Sudoku,
+        _big_buffer: &'buf mut Vec<(usize, usize)>,
+    ) -> Option<&[(usize, usize)]> {
+        return None;
+    }
 }
-#[derive(Debug,Clone, Copy,PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
 pub enum ExecutionPriority {
     High = 0,
     Medium = 1,
