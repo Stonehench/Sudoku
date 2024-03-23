@@ -17,6 +17,10 @@ pub mod knight_rule;
 pub mod row_rule;
 pub mod square_rule;
 pub mod x_rule;
+pub mod zipper_rule;
+pub mod consecutive_rule;
+pub mod parity_rule;
+
 
 pub trait Rule: Debug {
     fn updates<'buf>(

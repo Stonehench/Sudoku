@@ -1,7 +1,5 @@
 use super::{DynRule, Rule};
-use allocator_api2::vec::Vec as AlloVec;
 use bumpalo::Bump;
-use integer_sqrt::IntegerSquareRoot;
 use std::fmt::Debug;
 
 use crate::sudoku::Sudoku;
@@ -15,10 +13,11 @@ pub struct ZipperRule {
 }
 
 impl ZipperRule {
-    pub fn new() -> DynRule {
-        DynRule(Box::new(ZipperRule))
+    pub fn new(zipper_clue: Vec<(usize, Vec<(usize, usize)>)>) -> DynRule {
+        DynRule(Box::new(ZipperRule { zipper_clue }))
     }
 }
+
 
 impl Rule for ZipperRule {
     fn updates<'buf>(
@@ -32,9 +31,6 @@ impl Rule for ZipperRule {
         // if the center of a zipper is set to a number, that number can no longer appear on the sipper,
         // since you would have to add it with 0 to get the center digit which does not make any sense as 0 is not a valid digit
 
-        if zipper_clue.filter(|(i,rest)| i == index).any() {
-            buffer.push(rest);
-        }
 
         buffer
     }
@@ -70,26 +66,22 @@ impl Rule for ZipperRule {
 
 #[test]
 fn locked_zipper_candidate() {
-    let mut sudoku = Sudoku::new(9, vec![super::square_rule::SquareRule::new()]);
-    let zipper_rule = XRule {
-        zipper_clue: vec![(1 as usize, vec![(0 as usize, 2 as usize)])],
-    };
-    let mut buffer = vec![];
-    let mut arena = Bump::new();
 
-    let indexes = zipper_rule.updates(sudoku.size, 11, &mut buffer);
 }
 
 #[test]
 fn zipper_test() {
     let sudoku = Sudoku::new(9, vec![]);
 
-    let zipperrule = ZipperRule::new();
+    let zipper_rule = ZipperRule {
+        zipper_clue: vec![(1 as usize, vec![(0 as usize, 2 as usize)])],
+    };
+
     let mut buffer = vec![];
-    let indexes = zipperrule.updates(sudoku.size, 11, &mut buffer);
+    let indexes = zipper_rule.updates(sudoku.size, 11, &mut buffer);
     println!("{indexes:?}");
 
-    assert_eq!(indexes, vec![2, 11, 20, 29, 38, 47, 56, 65, 74])
+    assert_eq!(indexes, vec![0, 2])
 }
 
 #[test]

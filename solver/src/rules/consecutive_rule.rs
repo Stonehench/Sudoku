@@ -10,7 +10,7 @@ pub struct ConsecutiveRule {
 }
 
 impl ConsecutiveRule {
-    pub fn new(x_clue: Vec<(usize, usize)>) -> DynRule {
+    pub fn new(consecutive_clue: Vec<(usize, usize)>) -> DynRule {
         DynRule(Box::new(ConsecutiveRule { consecutive_clue }))
     }
 }
@@ -90,7 +90,8 @@ fn consecutive_hidden() {
 
 #[test]
 fn locked_consecutive_candidate() {
-
+    let mut buffer = vec![];
+    let mut arena = Bump::new();
 /* The test sudoku a 4 x 4
 =================
 ‖   | 1 O   |   ‖
@@ -113,11 +114,11 @@ fn locked_consecutive_candidate() {
 
     sudoku.set_cell(1, 1).unwrap();
     sudoku.set_cell(1, 8).unwrap();
-    let res = consecutive_rule.hidden_singles(&sudoku);
+    let res = consecutive_rule.locked_candidate(&sudoku, &mut buffer, &mut arena);
 
     // locked candidates should return that there can not be 3 in either of the dominos (index 2 and 4)
     // because 3 is not consecutive with 1
-    assert_eq!(res, Some(3, (vec![2, 4].as_slice())));
+    assert_eq!(res, Some((3, (vec![2 as usize, 4 as usize].as_slice()))));
 
 /* The test sudoku a 4 x 4
 =================
@@ -131,9 +132,9 @@ fn locked_consecutive_candidate() {
 =================
 */
     sudoku.set_cell(3, 6).unwrap();
-    let res = consecutive_rule.hidden_singles(&sudoku);
+    let res = consecutive_rule.locked_candidate(&sudoku, &mut buffer, &mut arena);
 
     // locked candidates should return that there can not be 4 in either of the dominos (index 2 and 4)
     // because 4 is not consecutive with 1
-    assert_eq!(res, Some(4, (vec![2, 4].as_slice())));
+    assert_eq!(res, Some((4, (vec![2 as usize, 4 as usize].as_slice()))));
 }

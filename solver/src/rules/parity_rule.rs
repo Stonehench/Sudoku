@@ -10,7 +10,7 @@ pub struct ParityRule {
 }
 
 impl ParityRule {
-    pub fn new(x_clue: Vec<(usize, usize)>) -> DynRule {
+    pub fn new(parity_clue: Vec<(usize, usize)>) -> DynRule {
         DynRule(Box::new(ParityRule { parity_clue }))
     }
 }
@@ -75,18 +75,20 @@ fn parity_hidden() {
         };
         let mut sudoku = Sudoku::new(
             4,
-            vec![super::square_rule::SquareRule::new(), x_rule.boxed_clone()],
+            vec![super::square_rule::SquareRule::new(), parity_rule.boxed_clone()],
         );
 
         sudoku.set_cell(1, 1).unwrap();
-        println!("{sudoku}");
+        //println!("{sudoku}");
 
-        let res = x_rule.hidden_singles(&sudoku);
+        let res = parity_rule.hidden_singles(&sudoku);
         assert_eq!(res, Some((4, 2)))
 }
 
 #[test]
 fn locked_parity_candidate() {
+    let mut buffer = vec![];
+    let mut arena = Bump::new();
 /* The test sudoku a 4 x 4
 =================
 ‖   | 1 Ø   |   ‖
@@ -109,9 +111,9 @@ fn locked_parity_candidate() {
 
         sudoku.set_cell(1, 1).unwrap();
         sudoku.set_cell(1, 8).unwrap();
-        let res = x_rule.hidden_singles(&sudoku);
+        let res = parity_rule.locked_candidate(&sudoku, &mut buffer, &mut arena);
 
-        assert_eq!(res, Some(3, (vec![2, 8].as_slice())));
+        assert_eq!(res, Some((3, (vec![2, 8].as_slice()))));
 
 /* The test sudoku a 4 x 4
 =================
@@ -125,7 +127,7 @@ fn locked_parity_candidate() {
 =================
 */
         sudoku.set_cell(3, 6).unwrap();
-        let res = x_rule.hidden_singles(&sudoku);
+        let res = parity_rule.locked_candidate(&sudoku, &mut buffer, &mut arena);
         
         // No odd numbers remain in the availible, so None should be retunded
         assert_eq!(res, None)
