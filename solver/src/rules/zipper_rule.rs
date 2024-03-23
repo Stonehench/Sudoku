@@ -30,15 +30,17 @@ impl Rule for ZipperRule {
 
         // if the center of a zipper is set to a number, that number can no longer appear on the zipper,
         // since you would have to add it with 0 to get the center digit which does not make any sense as 0 is not a valid digit
-        for (i, rest) in &self.zipper_clue{
-            if *i == index {
+        for (center, rest) in &self.zipper_clue{
+            if *center == index {
                 for (left, right) in rest {
                     buffer.push(*left);
                     buffer.push(*right);
                 }
+            // if a place on the zipper that is not the center is updated, the center can no longer be this number
+            } else if rest.into_iter().any(|(left, right)| *left == index || *right == index){
+                buffer.push(*center);
             }
         }
-
         buffer
     }
 
