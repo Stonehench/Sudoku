@@ -298,6 +298,7 @@ impl Sudoku {
                         }
                     }
 
+                    println!("GUESSSINFGFF");
                     //Der er flere muligheder for hvad der kan vælges. Derfor pushes state på branch stacken og der vælges en mulighed
                     //Vælg random
                     let choice = random::<usize>() % entropy.0;
@@ -713,6 +714,17 @@ fn solve_16x_test() {
 
     println!("{sudoku}");
 }
+
+#[test]
+fn solve_zipper_test() {
+    let file_str = std::fs::read_to_string("./sudokuZipper").unwrap();
+    let mut sudoku: Sudoku = file_str.parse().unwrap();
+
+    sudoku.solve(None, None).unwrap();
+
+    println!("{sudoku}");
+}
+
 
 #[test]
 fn solve_knights_move_sudoku() {

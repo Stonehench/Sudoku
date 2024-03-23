@@ -11,6 +11,8 @@ use std::{
 
 use crate::sudoku::Sudoku;
 
+use self::zipper_rule::ZipperRule;
+
 pub mod column_rule;
 pub mod diagonal_rule;
 pub mod knight_rule;
@@ -129,6 +131,34 @@ impl FromStr for DynRule {
                             })
                             .collect::<Result<_, _>>()?,
                     }))),
+                    Some("ZipperRule") =>{ 
+                        Ok(DynRule(Box::new(ZipperRule {
+                        zipper_clue: rule_params
+                            .map(|s| {
+                                let Some((center, rest)) = s.split_once(',') else {
+                                    return Err(format!("Failed to split {s} on ,"));
+                                };
+
+                                let center = center.parse().map_err(|e| format!("{e:?}"))?;
+                                let indecies = rest.split(',').map(str::trim); 
+
+                                let rest_resolved = indecies.map(|s| {
+                                    let Some((l, r)) = s.split_once('+') else {
+                                        return Err(format!("Failed to split {s} on +"));
+                                    };
+                                    let l = l.parse().map_err(|e| format!("{e:?}"))?;
+                                    let r = r.parse().map_err(|e| format!("{e:?}"))?;
+
+                                    Ok((l, r))
+                                })
+                                .collect::<Result<_, _>>()?;
+
+                                Ok((center, rest_resolved))
+                            })
+                            .collect::<Result<_, _>>()?,
+                    })))},
+                    //Some("ParityRule") => return Err(s.to_owned()), // TODO: finish this for parity should be almost the same as xrule
+                    //Some("ConsecutiveRule") => return Err(s.to_owned()), // TODO: finish this for consecutive should be almost the same as xrule
                     _ => return Err(s.to_owned()),
                 }
             }
