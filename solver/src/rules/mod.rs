@@ -63,8 +63,16 @@ pub trait Rule: Debug {
     fn priority(&self) -> ExecutionPriority {
         ExecutionPriority::Medium
     }
+
+    fn multi_remove<'buf>(
+        &self,
+        _sudoku: &Sudoku,
+        _big_buffer: &'buf mut Vec<(usize, usize)>,
+    ) -> Option<&[(usize, usize)]> {
+        return None;
+    }
 }
-#[derive(Debug,Clone, Copy,PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
 pub enum ExecutionPriority {
     High = 0,
     Medium = 1,
