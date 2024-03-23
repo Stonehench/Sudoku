@@ -78,7 +78,7 @@ def register():
 
 
 @app.route("/add_score", methods=["POST"])
-def add_score(user_id: str, value: int):
+def add_score():
     user_id = request.form["user_id"]
     value = request.form["value"]
 

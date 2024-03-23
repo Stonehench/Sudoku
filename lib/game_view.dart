@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_spinkit/flutter_spinkit.dart';
 import 'package:sudoku/board.dart';
 import 'package:sudoku/digit_selection.dart';
 import 'package:sudoku/game_header.dart';
@@ -32,8 +33,6 @@ class GameView extends StatelessWidget {
           ListenableBuilder(
             listenable: state,
             builder: (context, _) {
-
-
               return Center(
                 child: !state.gameDone()
                     ? null
@@ -53,6 +52,21 @@ class GameView extends StatelessWidget {
                               "You win!",
                               style: TextStyle(fontSize: 35),
                             ),
+                            if (state.scoreInAir()) ...[
+                              const SpinKitChasingDots(
+                                color: Colors.red,
+                              )
+                            ] else if (state.submitted()) ...[
+                              Text("You gained X points"),
+                            ] else ...[
+                              const Text(
+                                  "Failed to submit score. Check yo wifi or login"),
+                              OutlinedButton(
+                                  onPressed: () {
+                                    state.trySubmitScore();
+                                  },
+                                  child: const Text("Retry"))
+                            ]
                           ],
                         ),
                       ),

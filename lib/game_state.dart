@@ -50,7 +50,14 @@ class GameState extends ChangeNotifier {
     }
 
     if (await checkLegality(position: position, value: selectedDigit)) {
+      var preGameDone = gameDone();
+
       board[position] = selectedDigit;
+
+      if (!preGameDone && gameDone()) {
+        trySubmitScore();
+      }
+
       notifyListeners();
       return true;
     }
@@ -93,6 +100,14 @@ class GameState extends ChangeNotifier {
   bool _scoreSubmitted = false;
   bool _scoreInAir = false;
 
+  bool submitted() {
+    return _scoreSubmitted;
+  }
+
+  bool scoreInAir() {
+    return _scoreInAir;
+  }
+  //WTFF. Det her er en kæmpe mess.
   Future<int?> trySubmitScore() async {
     while (_scoreInAir) {
       //Block  while another request is flying
@@ -103,28 +118,33 @@ class GameState extends ChangeNotifier {
     //TODO: Point fået af at vinde er hardcodet. Det skal være baseret på sværhedsgraden.
     int value = 3;
     if (_scoreSubmitted) {
+      notifyListeners();
       return value;
     }
 
     _scoreInAir = true;
-    Account? account = null;
+    Account? account = AccountState.instance().get();
     if (account != null) {
       //_scoreSubmitted = true;
 
       try {
-        await http
-            .get(serverAddress.resolve("/add_score/${account.userID}/$value"));
+        await http.post(serverAddress.resolve("/add_score"), body: {
+          "user_id": account.userID,
+          "value": value.toString(),
+        });
         _scoreSubmitted = true;
         _scoreInAir = false;
+        notifyListeners();
         return value;
       } catch (e) {
-        print(e);
+        print("Sumbission failed with $e");
         _scoreInAir = false;
+        notifyListeners();
         return null;
       }
     }
     _scoreInAir = false;
-
+  notifyListeners();
     return null;
   }
 
