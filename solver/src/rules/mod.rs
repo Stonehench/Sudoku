@@ -62,6 +62,10 @@ pub trait Rule: Debug {
         None
     }
 
+    fn to_zipper_rule(&mut self) -> Option<&mut ZipperRule> {
+        None
+    }
+
     fn needs_square_for_locked(&self) -> bool {
         false
     }

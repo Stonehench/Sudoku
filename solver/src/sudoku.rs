@@ -256,6 +256,7 @@ impl Sudoku {
                 )?,
                 _ => {
                     // Der er ikke flere naked singles, så der tjekkes for hidden singles
+                    //println!("{self}");
 
                     for rule in &self.rules {
                         if let Some((n, hidden_index)) = rule.hidden_singles(self) {
@@ -298,7 +299,6 @@ impl Sudoku {
                         }
                     }
 
-                    println!("GUESSSINFGFF");
                     //Der er flere muligheder for hvad der kan vælges. Derfor pushes state på branch stacken og der vælges en mulighed
                     //Vælg random
                     let choice = random::<usize>() % entropy.0;
@@ -349,6 +349,16 @@ impl Sudoku {
         difficulty: Difficulty,
     ) -> Result<Self, SudokuSolveError> {
         let mut sudoku = Sudoku::new(size, rules);
+
+        if let Some(zipper_rule) = sudoku.rules.iter_mut().find_map(|r| r.to_zipper_rule()) {
+            if sudoku.size == 4 {
+                zipper_rule.zipper_clue.push((2,vec![(1 , 6 ) , (0, 10)]))
+            }
+            if sudoku.size == 9 {
+                zipper_rule.zipper_clue.push((40,vec![(39,41) , (48,32), (47, 33), (46, 34), (45, 35)]))
+            }      
+        }
+
         sudoku.solve(None, None)?;
 
         for cell in sudoku.cells.iter_mut() {
@@ -384,6 +394,8 @@ impl Sudoku {
                 }
             }
         }
+
+
         println!("Solved rules: {:#?}", sudoku.rules);
 
         let remove_limit = difficulty.get_removes(size);

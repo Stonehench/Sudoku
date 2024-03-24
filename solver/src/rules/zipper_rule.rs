@@ -1,5 +1,6 @@
 use super::{DynRule, Rule};
 use bumpalo::Bump;
+use integer_sqrt::IntegerSquareRoot;
 use std::fmt::Debug;
 
 use crate::sudoku::{self, Sudoku};
@@ -33,13 +34,11 @@ impl Rule for ZipperRule {
         for (center, rest) in &self.zipper_clue{
             if *center == index {
                 for (left, right) in rest {
-                    println!("Updating a left {left} and right {right}");
                     buffer.push(*left);
                     buffer.push(*right);
                 }
             // if a place on the zipper that is not the center is updated, the center can no longer be this number
             } else if rest.into_iter().any(|(left, right)| *left == index || *right == index){
-                println!("Updating a center {center}");
                 buffer.push(*center);
             }
         }
@@ -47,12 +46,12 @@ impl Rule for ZipperRule {
     }
 
     fn hidden_singles(&self, sudoku: &Sudoku) -> Option<(u16, usize)> {
-        println!("Looking for hidden Singles");
+        //println!("Looking for hidden Singles");
         // if the center is unknown, it could be a hidden sigle if two indecies at equal distance is filled
 
         // an index on the zipper might be a hidden single
         // if the center is known and the opposite side of the zipper is known
-
+        
         for (center, rest) in &self.zipper_clue {
             if sudoku.cells[*center].locked_in {
                 // if the center is known
@@ -60,17 +59,21 @@ impl Rule for ZipperRule {
                 for (left, right) in rest {
                     // the left side is known, calculate the right
                     if sudoku.cells[*left].locked_in && !sudoku.cells[*right].locked_in {
-                        println!("RIGHT HIDDEN at {right}");
-                        println!("Center index {center} left index {left}");
-                        println!("Center value {}, left value{}", sudoku.cells[*center].available[0], sudoku.cells[*left].available[0]);
-                        return Some((sudoku.cells[*center].available[0] - sudoku.cells[*left].available[0], *right));
+                        //println!("RIGHT HIDDEN at {right}");
+                        let value = sudoku.cells[*center].available[0] - sudoku.cells[*left].available[0];
+                        if !sudoku.cells[*right].available.contains(&value){
+                            //println!("the value for the hidden single did not exist, something is not solved correct"); 
+                        }
+                        return Some((value, *right));
                     }
                     // the right side is known, calculate the left
                     if sudoku.cells[*right].locked_in && !sudoku.cells[*left].locked_in {
-                        println!("LEFT HIDDEN at {left}");
-                        println!("Center index {center} right index {right}");
-                        println!("Center value {}, right value{}", sudoku.cells[*center].available[0], sudoku.cells[*right].available[0]);
-                        return Some((sudoku.cells[*center].available[0] - sudoku.cells[*right].available[0], *left));
+                        //println!("LEFT HIDDEN at {left}");
+                        let value = sudoku.cells[*center].available[0] - sudoku.cells[*right].available[0];
+                        if !sudoku.cells[*left].available.contains(&value){
+                        //println!("the value for the hidden single did not exist, something is not solved correct");    
+                        }
+                        return Some((value, *left));
                     }
 
                 }                    
@@ -79,13 +82,13 @@ impl Rule for ZipperRule {
                 // loop through all the pairs and see if the center can be calculated
                 for (left, right) in rest {
                     if sudoku.cells[*left].locked_in && sudoku.cells[*right].locked_in {
-                        println!("CENTER HIDDEN at {center} value {}", sudoku.cells[*left].available[0] + sudoku.cells[*right].available[0] );
+                        //println!("CENTER HIDDEN at {center} value {}", sudoku.cells[*left].available[0] + sudoku.cells[*right].available[0] );
                         return Some((sudoku.cells[*left].available[0] + sudoku.cells[*right].available[0], *center));
                     }
                 } 
             }
         }
-
+        
         None
     }
 
@@ -100,18 +103,20 @@ impl Rule for ZipperRule {
         arena: &mut Bump,
     ) -> Option<(u16, &'buf [usize])> {
         arena.reset();
-        println!("Looking for locked candidates");
+        
+        //println!("Looking for locked candidates");
         // if the center is know, anything greater than or equal to the center value
         // is no longler possible
 
         // for values ei. from 0 .. 9
+         
         for value in 1..(sudoku.size + 1) as u16{
             buffer.clear();
 
             // for each zipper 
             for (center, rest) in &self.zipper_clue {
-                // if the center cell is known and the center value is less than or equal the candidate value
-                if sudoku.cells[*center].locked_in && sudoku.cells[*center].available[0] <= value {                 
+                // the largest possible value in the center cell, must not be smaller than possible values in the zipper
+                if sudoku.cells[*center].available[sudoku.cells[*center].available.len() - 1] <= value {                 
                     // for all pairs in the current zipper
                     for (left, right) in rest {
                         // left index contains the value
@@ -123,20 +128,59 @@ impl Rule for ZipperRule {
                             buffer.push(*right);
                         }
                     }
+                // the smallest possible value in the center cell, must not be smaller than possible values in the zipper
                 } else if !sudoku.cells[*center].locked_in && sudoku.cells[*center].available.contains(&1) && value == 1 {
+                    buffer.push(*center);
+                    
+                // the center value must be bigger than the smallest combined value of all pairs    
+                } else if !sudoku.cells[*center].locked_in && rest.into_iter().any(|(left,right)|    
+                    sudoku.cells[*left].available[0] + sudoku.cells[*right].available[0] > value && sudoku.cells[*center].available.contains(&value)) {
                     buffer.push(*center);
                 }
             }
             if !buffer.is_empty() {
-                println!("CANDIDATE FOUND: {value} {buffer:?}");
+                //println!("CANDIDATE FOUND: {value} {buffer:?}");
                 return Some((value, buffer));
             }
         }
 
+        // many more wierd deductive things can be done, like:
+        // if two indecies are in the same column or row (or square), and the center is an even digit, they cannot be the same value
+        for (center, rest) in &self.zipper_clue {
+            if sudoku.cells[*center].locked_in && sudoku.cells[*center].available[0] % 2 == 0 {
+                let value = sudoku.cells[*center].available[0] / 2;
+                for (left, right) in rest{
+                    if left % sudoku.size == right % sudoku.size || left / sudoku.size == right / sudoku.size{ //in same comlumn || row
+                        if sudoku.cells[*left].available.contains(&value){
+                            buffer.push(*left);
+                        }
+                        if sudoku.cells[*right].available.contains(&value){
+                            buffer.push(*right);
+                        }
+                        
+                    }
+                    // THIS NEEDS SQUARE RULE BUT IT*S THE ONLY PART THAT NEEDS SQAURE RULE SO YEAH
+                    let sub_s = sudoku.size.integer_sqrt();
+                    if left % sub_s == right % sub_s && left / sub_s == right / sub_s { //in same square
+                        if sudoku.cells[*left].available.contains(&value){
+                            buffer.push(*left);
+                        }
+                        if sudoku.cells[*right].available.contains(&value){
+                            buffer.push(*right);
+                        }
+                        
+                    }
+                }
 
-        // many more wierd deductive things can be done
-
+                if !buffer.is_empty() {
+                    //println!("CANDIDATE SECOND TYPE FOUND: {value} {buffer:?}");
+                    return Some((value, buffer));
+                }
+            }
+        }
+        
         None
+        
     }
 
     fn boxed_clone(&self) -> DynRule {
@@ -145,6 +189,10 @@ impl Rule for ZipperRule {
 
     fn get_name(&self) -> &'static str {
         "ZipperRule"
+    }
+
+    fn to_zipper_rule(&mut self) -> Option<&mut ZipperRule> {
+        Some(self)
     }
 }
 
