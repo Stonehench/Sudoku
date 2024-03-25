@@ -3,6 +3,7 @@ import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:sudoku/cell.dart';
 import 'package:sudoku/game_state.dart';
+import 'package:sudoku/zipper_rule_gui.dart';
 
 class Board extends StatefulWidget {
   const Board({super.key});
@@ -112,6 +113,7 @@ class _BoardState extends State<Board> {
                   );
                 },
               ),
+              const Zipper(),
               ListenableBuilder(
                 listenable: state,
                 builder: (ctx, _) => GridView.builder(

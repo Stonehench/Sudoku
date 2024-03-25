@@ -40,8 +40,9 @@ class _GameLoaderState extends State<GameLoader> {
           return;
         }
         var xPositions = await getXPositions();
+        var zipperPositions = await getZipperPositions();
 
-        GameState.setInstance(GameState(source, xPositions));
+        GameState.setInstance(GameState(source, xPositions, zipperPositions));
         setState(() {
           Navigator.of(context).pushReplacement(MaterialPageRoute(
             builder: (context) => GameView(widget.rules),
@@ -62,7 +63,6 @@ class _GameLoaderState extends State<GameLoader> {
           throw "Backend failed to parse GUI difficulty (${widget.difficulty}). This is really fucking weird";
         }
       }();
-
     }
 
     () async {
