@@ -77,9 +77,10 @@ pub trait Rule: Debug {
     fn multi_remove<'buf>(
         &self,
         _sudoku: &Sudoku,
-        _big_buffer: &'buf mut Vec<(usize, usize)>,
-    ) -> Option<&[(usize, usize)]> {
-        return None;
+        big_buffer: &'buf mut Vec<(u16, usize)>,
+    ) ->  &'buf [(u16, usize)] {
+        big_buffer.clear();
+        return big_buffer;
     }
 }
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]

@@ -235,6 +235,7 @@ impl Sudoku {
 
         let mut branch_stack: Vec<(Vec<Cell>, PriorityQueue<usize, Entropy>)> = vec![];
         let mut ret_buffer = vec![];
+        let mut big_buffer = vec![];
         let mut arena = Self::get_arena();
 
         'main: while let Some((index, entropy)) = pri_queue.pop() {
@@ -256,7 +257,6 @@ impl Sudoku {
                 )?,
                 _ => {
                     // Der er ikke flere naked singles, så der tjekkes for hidden singles
-                    //println!("{self}");
 
                     for rule in &self.rules {
                         if let Some((n, hidden_index)) = rule.hidden_singles(self) {
@@ -298,6 +298,38 @@ impl Sudoku {
                             continue 'main;
                         }
                     }
+                    println!("Multi remove on:");
+                    println!("{self}");
+                    // OMG I DO NOT EVEN KNOW HELP ME OH LORD!!!!
+                    for rule in self.rules.iter().filter(|r| {
+                        if r.needs_square_for_locked() {
+                            has_square
+                        } else {
+                            true
+                        }
+                    }) {
+                        let multi_remove_indecies = rule.multi_remove(self,  &mut big_buffer);
+                        if !multi_remove_indecies.is_empty(){
+                            for (value, index) in multi_remove_indecies{
+                                self.cells[*index].remove(*value)?;
+                                pri_queue.change_priority(
+                                    index,
+                                    Entropy(self.cells[*index].available.len()),
+                                );
+                                if self.cells[*index].available.len() == 0 {
+                                    println!("An enthropy hit 0");
+                                    
+                                }
+                                
+                            }  
+                            println!("After"); 
+                            println!("{self}");
+                            continue 'main;                         
+                        }
+                    } 
+
+
+                    println!("GUESSING");
 
                     //Der er flere muligheder for hvad der kan vælges. Derfor pushes state på branch stacken og der vælges en mulighed
                     //Vælg random
@@ -327,6 +359,7 @@ impl Sudoku {
                     }
 
                     self.update_cell(n, index, &mut pri_queue, &mut ret_buffer)?;
+
                 }
             }
         }
@@ -731,6 +764,17 @@ fn solve_16x_test() {
 fn solve_zipper_test() {
     let file_str = std::fs::read_to_string("./sudokuZipper").unwrap();
     let mut sudoku: Sudoku = file_str.parse().unwrap();
+
+    sudoku.solve(None, None).unwrap();
+
+    println!("{sudoku}");
+}
+
+#[test]
+fn solve_zipper9x9_test() {
+    let file_str = std::fs::read_to_string("./sudokuZipper9x9").unwrap();
+    let mut sudoku: Sudoku = file_str.parse().unwrap();
+
 
     sudoku.solve(None, None).unwrap();
 
