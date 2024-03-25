@@ -63,7 +63,7 @@ impl Rule for ZipperRule {
                         if sudoku.cells[*center].available.contains(&value){
                             return Some((value, *center));
                         }
-                        println!("a mistake has happend"); 
+                        //println!("a mistake has happend"); 
                     }
                 } 
             }
@@ -78,7 +78,7 @@ impl Rule for ZipperRule {
                                 return Some((value, *right));
                             }
                         }
-                        println!("a mistake has happend"); 
+                        //println!("a mistake has happend"); 
                     }
                     // the right side is known, calculate the left
                     if sudoku.cells[*right].locked_in && !sudoku.cells[*left].locked_in {
@@ -88,7 +88,7 @@ impl Rule for ZipperRule {
                                 return Some((value, *left));
                             }   
                         }
-                        println!("a mistake has happend"); 
+                        //println!("a mistake has happend"); 
                     }
                 }                    
             }
@@ -101,137 +101,6 @@ impl Rule for ZipperRule {
         true
     }
 
-    fn locked_candidate<'buf>(
-        &self,
-        sudoku: &Sudoku,
-        buffer: &'buf mut Vec<usize>,
-        arena: &mut Bump,
-    ) -> Option<(u16, &'buf [usize])> {
-        arena.reset();
-
-        return None;
-        // for alll valid values
-        for value in 1..(sudoku.size + 1) as u16{
-            buffer.clear();
-
-            // for each zipper 
-            for (center, rest) in &self.zipper_clue {
-                // for all the pairs in the zipper
-                for (left, right) in rest {
-                    let center_greatest = sudoku.cells[*center].available[sudoku.cells[*center].available.len() - 1];
-
-                    // left index contains the value
-                    if sudoku.cells[*left].available.contains(&value) && !sudoku.cells[*left].locked_in && (
-                        sudoku.cells[*right].available[0] + value > center_greatest ||  // right smallest avalible + value overflows the avalible in center
-                        center_greatest <= value || // the value overflows the center avalible
-                        sudoku.cells[*center].locked_in && !sudoku.cells[*right].available.contains(&(&sudoku.cells[*center].available[0] - value)) 
-                        )
-                    {
-                        buffer.push(*left);
-                    }
-                    // right index contains the value
-                    if sudoku.cells[*right].available.contains(&value) && !sudoku.cells[*right].locked_in && (
-                        sudoku.cells[*left].available[0] + value > center_greatest || // left smallest avalible + value overflows the avalible in center
-                        center_greatest <= value || // the value overflows the center avalible
-                        sudoku.cells[*center].locked_in && !sudoku.cells[*left].available.contains(&(&sudoku.cells[*center].available[0] - value)) 
-                        )
-                    {
-                        buffer.push(*right);
-                    }
-                }
-
-                // calculate how many digit the center "sees", in row, cloumn, and square
-                // because the center digit is larger than all the values on the zipper
-                // and because only uniqe digits can appear in row, column, and square
-                // the center must be larger than the amount of digits it sees
-                let sub_s = sudoku.size.integer_sqrt();        
-                let same_row: u16 = rest.into_iter().map(|(l,r)| {
-                    let mut val = 0;
-                    if l % sudoku.size == center % sudoku.size  {
-                        val = val + 1;
-                    }
-                    if r % sudoku.size == center % sudoku.size  {
-                        val = val + 1;
-                    }
-                    val
-                }).sum();
-                let same_column: u16 = rest.into_iter().map(|(l,r)| {
-                    let mut val = 0;
-                    if l / sudoku.size == center / sudoku.size  {
-                        val = val + 1;
-                    }
-                    if r / sudoku.size == center / sudoku.size  {
-                        val = val + 1;
-                    }
-                    val
-                }).sum();
-                // THIS NEEDS SQUARE RULE, BUT NO PRIOR CALCULATIONS NEEDED SQUARE RULE
-                let same_square: u16 = rest.into_iter().map(|(l,r)| {
-                    let mut val = 0;
-                    if l / sudoku.size / sub_s == center / sudoku.size / sub_s && l % sudoku.size / sub_s == center % sudoku.size / sub_s  {
-                        val = val + 1;
-                    }
-                    if r / sudoku.size / sub_s == center / sudoku.size / sub_s && r % sudoku.size / sub_s == center % sudoku.size / sub_s  {
-                        val = val + 1;
-                    }
-                    val
-                }).sum();
-
-            
-                if  !sudoku.cells[*center].locked_in && sudoku.cells[*center].available.contains(&value) && 
-                    ( value == 1 ||
-                    rest.into_iter().any(|(left,right)| 
-                        sudoku.cells[*left].available[0] + sudoku.cells[*right].available[0] > value )
-                        || (value <= same_row || value <= same_column || value <= same_square)) 
-                    
-                {
-                    buffer.push(*center);
-                }
-            }
-
-            if !buffer.is_empty() {
-                return Some((value, buffer));
-            }
-        }
-
-        // many more wierd deductive things can be done, like:
-        // if two indecies are in the same column or row (or square), and the center is an even digit, they cannot be the same value
-        for (center, rest) in &self.zipper_clue {
-            if sudoku.cells[*center].locked_in && sudoku.cells[*center].available[0] % 2 == 0 {
-                let value = sudoku.cells[*center].available[0] / 2;
-                for (left, right) in rest{
-                    if left % sudoku.size == right % sudoku.size || left / sudoku.size == right / sudoku.size{ //in same comlumn || row
-                        if sudoku.cells[*left].available.contains(&value) && !sudoku.cells[*left].locked_in{
-                            buffer.push(*left);
-                        }
-                        if sudoku.cells[*right].available.contains(&value) && !sudoku.cells[*right].locked_in{
-                            buffer.push(*right);
-                        }
-                        
-                    }
-                    // THIS NEEDS SQUARE RULE
-                    let sub_s = sudoku.size.integer_sqrt();
-                    if left % sudoku.size / sub_s == right  % sudoku.size / sub_s && left / sudoku.size / sub_s == right / sudoku.size / sub_s { //in same square
-                        if sudoku.cells[*left].available.contains(&value) && !sudoku.cells[*left].locked_in{
-                            buffer.push(*left);
-                        }
-                        if sudoku.cells[*right].available.contains(&value) && !sudoku.cells[*left].locked_in {
-                            buffer.push(*right);
-                        }
-                        
-                    }
-                }
-
-                if !buffer.is_empty() {
-                    return Some((value, buffer));
-                }
-            }
-        }
-        // if a certain digit is locked in a square onto the zipper, that zipper center must be greater than that digit
-        
-        None
-        
-    }
 
     fn multi_remove<'buf>(
             &self,
@@ -365,61 +234,6 @@ impl Rule for ZipperRule {
 }
 
 //########################### TEST ###############################
-
-/*
-#[test]
-fn locked_zipper_candidate() {
-    
-    let mut sudoku = Sudoku::new(4, vec![super::square_rule::SquareRule::new()]);
-    let mut zipper_rule = ZipperRule {
-        zipper_clue: vec![(1 as usize, vec![(0 as usize, 2 as usize),(4 as usize, 3 as usize)])],
-    };
-
-    /* The test sudoku a 4 x 4
-    =================                   =================
-    ‖   | 4 ‖   |   ‖                   ‖ x | x ‖ x | x ‖
-    -----------------                    -----------------
-    ‖   |   ‖   |   ‖                   ‖ x |   ‖   |   ‖
-    =================        zipper =   ================= 
-    ‖   |   ‖   |   ‖                   ‖   |   ‖   |   ‖
-    -----------------                    -----------------
-    ‖   |   ‖   |   ‖                   ‖   |   ‖   |   ‖
-    =================                   =================
-    */
-
-    sudoku.set_cell(4, 1).unwrap();
-    println!("{sudoku}");
-    let mut buffer = vec![];
-    let mut arena = Bump::new();
-    let res = zipper_rule.locked_candidate(&sudoku, &mut buffer, &mut arena);
-    assert_eq!(res, Some((2, vec![0, 2].as_slice())));
-
-    sudoku = Sudoku::new(4, vec![super::square_rule::SquareRule::new()]);
-    zipper_rule = ZipperRule {
-        zipper_clue: vec![(1 as usize, vec![(0 as usize, 2 as usize),(4 as usize, 3 as usize)]), (15 as usize, vec![(11 as usize, 14 as usize),(7 as usize, 13 as usize)])],
-    };
-
-    /* The test sudoku a 4 x 4
-    =================                   =================
-    ‖   | 3 ‖   |   ‖                   ‖ x | x ‖ x | x ‖
-    -----------------                    -----------------
-    ‖   |   ‖   |   ‖                   ‖ x |   ‖   | v ‖
-    =================        zipper =   ================= 
-    ‖   |   ‖   |   ‖                   ‖   |   ‖   | v ‖
-    -----------------                    -----------------
-    ‖   |   ‖   | 3 ‖                   ‖   | v ‖ v | v ‖
-    =================                   =================
-    */
-
-    sudoku.set_cell(4, 1).unwrap();
-    sudoku.set_cell(4, 15).unwrap();
-    println!("{sudoku}");
-
-    let res = zipper_rule.locked_candidate(&sudoku, &mut buffer, &mut arena);
-    assert_eq!(res, Some((2, [0, 2].as_slice())))
-     
-}
-*/
 
 #[test]
 fn zipper_test() {

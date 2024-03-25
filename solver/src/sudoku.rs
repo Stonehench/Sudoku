@@ -298,8 +298,7 @@ impl Sudoku {
                             continue 'main;
                         }
                     }
-                    println!("Multi remove on:");
-                    println!("{self}");
+
                     // OMG I DO NOT EVEN KNOW HELP ME OH LORD!!!!
                     for rule in self.rules.iter().filter(|r| {
                         if r.needs_square_for_locked() {
@@ -319,20 +318,11 @@ impl Sudoku {
                                     index,
                                     Entropy(self.cells[*index].available.len()),
                                 );
-                                if self.cells[*index].available.len() == 0 {
-                                    println!("An enthropy hit 0");
-                                    
-                                }
-                                
                             }  
-                            println!("After"); 
-                            println!("{self}");
+
                             continue 'main;                         
                         }
                     } 
-
-
-                    println!("GUESSING");
 
                     //Der er flere muligheder for hvad der kan vælges. Derfor pushes state på branch stacken og der vælges en mulighed
                     //Vælg random
@@ -782,6 +772,13 @@ fn solve_zipper9x9_test() {
     sudoku.solve(None, None).unwrap();
 
     println!("{sudoku}");
+    assert_eq!(
+        sudoku.to_string().trim(),
+        std::fs::read_to_string("./sudokuZipper9x9Solution")
+            .unwrap()
+            .replace("\r\n", "\n")
+            .trim()
+    );
 }
 
 
