@@ -310,6 +310,9 @@ impl Sudoku {
                     }) {
                         let multi_remove_indecies = rule.multi_remove(self,  &mut big_buffer);
                         if !multi_remove_indecies.is_empty(){
+                            //Put nuværende cell tilbage i priority queue
+                            pri_queue.push(index, entropy);
+
                             for (value, index) in multi_remove_indecies{
                                 self.cells[*index].remove(*value)?;
                                 pri_queue.change_priority(
