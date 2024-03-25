@@ -381,7 +381,18 @@ impl Sudoku {
                 zipper_rule.zipper_clue.push((2,vec![(1 , 6 ) , (0, 10)]))
             }
             if sudoku.size == 9 {
-                zipper_rule.zipper_clue.push((40,vec![(39,41) , (48,32), (47, 33), (46, 34), (45, 35)]))
+                //zipper_rule.zipper_clue.push((40,vec![(39,41) , (48,32), (47, 33), (46, 34), (45, 35)]));
+                zipper_rule.zipper_clue.push((0,vec![(1,9),(2,18)]));
+                zipper_rule.zipper_clue.push((30,vec![(21,29),(12,28),(3,27)]));
+                zipper_rule.zipper_clue.push((13,vec![(4,22)]));
+                zipper_rule.zipper_clue.push((14,vec![(5,23)]));
+                zipper_rule.zipper_clue.push((40,vec![(41,49),(42,58),(43,67),(44,76),(53,77),(52,68),(51,59),(61,69)]));
+                zipper_rule.zipper_clue.push((26,vec![(17,25),(8,24),(7,15)]));
+                zipper_rule.zipper_clue.push((37,vec![(36,38)]));
+                zipper_rule.zipper_clue.push((56,vec![(47,55),(46,64),(45,73)]));
+                zipper_rule.zipper_clue.push((66,vec![(57,65)])); 
+                zipper_rule.zipper_clue.push((70,vec![(71,79),(62,78)]));
+
             }      
         }
 
