@@ -257,7 +257,30 @@ impl Sudoku {
                 )?,
                 _ => {
                     // Der er ikke flere naked singles, så der tjekkes for hidden singles
+                    for rule in self.rules.iter().filter(|r| {
+                        if r.needs_square_for_locked() {
+                            has_square
+                        } else {
+                            true
+                        }
+                    }) {
+                        let multi_remove_indecies = rule.multi_remove(self,  &mut big_buffer);
+                        if !multi_remove_indecies.is_empty(){
+                            //Put nuværende cell tilbage i priority queue
+                            pri_queue.push(index, entropy);
 
+                            for (value, index) in multi_remove_indecies{
+                                self.cells[*index].remove(*value)?;
+                                pri_queue.change_priority(
+                                    index,
+                                    Entropy(self.cells[*index].available.len()),
+                                );
+                            }  
+
+                            continue 'main;                         
+                        }
+                    } 
+                    
                     for rule in &self.rules {
                         if let Some((n, hidden_index)) = rule.hidden_singles(self) {
                             //Put nuværende cell tilbage i priority queue
@@ -298,7 +321,7 @@ impl Sudoku {
                             continue 'main;
                         }
                     }
-
+                    /*
                     // OMG I DO NOT EVEN KNOW HELP ME OH LORD!!!!
                     for rule in self.rules.iter().filter(|r| {
                         if r.needs_square_for_locked() {
@@ -323,6 +346,7 @@ impl Sudoku {
                             continue 'main;                         
                         }
                     } 
+                     */
 
                     //Der er flere muligheder for hvad der kan vælges. Derfor pushes state på branch stacken og der vælges en mulighed
                     //Vælg random
