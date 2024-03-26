@@ -83,9 +83,11 @@ class _ZipperState extends State<Zipper> {
                             zipper.$2[j].$2 == i &&
                                 zipper.$2[j - 1].$1 == i + 1 ||
                             zipper.$2[j].$2 == i &&
-                                zipper.$2[j - 1].$2 == i + 1 ||
-                            zipper.$2[j].$1 == i && zipper.$1 == i + 1 ||
-                            zipper.$2[j].$2 == i && zipper.$1 == i + 1)) {
+                                zipper.$2[j - 1].$2 == i + 1)) {
+                      return true;
+                    }
+                    if (zipper.$2[j].$1 == i && zipper.$1 == i + 1 ||
+                        zipper.$2[j].$2 == i && zipper.$1 == i + 1) {
                       return true;
                     }
                   }
@@ -135,6 +137,18 @@ class _ZipperState extends State<Zipper> {
                                 right + state.size == zipper.$2[j - 1].$1 ||
                             right == index &&
                                 right + state.size == zipper.$2[j - 1].$2)) {
+                      return true;
+                    }
+
+                    // next to the center
+                    if (zipper.$1 == index &&
+                            zipper.$1 + state.size == zipper.$2.first.$1 ||
+                        zipper.$1 == index &&
+                            zipper.$1 + state.size == zipper.$2.first.$2 ||
+                        zipper.$2[j].$1 == index &&
+                            zipper.$1 == index + state.size ||
+                        zipper.$2[j].$2 == index &&
+                            zipper.$1 == index + state.size) {
                       return true;
                     }
                   }
