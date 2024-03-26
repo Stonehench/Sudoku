@@ -13,27 +13,41 @@ class ScoreboardPage extends StatefulWidget {
   State<ScoreboardPage> createState() => _ScoreboardPageState();
 }
 
-enum LoadingState { unstarted, loading, failed, success }
-
 class _ScoreboardPageState extends State<ScoreboardPage> {
   @override
   Widget build(BuildContext context) {
+    Key userKey;
+    Account? account = AccountState.instance().get();
+    if (account == null) {
+      userKey = const Key("null");
+    } else {
+      userKey = Key(account.userID);
+    }
+
     return Scaffold(
       appBar: AppBar(
         title: const Text("Scoreboard"),
         actions: [
           TextButton(
-              onPressed: () => Navigator.of(context).push(
-                  MaterialPageRoute(builder: (context) => const AccountPage())),
+              onPressed: () async {
+                await Navigator.of(context).push(MaterialPageRoute(
+                    builder: (context) => const AccountPage()));
+                setState(() {
+                  //Force rebuild
+                });
+              },
               child: const Text("Account"))
         ],
       ),
-      body: const ScoreboardEmbed(
+      body: ScoreboardEmbed(
+        key: userKey,
         onlyYou: false,
       ),
     );
   }
 }
+
+enum LoadingState { unstarted, loading, failed, success }
 
 class ScoreboardEmbed extends StatefulWidget {
   final bool onlyYou;
@@ -219,13 +233,29 @@ Future<List<Score>?> getCurrentPlace() async {
 
   int index = allScores.indexWhere((score) => score.you);
 
-  // WTFFFF. Virker tho
-  return allScores
-      .take(index + 3)
-      .toList()
-      .reversed
-      .take(4)
-      .toList()
-      .reversed
-      .toList();
+  if (index == 0) {
+    return allScores.take(3).toList();
+  } else if (index + 1 == allScores.length) {
+    return allScores.indexed
+        .skipWhile((value) => fst(value) + 2 < index)
+        .map(scd)
+        .take(3)
+        .toList();
+  } else {
+    return allScores.indexed
+        .skipWhile((value) => fst(value) + 1 < index)
+        .map(scd)
+        .take(3)
+        .toList();
+  }
+}
+
+T1 fst<T1, T2>((T1, T2) t) {
+  var (t1, _) = t;
+  return t1;
+}
+
+T2 scd<T1, T2>((T1, T2) t) {
+  var (_, t2) = t;
+  return t2;
 }
