@@ -4,6 +4,7 @@ import 'package:sudoku/account.dart';
 import 'package:sudoku/board.dart';
 import 'package:sudoku/digit_selection.dart';
 import 'package:sudoku/game_header.dart';
+import 'package:sudoku/scoreboard.dart';
 import 'package:sudoku/tool_bar.dart';
 import 'package:sudoku/game_state.dart';
 
@@ -77,7 +78,8 @@ class GameView extends StatelessWidget {
                   SpinKitCircle(color: Theme.of(context).highlightColor)
                 ],
               ScoreSubmissionStatus.submitted => [
-                  Text("Gained ${state.tryGetScore()!} points")
+                  Text("Gained ${state.tryGetScore()!} points"),
+                  const Scoreboard(asPage: false, onlyYou: true),
                 ],
               ScoreSubmissionStatus.noWifi => [
                   const Text("Failed to connect to server. Check your wifi")

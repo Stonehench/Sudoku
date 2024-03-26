@@ -7,7 +7,9 @@ import 'package:sudoku/api.dart';
 import 'package:http/http.dart' as http;
 
 class Scoreboard extends StatefulWidget {
-  const Scoreboard({super.key});
+  final bool onlyYou;
+  final bool asPage;
+  const Scoreboard({super.key, this.onlyYou = false, this.asPage = true});
 
   @override
   State<Scoreboard> createState() => _ScoreboardState();
@@ -28,7 +30,8 @@ class _ScoreboardState extends State<Scoreboard> {
           setState(() {
             loadingState = LoadingState.loading;
           });
-          var res = await getScoreBoard();
+          var res =
+              await (widget.onlyYou ? getCurrentPlace() : getScoreBoard());
           setState(() {
             if (res == null) {
               loadingState = LoadingState.failed;
@@ -52,36 +55,46 @@ class _ScoreboardState extends State<Scoreboard> {
             child: Text(
                 "Failed to fetch scoreboard. Check your internet connection"));
       case LoadingState.success:
-        body = ListView(
-          padding: const EdgeInsets.all(5),
-          children: scoreboard!.indexed.map(scoreItem).toList(),
-        );
+        if (widget.onlyYou) {
+          body = Column(
+              //padding: const EdgeInsets.all(5),
+              children: scoreboard!.map(scoreItem).toList());
+        } else {
+          body = ListView(
+            padding: const EdgeInsets.all(5),
+            children: scoreboard!.map(scoreItem).toList(),
+          );
+        }
     }
-
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text("Scoreboard"),
-        actions: [
-          TextButton(
-              onPressed: () => Navigator.of(context).push(
-                  MaterialPageRoute(builder: (context) => const AccountPage())),
-              child: const Text("Account"))
-        ],
-      ),
-      body: RefreshIndicator(
-          onRefresh: () async {
-            var res = await getScoreBoard();
-            setState(() {
-              if (res == null) {
-                loadingState = LoadingState.failed;
-              } else {
-                scoreboard = res;
-                loadingState = LoadingState.success;
-              }
-            });
-          },
-          child: Center(child: body)),
-    );
+    if (widget.asPage) {
+      return Scaffold(
+        appBar: AppBar(
+          title: const Text("Scoreboard"),
+          actions: [
+            TextButton(
+                onPressed: () => Navigator.of(context).push(MaterialPageRoute(
+                    builder: (context) => const AccountPage())),
+                child: const Text("Account"))
+          ],
+        ),
+        body: RefreshIndicator(
+            onRefresh: () async {
+              var res = await getScoreBoard();
+              setState(() {
+                if (res == null) {
+                  loadingState = LoadingState.failed;
+                } else {
+                  scoreboard = res;
+                  loadingState = LoadingState.success;
+                }
+              });
+            },
+            child: Center(child: body)),
+      );
+    } else {
+      print("BODY!!$body");
+      return Center(child: body);
+    }
   }
 
   TextStyle styleOfPlace(int place, BuildContext context) {
@@ -99,10 +112,7 @@ class _ScoreboardState extends State<Scoreboard> {
     }
   }
 
-  Widget scoreItem((int, Score) data) {
-    var (index, score) = data;
-    var place = index + 1;
-
+  Widget scoreItem(Score score) {
     var topDecorator = BoxDecoration(
       borderRadius: const BorderRadius.only(
           topLeft: Radius.circular(10), topRight: Radius.circular(10)),
@@ -118,9 +128,9 @@ class _ScoreboardState extends State<Scoreboard> {
       color: Theme.of(context).focusColor,
     );
 
-    var decoration = place == 1
+    var decoration = score.place == 1
         ? topDecorator
-        : (place == scoreboard!.length ? botDecorator : normalDecorator);
+        : (score.place == scoreboard!.length ? botDecorator : normalDecorator);
 
     var you = score.you ? [const Text("You!")] : [];
 
@@ -133,7 +143,8 @@ class _ScoreboardState extends State<Scoreboard> {
           Container(
             width: 50,
             margin: const EdgeInsets.fromLTRB(10, 0, 0, 0),
-            child: Text("#$place", style: styleOfPlace(place, context)),
+            child: Text("#${score.place}",
+                style: styleOfPlace(score.place, context)),
           ),
           Text(
             score.username,
@@ -158,7 +169,8 @@ class Score {
   final String username;
   final int value;
   final bool you;
-  const Score(this.username, this.value, this.you);
+  final int place;
+  const Score(this.username, this.value, this.you, this.place);
 
   @override
   String toString() {
@@ -167,7 +179,7 @@ class Score {
 }
 
 Future<List<Score>?> getScoreBoard() async {
-  Account? account = null;
+  Account? account = AccountState.instance().get();
   try {
     String userID;
     if (account != null) {
@@ -182,12 +194,30 @@ Future<List<Score>?> getScoreBoard() async {
     List<Score> scoreBoard = [];
     for (var score in jsonRes as List<dynamic>) {
       var scoreMap = score as Map<String, dynamic>;
-      scoreBoard
-          .add(Score(scoreMap["username"], scoreMap["value"], scoreMap["you"]));
+      scoreBoard.add(Score(scoreMap["username"], scoreMap["value"],
+          scoreMap["you"], scoreBoard.length + 1));
     }
     return scoreBoard;
   } catch (e) {
     print("Scoreboard fetching failed with $e");
     return null;
   }
+}
+
+Future<List<Score>?> getCurrentPlace() async {
+  var allScores = await getScoreBoard();
+  if (allScores == null) {
+    return null;
+  }
+
+  int index = allScores.indexWhere((score) => score.you);
+
+  return allScores
+      .take(index + 3)
+      .toList()
+      .reversed
+      .take(4)
+      .toList()
+      .reversed
+      .toList();
 }

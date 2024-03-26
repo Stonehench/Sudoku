@@ -182,6 +182,9 @@ class GameState extends ChangeNotifier {
   bool drafting = false;
 }
 
+
+
+
 enum ScoreSubmissionStatus {
   gameNotDone,
   unSubmitted,
