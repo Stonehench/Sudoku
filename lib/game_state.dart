@@ -142,8 +142,7 @@ class GameState extends ChangeNotifier {
       case ScoreSubmissionStatus.serverError:
         return;
       case ScoreSubmissionStatus.unSubmitted:
-        //TODO: Point fået af at vinde er hardcodet. Det skal være baseret på sværhedsgraden.
-        int value = 3;
+        int value = (size * board.length) ~/ initialClues.length;
 
         Account? account = AccountState.instance().get();
         if (account == null) {
