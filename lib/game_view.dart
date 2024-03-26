@@ -47,6 +47,11 @@ class GameView extends StatelessWidget {
   }
 
   Widget victoryWidget(BuildContext context, GameState state) {
+    var buttonStyle = OutlinedButton.styleFrom(
+      shape: const RoundedRectangleBorder(
+          borderRadius: BorderRadius.all(Radius.circular(5))),
+    );
+
     return Center(
       child: Container(
         decoration: BoxDecoration(
@@ -83,6 +88,7 @@ class GameView extends StatelessWidget {
               ScoreSubmissionStatus.noAccount => [
                   const Text("Not logged in"),
                   OutlinedButton(
+                      style: buttonStyle,
                       onPressed: () async {
                         await Navigator.of(context).push(MaterialPageRoute(
                             builder: (context) => const AccountPage()));
@@ -93,6 +99,7 @@ class GameView extends StatelessWidget {
             },
             const Spacer(),
             OutlinedButton(
+                style: buttonStyle,
                 onPressed: () {
                   Navigator.of(context).pop();
                 },

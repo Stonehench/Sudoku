@@ -34,7 +34,7 @@ class _LoggedInWidgetState extends State<LoggedInWidget> {
   Widget build(BuildContext context) {
     AccountState? aState = AccountState.instance();
 
-    return ElevatedButton(
+    return OutlinedButton(
         onPressed: () => aState.logout(), child: const Text("Logout"));
   }
 }
