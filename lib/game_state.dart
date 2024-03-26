@@ -1,7 +1,6 @@
 import 'dart:math';
 
 import 'package:flutter/foundation.dart';
-import 'package:sudoku/account.dart';
 import 'package:sudoku/api.dart';
 import 'package:sudoku/src/rust/api/simple.dart';
 import 'package:http/http.dart' as http;
@@ -33,6 +32,7 @@ class GameState extends ChangeNotifier {
     }
 
     size = sqrt(board.length).toInt();
+    addListener(_trySubmitScore);
   }
 
   late final int size;
@@ -84,51 +84,111 @@ class GameState extends ChangeNotifier {
   }
 
   bool digitDone(int n) {
-    //TODO: Det her skal måske memoizes. Ingen grund til at gøre det ved HVER update
     return board.where((b) => b == n).length == size;
   }
 
-  bool gameDone() {
+  bool _gameDone() {
     return board.every((n) => n != null);
   }
 
-  bool _scoreSubmitted = false;
-  bool _scoreInAir = false;
+  int? tryGetScore() {
+    return _submittedScore;
+  }
 
-  Future<int?> trySubmitScore() async {
-    while (_scoreInAir) {
-      //Block  while another request is flying
-      await Future.delayed(const Duration(seconds: 1));
-      print("Blocking request");
+  ScoreSubmissionStatus _scoreSubmitStatus = ScoreSubmissionStatus.gameNotDone;
+  int? _submittedScore;
+
+  ScoreSubmissionStatus scoreStatus() {
+    return _scoreSubmitStatus;
+  }
+
+  void retryScoreSubmit() {
+    //Retry not allowed if status is already submitted.
+    switch (_scoreSubmitStatus) {
+      //Only allow retry if status is noAccount,noWifi or serverErrir.
+      case ScoreSubmissionStatus.noAccount:
+      case ScoreSubmissionStatus.noWifi:
+      case ScoreSubmissionStatus.serverError:
+        _scoreSubmitStatus = ScoreSubmissionStatus.unSubmitted;
+        notifyListeners();
+
+      default:
+        return;
     }
+  }
 
-    //TODO: Point fået af at vinde er hardcodet. Det skal være baseret på sværhedsgraden.
-    int value = 3;
-    if (_scoreSubmitted) {
-      return value;
+  int? serverErrorStatus;
+
+  // Vi laver det til en state machine type beat tænker jeg
+  //Denne funktion bliver kaldt ved hver notifyListeners()
+  void _trySubmitScore() async {
+    if (!_gameDone()) {
+      return;
     }
-
-    _scoreInAir = true;
-    Account? account = await getAccount();
-    if (account != null) {
-      _scoreSubmitted = true;
-
-      try {
-        await http
-            .get(serverAddress.resolve("/add_score/${account.userID}/$value"));
-        _scoreSubmitted = true;
-        _scoreInAir = false;
-        return value;
-      } catch (e) {
-        print(e);
-        _scoreInAir = false;
-        return null;
-      }
+    if (_scoreSubmitStatus == ScoreSubmissionStatus.gameNotDone) {
+      _scoreSubmitStatus = ScoreSubmissionStatus.unSubmitted;
     }
-    _scoreInAir = false;
+    switch (_scoreSubmitStatus) {
+      case ScoreSubmissionStatus.inAir:
+        return;
+      case ScoreSubmissionStatus.gameNotDone:
+        return;
+      case ScoreSubmissionStatus.noAccount:
+        return;
+      case ScoreSubmissionStatus.noWifi:
+        return;
+      case ScoreSubmissionStatus.submitted:
+        return;
+      case ScoreSubmissionStatus.serverError:
+        return;
+      case ScoreSubmissionStatus.unSubmitted:
+        //TODO: Point fået af at vinde er hardcodet. Det skal være baseret på sværhedsgraden.
+        int value = 3;
 
-    return null;
+        Account? account = AccountState.instance().get();
+        if (account == null) {
+          _scoreSubmitStatus = ScoreSubmissionStatus.noAccount;
+          notifyListeners();
+          return;
+        }
+
+        try {
+          _scoreSubmitStatus = ScoreSubmissionStatus.inAir;
+          notifyListeners();
+
+          var response =
+              await http.post(serverAddress.resolve("/add_score"), body: {
+            "user_id": account.userID,
+            "value": value.toString(),
+          });
+
+          if (response.statusCode != 200) {
+            _scoreSubmitStatus = ScoreSubmissionStatus.serverError;
+            serverErrorStatus = response.statusCode;
+            notifyListeners();
+            return;
+          }
+          _submittedScore = value;
+          _scoreSubmitStatus = ScoreSubmissionStatus.submitted;
+          notifyListeners();
+          return;
+        } catch (e) {
+          _scoreSubmitStatus = ScoreSubmissionStatus.noWifi;
+          notifyListeners();
+          return;
+        }
+    }
   }
 
   bool drafting = false;
+}
+
+enum ScoreSubmissionStatus {
+  gameNotDone,
+  unSubmitted,
+  noAccount,
+  noWifi,
+  inAir,
+  submitted,
+  serverError,
 }
