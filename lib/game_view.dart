@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_spinkit/flutter_spinkit.dart';
+import 'package:sudoku/account.dart';
 import 'package:sudoku/board.dart';
 import 'package:sudoku/digit_selection.dart';
 import 'package:sudoku/game_header.dart';
@@ -33,47 +34,64 @@ class GameView extends StatelessWidget {
           ListenableBuilder(
             listenable: state,
             builder: (context, _) {
-              return Center(
-                child: !state.gameDone()
-                    ? null
-                    : Container(
-                        decoration: BoxDecoration(
-                          backgroundBlendMode: BlendMode.darken,
-                          borderRadius:
-                              const BorderRadius.all(Radius.circular(20)),
-                          color: Theme.of(context).dialogBackgroundColor,
-                        ),
-                        padding: const EdgeInsets.all(20),
-                        width: MediaQuery.of(context).size.width * 0.8,
-                        height: MediaQuery.of(context).size.height * 0.5,
-                        child: Column(
-                          children: [
-                            const Text(
-                              "You win!",
-                              style: TextStyle(fontSize: 35),
-                            ),
-                            if (state.scoreInAir()) ...[
-                              const SpinKitChasingDots(
-                                color: Colors.red,
-                              )
-                            ] else if (state.submitted()) ...[
-                              Text("You gained X points"),
-                            ] else ...[
-                              const Text(
-                                  "Failed to submit score. Check yo wifi or login"),
-                              OutlinedButton(
-                                  onPressed: () {
-                                    state.trySubmitScore();
-                                  },
-                                  child: const Text("Retry"))
-                            ]
-                          ],
-                        ),
-                      ),
-              );
+              if (state.scoreStatus() != ScoreSubmissionStatus.gameNotDone) {
+                return victoryWidget(context, state);
+              } else {
+                return const SizedBox.shrink();
+              }
             },
           ),
         ],
+      ),
+    );
+  }
+
+  Widget victoryWidget(BuildContext context, GameState state) {
+    return Center(
+      child: Container(
+        decoration: BoxDecoration(
+          backgroundBlendMode: BlendMode.darken,
+          borderRadius: const BorderRadius.all(Radius.circular(20)),
+          color: Theme.of(context).dialogBackgroundColor,
+        ),
+        padding: const EdgeInsets.all(20),
+        width: MediaQuery.of(context).size.width * 0.8,
+        height: MediaQuery.of(context).size.height * 0.5,
+        child: Column(
+          children: [
+            const Text(
+              "You win!",
+              style: TextStyle(fontSize: 35),
+            ),
+            ...switch (state.scoreStatus()) {
+              ScoreSubmissionStatus.gameNotDone ||
+              ScoreSubmissionStatus.unSubmitted =>
+                throw "Unreachable",
+              ScoreSubmissionStatus.inAir => [
+                  SpinKitCircle(color: Theme.of(context).highlightColor)
+                ],
+              ScoreSubmissionStatus.submitted => [
+                  Text("Gained ${state.tryGetScore()!} points")
+                ],
+              ScoreSubmissionStatus.noWifi => [
+                  const Text("Failed to connect to server. Check your wifi")
+                ],
+              ScoreSubmissionStatus.serverError => [
+                  Text("Internal server error: ${state.serverErrorStatus}")
+                ],
+              ScoreSubmissionStatus.noAccount => [
+                  const Text("Not logged in"),
+                  OutlinedButton(
+                      onPressed: () async {
+                        await Navigator.of(context).push(MaterialPageRoute(
+                            builder: (context) => const AccountPage()));
+                        state.retryScoreSubmit();
+                      },
+                      child: const Text("Login"))
+                ],
+            }
+          ],
+        ),
       ),
     );
   }
