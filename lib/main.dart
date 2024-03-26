@@ -6,6 +6,7 @@ import 'package:sudoku/src/rust/frb_generated.dart';
 
 Future<void> main() async {
   await RustLib.init();
+  WidgetsFlutterBinding.ensureInitialized();
   await AccountState.initialize();
   runApp(const SudokuApp());
 }

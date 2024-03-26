@@ -52,6 +52,7 @@ class GameView extends StatelessWidget {
         decoration: BoxDecoration(
           backgroundBlendMode: BlendMode.darken,
           borderRadius: const BorderRadius.all(Radius.circular(20)),
+          border: Border.all(color: Colors.white),
           color: Theme.of(context).dialogBackgroundColor,
         ),
         padding: const EdgeInsets.all(20),
@@ -89,7 +90,13 @@ class GameView extends StatelessWidget {
                       },
                       child: const Text("Login"))
                 ],
-            }
+            },
+            const Spacer(),
+            OutlinedButton(
+                onPressed: () {
+                  Navigator.of(context).pop();
+                },
+                child: const Text("Home")),
           ],
         ),
       ),
