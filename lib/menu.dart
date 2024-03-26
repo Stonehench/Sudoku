@@ -208,7 +208,7 @@ class _MenuState extends State<Menu> {
                 ),
                 OutlinedButton(
                   onPressed: () => Navigator.of(context).push(MaterialPageRoute(
-                      builder: (context) => const Scoreboard())),
+                      builder: (context) => const ScoreboardPage())),
                   child: const Text("Scoreboard"),
                 )
               ],

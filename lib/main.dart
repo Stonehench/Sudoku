@@ -1,10 +1,13 @@
 import 'package:flutter/material.dart';
+import 'package:sudoku/api.dart';
 import 'package:sudoku/menu.dart';
 import 'package:sudoku/src/rust/api/simple.dart';
 import 'package:sudoku/src/rust/frb_generated.dart';
 
 Future<void> main() async {
   await RustLib.init();
+  WidgetsFlutterBinding.ensureInitialized();
+  await AccountState.initialize();
   runApp(const SudokuApp());
 }
 

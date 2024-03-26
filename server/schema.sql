@@ -1,6 +1,7 @@
 create table users(
     user_id char(36) primary key,
-    username varchar(20)
+    username varchar(20) unique,
+    password varchar(20)
 )
 
 create table scores(
