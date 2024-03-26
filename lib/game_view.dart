@@ -79,7 +79,7 @@ class GameView extends StatelessWidget {
                 ],
               ScoreSubmissionStatus.submitted => [
                   Text("Gained ${state.tryGetScore()!} points"),
-                  const Scoreboard(asPage: false, onlyYou: true),
+                  const ScoreboardEmbed(onlyYou: true),
                 ],
               ScoreSubmissionStatus.noWifi => [
                   const Text("Failed to connect to server. Check your wifi")

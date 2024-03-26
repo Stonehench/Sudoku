@@ -6,96 +6,46 @@ import 'package:sudoku/account.dart';
 import 'package:sudoku/api.dart';
 import 'package:http/http.dart' as http;
 
-class Scoreboard extends StatefulWidget {
-  final bool onlyYou;
-  final bool asPage;
-  const Scoreboard({super.key, this.onlyYou = false, this.asPage = true});
+class ScoreboardPage extends StatefulWidget {
+  const ScoreboardPage({super.key});
 
   @override
-  State<Scoreboard> createState() => _ScoreboardState();
+  State<ScoreboardPage> createState() => _ScoreboardPageState();
 }
 
 enum LoadingState { unstarted, loading, failed, success }
 
-class _ScoreboardState extends State<Scoreboard> {
-  LoadingState loadingState = LoadingState.unstarted;
-  List<Score>? scoreboard;
-
+class _ScoreboardPageState extends State<ScoreboardPage> {
   @override
   Widget build(BuildContext context) {
-    Widget body;
-    switch (loadingState) {
-      case LoadingState.unstarted:
-        () async {
-          setState(() {
-            loadingState = LoadingState.loading;
-          });
-          var res =
-              await (widget.onlyYou ? getCurrentPlace() : getScoreBoard());
-          setState(() {
-            if (res == null) {
-              loadingState = LoadingState.failed;
-            } else {
-              scoreboard = res;
-              loadingState = LoadingState.success;
-            }
-          });
-        }();
-        body = const SpinKitCircle(
-          color: Colors.white,
-        );
-
-      case LoadingState.loading:
-        body = const SpinKitCircle(
-          color: Colors.white,
-        );
-
-      case LoadingState.failed:
-        body = const Center(
-            child: Text(
-                "Failed to fetch scoreboard. Check your internet connection"));
-      case LoadingState.success:
-        if (widget.onlyYou) {
-          body = Column(
-              //padding: const EdgeInsets.all(5),
-              children: scoreboard!.map(scoreItem).toList());
-        } else {
-          body = ListView(
-            padding: const EdgeInsets.all(5),
-            children: scoreboard!.map(scoreItem).toList(),
-          );
-        }
-    }
-    if (widget.asPage) {
-      return Scaffold(
-        appBar: AppBar(
-          title: const Text("Scoreboard"),
-          actions: [
-            TextButton(
-                onPressed: () => Navigator.of(context).push(MaterialPageRoute(
-                    builder: (context) => const AccountPage())),
-                child: const Text("Account"))
-          ],
-        ),
-        body: RefreshIndicator(
-            onRefresh: () async {
-              var res = await getScoreBoard();
-              setState(() {
-                if (res == null) {
-                  loadingState = LoadingState.failed;
-                } else {
-                  scoreboard = res;
-                  loadingState = LoadingState.success;
-                }
-              });
-            },
-            child: Center(child: body)),
-      );
-    } else {
-      print("BODY!!$body");
-      return Center(child: body);
-    }
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text("Scoreboard"),
+        actions: [
+          TextButton(
+              onPressed: () => Navigator.of(context).push(
+                  MaterialPageRoute(builder: (context) => const AccountPage())),
+              child: const Text("Account"))
+        ],
+      ),
+      body: const ScoreboardEmbed(
+        onlyYou: false,
+      ),
+    );
   }
+}
+
+class ScoreboardEmbed extends StatefulWidget {
+  final bool onlyYou;
+
+  const ScoreboardEmbed({super.key, required this.onlyYou});
+  @override
+  State<ScoreboardEmbed> createState() => _ScoreboardEmbedState();
+}
+
+class _ScoreboardEmbedState extends State<ScoreboardEmbed> {
+  LoadingState loadingState = LoadingState.unstarted;
+  List<Score>? scoreboard;
 
   TextStyle styleOfPlace(int place, BuildContext context) {
     if (place == 1) {
@@ -128,9 +78,9 @@ class _ScoreboardState extends State<Scoreboard> {
       color: Theme.of(context).focusColor,
     );
 
-    var decoration = score.place == 1
+    var decoration = scoreboard!.first == score
         ? topDecorator
-        : (score.place == scoreboard!.length ? botDecorator : normalDecorator);
+        : (scoreboard!.last == score ? botDecorator : normalDecorator);
 
     var you = score.you ? [const Text("You!")] : [];
 
@@ -160,6 +110,63 @@ class _ScoreboardState extends State<Scoreboard> {
             ),
           )
         ],
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return RefreshIndicator(
+      onRefresh: () async {
+        var res = await getScoreBoard();
+        setState(() {
+          if (res == null) {
+            loadingState = LoadingState.failed;
+          } else {
+            scoreboard = res;
+            loadingState = LoadingState.success;
+          }
+        });
+      },
+      child: Center(
+        child: switch (loadingState) {
+          LoadingState.unstarted => () {
+              //Cringe, usejt, osv ..
+              () async {
+                setState(() {
+                  loadingState = LoadingState.loading;
+                });
+                var res = await (widget.onlyYou
+                    ? getCurrentPlace()
+                    : getScoreBoard());
+                setState(() {
+                  if (res == null) {
+                    loadingState = LoadingState.failed;
+                  } else {
+                    scoreboard = res;
+                    loadingState = LoadingState.success;
+                  }
+                });
+              }();
+              return const SpinKitCircle(
+                color: Colors.white,
+              );
+            }(),
+          LoadingState.loading => const SpinKitCircle(
+              color: Colors.white,
+            ),
+          LoadingState.failed => const Center(
+              child: Text(
+                  "Failed to fetch scoreboard. Check your internet connection")),
+          LoadingState.success => widget.onlyYou
+              ? Column(
+                  //padding: const EdgeInsets.all(5),
+                  children: scoreboard!.map(scoreItem).toList())
+              : ListView(
+                  padding: const EdgeInsets.all(5),
+                  children: scoreboard!.map(scoreItem).toList(),
+                ),
+        },
       ),
     );
   }
@@ -212,6 +219,7 @@ Future<List<Score>?> getCurrentPlace() async {
 
   int index = allScores.indexWhere((score) => score.you);
 
+  // WTFFFF. Virker tho
   return allScores
       .take(index + 3)
       .toList()
