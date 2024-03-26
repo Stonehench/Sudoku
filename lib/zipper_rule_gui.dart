@@ -117,31 +117,26 @@ class _ZipperState extends State<Zipper> {
                     int left = zipper.$2[j].$1;
                     int right = zipper.$2[j].$2;
                     if (j < zipper.$2.length - 1 &&
-                        (left == index &&
-                                left + state.size == zipper.$2[j + 1].$1 ||
-                            left == index &&
-                                left + state.size == zipper.$2[j + 1].$2 ||
-                            right == index &&
-                                right + state.size == zipper.$2[j + 1].$1 ||
-                            right == index &&
-                                right + state.size == zipper.$2[j + 1].$2)) {
-                      return true;
-                    }
-
-                    if (j > 0 &&
-                        (left == index &&
-                                left + state.size == zipper.$2[j - 1].$1 ||
-                            left == index &&
-                                left + state.size == zipper.$2[j - 1].$2 ||
-                            right == index &&
-                                right + state.size == zipper.$2[j - 1].$1 ||
-                            right == index &&
-                                right + state.size == zipper.$2[j - 1].$2)) {
-                      return true;
-                    }
-
-                    // next to the center
-                    if (zipper.$1 == index &&
+                            (left == index &&
+                                    left + state.size == zipper.$2[j + 1].$1 ||
+                                left == index &&
+                                    left + state.size == zipper.$2[j + 1].$2 ||
+                                right == index &&
+                                    right + state.size == zipper.$2[j + 1].$1 ||
+                                right == index &&
+                                    right + state.size ==
+                                        zipper.$2[j + 1].$2) ||
+                        j > 0 &&
+                            (left == index &&
+                                    left + state.size == zipper.$2[j - 1].$1 ||
+                                left == index &&
+                                    left + state.size == zipper.$2[j - 1].$2 ||
+                                right == index &&
+                                    right + state.size == zipper.$2[j - 1].$1 ||
+                                right == index &&
+                                    right + state.size ==
+                                        zipper.$2[j - 1].$2) ||
+                        zipper.$1 == index &&
                             zipper.$1 + state.size == zipper.$2.first.$1 ||
                         zipper.$1 == index &&
                             zipper.$1 + state.size == zipper.$2.first.$2 ||
