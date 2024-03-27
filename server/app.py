@@ -85,3 +85,14 @@ def add_score():
     cursor = conn.cursor()
     cursor.execute("insert into scores (user_id, value) values (?,?)", [user_id, value])
     return {}
+
+
+@app.route("/change_passwd", methods=["POST"])
+def change_passw():
+    user_id = request.form["user_id"]
+    new_passwd = request.form["password"]
+    cursor = conn.cursor()
+    cursor.execute(
+        "update users set password = ? where user_id = ?", [new_passwd, user_id]
+    )
+    return {}
