@@ -96,11 +96,12 @@ class _ScoreboardEmbedState extends State<ScoreboardEmbed> {
         ? topDecorator
         : (scoreboard!.last == score ? botDecorator : normalDecorator);
 
-    var lasth = score.lasth != 0
-        ? [const Spacer(), Text("${score.lasth} points past hour")]
-        : [];
+    var lasthtxt =
+        widget.onlyYou ? "+${score.lasth}" : "${score.lasth} points past hour";
 
-    var addons = score.you ? [const Text("You!"), ...lasth] : lasth;
+    var lasth = score.lasth != 0 ? [const Spacer(), Text(lasthtxt, style: const TextStyle(color: Colors.green),)] : [];
+
+    var addons = score.you && !widget.onlyYou ? [const Text("You!"), ...lasth] : lasth;
 
     return Container(
       decoration: decoration,
