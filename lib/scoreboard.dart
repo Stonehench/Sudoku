@@ -96,7 +96,12 @@ class _ScoreboardEmbedState extends State<ScoreboardEmbed> {
         ? topDecorator
         : (scoreboard!.last == score ? botDecorator : normalDecorator);
 
-    var you = score.you ? [const Text("You!")] : [];
+    var lasthtxt =
+        widget.onlyYou ? "+${score.lasth}" : "${score.lasth} points past hour";
+
+    var lasth = score.lasth != 0 ? [const Spacer(), Text(lasthtxt, style: const TextStyle(color: Colors.green),)] : [];
+
+    var addons = score.you && !widget.onlyYou ? [const Text("You!"), ...lasth] : lasth;
 
     return Container(
       decoration: decoration,
@@ -115,7 +120,7 @@ class _ScoreboardEmbedState extends State<ScoreboardEmbed> {
             style: const TextStyle(fontSize: 18),
           ),
           const Spacer(),
-          ...you,
+          ...addons,
           Container(
             padding: const EdgeInsets.fromLTRB(10, 0, 10, 0),
             child: Text(
@@ -191,7 +196,8 @@ class Score {
   final int value;
   final bool you;
   final int place;
-  const Score(this.username, this.value, this.you, this.place);
+  final int lasth;
+  const Score(this.username, this.value, this.you, this.place, this.lasth);
 
   @override
   String toString() {
@@ -215,8 +221,9 @@ Future<List<Score>?> getScoreBoard() async {
     List<Score> scoreBoard = [];
     for (var score in jsonRes as List<dynamic>) {
       var scoreMap = score as Map<String, dynamic>;
+      print(scoreMap);
       scoreBoard.add(Score(scoreMap["username"], scoreMap["value"],
-          scoreMap["you"], scoreBoard.length + 1));
+          scoreMap["you"], scoreBoard.length + 1, scoreMap["lasth"]));
     }
     return scoreBoard;
   } catch (e) {

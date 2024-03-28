@@ -59,7 +59,7 @@ class AccountState extends ChangeNotifier {
         "password": password,
       });
       if (response.statusCode != 200) {
-        _errorMsg = "Invalid username or password (probably)";
+        _errorMsg = "Invalid username or password";
         notifyListeners();
         return false;
       }
@@ -73,7 +73,7 @@ class AccountState extends ChangeNotifier {
       notifyListeners();
       return true;
     } catch (e) {
-      _errorMsg = "Failed to connect to server (probably)";
+      _errorMsg = "Failed to connect to server";
       notifyListeners();
       return false;
     }
@@ -86,7 +86,7 @@ class AccountState extends ChangeNotifier {
         "password": password,
       });
       if (response.statusCode != 200) {
-        _errorMsg = "Username taken (probably)"; //Probably
+        _errorMsg = "Username taken"; //Probably
         notifyListeners();
         return false;
       }
@@ -98,7 +98,7 @@ class AccountState extends ChangeNotifier {
       notifyListeners();
       return true;
     } catch (e) {
-      _errorMsg = "Failed to connect to server (probably)";
+      _errorMsg = "Failed to connect to server";
       notifyListeners();
       return false;
     }
@@ -116,7 +116,21 @@ class AccountState extends ChangeNotifier {
         throw "Failed with err ${response.statusCode}";
       }
     } catch (e) {
-      throw "Failed to connect to server (probably)";
+      throw "Failed to connect to server";
+    }
+  }
+
+  Future<bool> changePasswd(Account account, String newPasswd) async {
+    try {
+      var response =
+          await http.post(serverAddress.resolve("/change_passwd"), body: {
+        "user_id": account.userID,
+        "password": newPasswd,
+      });
+
+      return response.statusCode == 200;
+    } catch (e) {
+      return false;
     }
   }
 
