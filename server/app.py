@@ -178,10 +178,17 @@ def register():
 def add_score():
     user_id = request.form["user_id"]
     value = request.form["value"]
+    if "daily_dato" in request.form:
+        daily_dato = request.form["daily_dato"]
+    else:
+        daily_dato = None
 
     conn = pool.get_connection()
     cursor = conn.cursor()
-    cursor.execute("insert into scores (user_id, value) values (?,?)", [user_id, value])
+    cursor.execute(
+        "insert into scores (user_id, value, dailty_dato) values (?,?,?)",
+        [user_id, value, daily_dato],
+    )
 
     conn.commit()
     conn.close()
