@@ -278,7 +278,7 @@ class _MenuState extends State<Menu> {
             Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                if (notLoggedIn) ...[
+                if (AccountState.instance().get() == null) ...[
                   const Text("Login to solve daily puzzles"),
                 ] else if (failedToFetchDaily) ...[
                   const Text("Failed to fetch daily puzzle"),
