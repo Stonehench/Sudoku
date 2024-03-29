@@ -444,7 +444,7 @@ impl Sudoku {
             count += 1;
         }
 
-        //#[cfg(debug_assertions)]
+        #[cfg(debug_assertions)]
         println!("Removed {count} in {:?}", timer.elapsed());
 
         for cell in &mut sudoku.cells {

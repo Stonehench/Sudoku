@@ -21,6 +21,30 @@ fn main() {
     if input_filename == "--benchmark" {
         benchmark(args().nth(2) == Some("generate".into()));
         return;
+    } else if input_filename == "--generate" {
+        let difficulty = if let Some(diff_name) = args().nth(2) {
+            diff_name
+                .parse()
+                .expect(&format!("Failed to parse difficulty {diff_name}"))
+        } else {
+            Difficulty::Medium
+        };
+
+        let sudoku =
+            Sudoku::generate_with_size(9, vec![SquareRule::new()], None, difficulty).unwrap();
+
+        for (i, cell) in sudoku.cells.iter().enumerate() {
+            if i > 0 && i % sudoku.size == 0 {
+                println!("");
+            }
+            match cell.available.as_slice() {
+                [value] => print!("{value}"),
+                _ => print!("0"),
+            }
+            print!(",");
+        }
+        println!("");
+        return;
     }
 
     let Ok(file_source) = fs::read_to_string(&input_filename) else {
