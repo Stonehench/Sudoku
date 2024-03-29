@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'dart:math';
 
 import 'package:flutter/services.dart';
+import 'package:sudoku/api.dart';
 import 'package:sudoku/gameloader.dart';
 import 'package:sudoku/scoreboard.dart';
 import 'package:sudoku/src/rust/api/simple.dart';
@@ -138,11 +139,35 @@ class _MenuState extends State<Menu> {
 
   @override
   Widget build(BuildContext context) {
+    AccountState accState = AccountState.instance();
+    accState.updateStreak().then((value) => setState(() {
+          //Rebuild
+        }));
+
     return Scaffold(
       body: Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
+            ListenableBuilder(
+              listenable: accState,
+              builder: (context, _) {
+                Account? acc = accState.get();
+                if (acc == null) {
+                  return const SizedBox();
+                }
+                if (acc.multiplier == null || acc.streak == null) {
+                  return const SizedBox();
+                }
+
+                return Column(
+                  children: [
+                    Text("Streak: ${acc.streak} days"),
+                    Text("Multiplier: ${acc.multiplier!.toStringAsFixed(2)}"),
+                  ],
+                );
+              },
+            ),
             SizedBox(
               width: 250,
               child: TextField(
@@ -191,11 +216,11 @@ class _MenuState extends State<Menu> {
                               sudokuSource, gameModes, gameDifficulty, size),
                         ),
                       );
-                      if (res != null) {
-                        setState(() {
+                      setState(() {
+                        if (res != null) {
                           sizeText = res.toString();
-                        });
-                      }
+                        }
+                      });
                     }();
                   },
                   child: const Text('Create Sudoku'),
@@ -204,8 +229,13 @@ class _MenuState extends State<Menu> {
                   width: 10,
                 ),
                 OutlinedButton(
-                  onPressed: () => Navigator.of(context).push(MaterialPageRoute(
-                      builder: (context) => const ScoreboardPage())),
+                  onPressed: () async {
+                    await Navigator.of(context).push(MaterialPageRoute(
+                        builder: (context) => const ScoreboardPage()));
+                    setState(() {
+                      //Rebuild
+                    });
+                  },
                   child: const Text("Scoreboard"),
                 )
               ],
