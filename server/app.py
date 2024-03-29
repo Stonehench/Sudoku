@@ -89,7 +89,7 @@ def streak():
     return {"streak": streak, "multiplier": 1.1**streak}
 
 
-@app.route("/daily")
+@app.route("/daily", methods=["GET", "POST"])
 def get_daily():
     conn = pool.get_connection()
     cursor = conn.cursor()
@@ -103,10 +103,24 @@ def get_daily():
     else:
         data = data[0]
 
+    solved = None
+
+    print(request.form)
+
+    if "user_id" in request.form.keys():
+        cursor.execute(
+            "select * from scores where user_id = ? and daily_dato = curdate()",
+            [request.form["user_id"]],
+        )
+        solved = cursor.fetchone() is not None
+
     conn.commit()
     conn.close()
 
-    return {"puzzle": data}
+    return {
+        "puzzle": data,
+        "solved": solved,
+    }
 
 
 @app.route("/scoreboard")
