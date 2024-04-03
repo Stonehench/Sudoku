@@ -257,7 +257,7 @@ impl Sudoku {
                 )?,
                 _ => {
                     // Der er ikke flere naked singles, så der tjekkes for hidden singles
-                    
+
                     for rule in &self.rules {
                         if let Some((n, hidden_index)) = rule.hidden_singles(self) {
                             //Put nuværende cell tilbage i priority queue
@@ -298,33 +298,29 @@ impl Sudoku {
                             continue 'main;
                         }
                     }
-                    
 
-                    // TODO:
-                    // Current problems invole 4x4 with knights move, here it is able to produce invalid solutions
-                    // Currently the hard coded version of the zipper is impossible in knights mode
                     for rule in self.rules.iter().filter(|r| {
-                        if r.needs_square_for_locked() && r.can_multi_remove() {
+                        if r.needs_square_for_locked() {
                             return has_square;
-                        } 
-                        false
+                        }
+                        true
                     }) {
-                        let multi_remove_indecies = rule.multi_remove(self,  &mut big_buffer);
-                        if !multi_remove_indecies.is_empty(){
+                        let multi_remove_indecies = rule.multi_remove(self, &mut big_buffer);
+                        if !multi_remove_indecies.is_empty() {
                             //Put nuværende cell tilbage i priority queue
                             pri_queue.push(index, entropy);
 
-                            for (value, index) in multi_remove_indecies{
+                            for (value, index) in multi_remove_indecies {
                                 self.cells[*index].remove(*value)?;
                                 pri_queue.change_priority(
                                     index,
                                     Entropy(self.cells[*index].available.len()),
                                 );
-                            }  
+                            }
 
-                            continue 'main;                         
+                            continue 'main;
                         }
-                    } 
+                    }
 
                     //Der er flere muligheder for hvad der kan vælges. Derfor pushes state på branch stacken og der vælges en mulighed
                     //Vælg random
@@ -354,7 +350,19 @@ impl Sudoku {
                     }
 
                     self.update_cell(n, index, &mut pri_queue, &mut ret_buffer)?;
+                }
+            }
 
+            if pri_queue.is_empty() {
+                //Check om alle regler bliver overholdt
+                if !self.rules.iter().all(|r| r.finished_legal(&self)) {
+                    //Der er ingen løsning på den nuværende branch. Derfor popper vi en branch og løser den i stedet
+                    let Some((cells, new_pri_queue)) = branch_stack.pop() else {
+                        return Err(SudokuSolveError::UnsolveableError);
+                    };
+
+                    self.cells = cells;
+                    pri_queue = new_pri_queue;
                 }
             }
         }
@@ -380,22 +388,39 @@ impl Sudoku {
 
         if let Some(zipper_rule) = sudoku.rules.iter_mut().find_map(|r| r.to_zipper_rule()) {
             if sudoku.size == 4 {
-                zipper_rule.zipper_clue.push((2,vec![(1 , 6 ) , (0, 10)]))
+                zipper_rule.zipper_clue.push((2, vec![(1, 6), (0, 10)]))
             }
             if sudoku.size == 9 {
                 //zipper_rule.zipper_clue.push((40,vec![(39,41) , (48,32), (47, 33), (46, 34), (45, 35)]));
-                zipper_rule.zipper_clue.push((0,vec![(1,9),(2,18)]));
-                zipper_rule.zipper_clue.push((30,vec![(21,29),(12,28),(3,27)]));
-                zipper_rule.zipper_clue.push((13,vec![(4,22)]));
-                zipper_rule.zipper_clue.push((14,vec![(5,23)]));
-                zipper_rule.zipper_clue.push((40,vec![(41,49),(42,58),(43,67),(44,76),(53,77),(52,68),(51,59),(61,69)]));
-                zipper_rule.zipper_clue.push((26,vec![(17,25),(8,24),(7,15)]));
-                zipper_rule.zipper_clue.push((37,vec![(36,38)]));
-                zipper_rule.zipper_clue.push((56,vec![(47,55),(46,64),(45,73)]));
-                zipper_rule.zipper_clue.push((66,vec![(57,65)])); 
-                zipper_rule.zipper_clue.push((70,vec![(71,79),(62,78)]));
-
-            }      
+                zipper_rule.zipper_clue.push((0, vec![(1, 9), (2, 18)]));
+                zipper_rule
+                    .zipper_clue
+                    .push((30, vec![(21, 29), (12, 28), (3, 27)]));
+                zipper_rule.zipper_clue.push((13, vec![(4, 22)]));
+                zipper_rule.zipper_clue.push((14, vec![(5, 23)]));
+                zipper_rule.zipper_clue.push((
+                    40,
+                    vec![
+                        (41, 49),
+                        (42, 58),
+                        (43, 67),
+                        (44, 76),
+                        (53, 77),
+                        (52, 68),
+                        (51, 59),
+                        (61, 69),
+                    ],
+                ));
+                zipper_rule
+                    .zipper_clue
+                    .push((26, vec![(17, 25), (8, 24), (7, 15)]));
+                zipper_rule.zipper_clue.push((37, vec![(36, 38)]));
+                zipper_rule
+                    .zipper_clue
+                    .push((56, vec![(47, 55), (46, 64), (45, 73)]));
+                zipper_rule.zipper_clue.push((66, vec![(57, 65)]));
+                zipper_rule.zipper_clue.push((70, vec![(71, 79), (62, 78)]));
+            }
         }
 
         sudoku.solve(None, None)?;
@@ -433,7 +458,6 @@ impl Sudoku {
                 }
             }
         }
-
 
         println!("Solved rules: {:#?}", sudoku.rules);
 
@@ -781,7 +805,6 @@ fn solve_zipper9x9_test() {
     let file_str = std::fs::read_to_string("./sudokuZipper9x9").unwrap();
     let mut sudoku: Sudoku = file_str.parse().unwrap();
 
-
     sudoku.solve(None, None).unwrap();
 
     println!("{sudoku}");
@@ -793,7 +816,6 @@ fn solve_zipper9x9_test() {
             .trim()
     );
 }
-
 
 #[test]
 fn solve_knights_move_sudoku() {
