@@ -598,7 +598,7 @@ pub struct Cell {
 }
 
 impl Cell {
-    fn single(n: u16) -> Self {
+    pub fn single(n: u16) -> Self {
         Self {
             available: smallvec![n],
             locked_in: true,
