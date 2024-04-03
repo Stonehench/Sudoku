@@ -29,8 +29,10 @@ impl Rule for ZipperRule {
     ) -> &'buf [usize] {
         buffer.clear();
 
-        // if the center of a zipper is set to a number, that number can no longer appear on the zipper,
+        // if the center of a zipper is set to a number, that number can no longer appear on the zipper, 
         // since you would have to add it with 0 to get the center digit which does not make any sense as 0 is not a valid digit
+        // (technically no number higher than the value set in the center can appera, but that is not really how this function works) 
+
         for (center, rest) in &self.zipper_clue{
             if *center == index {
                 for (left, right) in rest {
@@ -38,6 +40,7 @@ impl Rule for ZipperRule {
                     buffer.push(*right);
                 }
             // if a place on the zipper that is not the center is updated, the center can no longer be this number
+            // (Or any number lower for that matter since the center is always the highest digit on the zipper)
             } else if rest.into_iter().any(|(left, right)| *left == index || *right == index){
                 buffer.push(*center);
             }
@@ -96,6 +99,11 @@ impl Rule for ZipperRule {
         
         None
     }
+
+    fn can_multi_remove(&self) -> bool {
+        true
+    }
+
 
     fn needs_square_for_locked(&self) -> bool {
         true

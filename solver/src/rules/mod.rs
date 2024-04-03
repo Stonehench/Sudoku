@@ -66,6 +66,10 @@ pub trait Rule: Debug {
         None
     }
 
+    fn can_multi_remove(&self) -> bool {
+        false
+    }
+
     fn needs_square_for_locked(&self) -> bool {
         false
     }
