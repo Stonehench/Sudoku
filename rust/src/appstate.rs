@@ -6,12 +6,14 @@ use solver::sudoku::Sudoku;
 pub struct AppState {
     pub current_sudoku: Option<(Sudoku, Sudoku)>,
     pub x_positions: Vec<(usize, usize)>,
+    pub zipper_positions: Vec<(usize, Vec<(usize, usize)>)>
 }
 
 lazy_static! {
     static ref STATE: Mutex<AppState> = Mutex::new(AppState {
         current_sudoku: None,
-        x_positions: vec![]
+        x_positions: vec![],
+        zipper_positions: vec![],
     });
 }
 
