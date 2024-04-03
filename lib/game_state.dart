@@ -150,7 +150,9 @@ class GameState extends ChangeNotifier {
           notifyListeners();
           return;
         }
-        value = (value * account.multiplier!).toInt();
+        if (account.multiplier != null) {
+          value = (value * account.multiplier!).toInt();
+        }
 
         try {
           _scoreSubmitStatus = ScoreSubmissionStatus.inAir;
