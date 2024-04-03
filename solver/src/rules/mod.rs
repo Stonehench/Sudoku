@@ -22,7 +22,7 @@ pub mod x_rule;
 pub mod zipper_rule;
 pub mod consecutive_rule;
 pub mod parity_rule;
-
+pub mod thermometer_rule;
 
 pub trait Rule: Debug {
     fn updates<'buf>(
