@@ -26,16 +26,20 @@ class _ZipperState extends State<Zipper> {
           gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
               crossAxisCount: state.size),
           itemBuilder: (context, index) {
+            int dotWidth = 100;
             return Container(
               alignment: Alignment.center,
-              child: state.zipperPositions.any((zipper) =>
-                      // if the center has a neighbour below
-                      zipper.$1 == index ||
-                      zipper.$2.any((element) =>
-                          element.$1 == index || element.$2 == index))
+              child: state.zipperPositions.any((zipper) {
+                if (zipper.$1 == index) {
+                  dotWidth = 200;
+                }
+                return zipper.$1 == index ||
+                    zipper.$2.any((element) =>
+                        element.$1 == index || element.$2 == index);
+              })
                   ? Container(
-                      width: 10,
-                      height: 10,
+                      width: dotWidth / state.size,
+                      height: dotWidth / state.size,
                       //color: lineColor,
                       decoration: BoxDecoration(
                         shape: BoxShape.circle,
@@ -276,7 +280,7 @@ class _ZipperState extends State<Zipper> {
   Widget getHorizontal(GameState state) {
     return SizedBox(
         width: 340 / state.size,
-        height: 10,
+        height: 100 / state.size,
         child: Container(
           color: lineColor,
         ));
@@ -285,7 +289,7 @@ class _ZipperState extends State<Zipper> {
   Widget getVertical(GameState state) {
     return SizedBox(
         height: 340 / state.size,
-        width: 10,
+        width: 100 / state.size,
         child: Container(
           color: lineColor,
         ));
@@ -295,8 +299,8 @@ class _ZipperState extends State<Zipper> {
     return Transform.rotate(
         angle: angle,
         child: Container(
-          width: 100,
-          height: 10,
+          width: 1000,
+          height: 100 / state.size,
           color: lineColor,
         ));
   }
