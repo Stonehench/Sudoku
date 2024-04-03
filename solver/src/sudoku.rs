@@ -314,12 +314,17 @@ impl Sudoku {
                             //Put nuværende cell tilbage i priority queue
                             pri_queue.push(index, entropy);
 
+                            let mut last_index = 0;
                             for (value, index) in multi_remove_indecies{
-                                self.cells[*index].remove(*value)?;
-                                pri_queue.change_priority(
-                                    index,
-                                    Entropy(self.cells[*index].available.len()),
-                                );
+                                if last_index != *index && last_index != 0 {
+                                    pri_queue.change_priority(
+                                        &last_index,
+                                        Entropy(self.cells[last_index].available.len()),
+                                    );
+                                } else {
+                                    last_index = *index;
+                                }
+                                self.cells[*index].remove(*value)?;      
                             }  
 
                             continue 'main;                         
