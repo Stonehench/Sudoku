@@ -34,6 +34,10 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   Uint8List dco_decode_list_prim_u_8_strict(dynamic raw);
 
   @protected
+  List<(int, List<(int, int)>)>
+      dco_decode_list_record_usize_list_record_usize_usize(dynamic raw);
+
+  @protected
   List<(int, int)> dco_decode_list_record_usize_usize(dynamic raw);
 
   @protected
@@ -41,6 +45,10 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   int? dco_decode_opt_box_autoadd_usize(dynamic raw);
+
+  @protected
+  (int, List<(int, int)>) dco_decode_record_usize_list_record_usize_usize(
+      dynamic raw);
 
   @protected
   (int, int) dco_decode_record_usize_usize(dynamic raw);
@@ -73,6 +81,11 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   Uint8List sse_decode_list_prim_u_8_strict(SseDeserializer deserializer);
 
   @protected
+  List<(int, List<(int, int)>)>
+      sse_decode_list_record_usize_list_record_usize_usize(
+          SseDeserializer deserializer);
+
+  @protected
   List<(int, int)> sse_decode_list_record_usize_usize(
       SseDeserializer deserializer);
 
@@ -81,6 +94,10 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   int? sse_decode_opt_box_autoadd_usize(SseDeserializer deserializer);
+
+  @protected
+  (int, List<(int, int)>) sse_decode_record_usize_list_record_usize_usize(
+      SseDeserializer deserializer);
 
   @protected
   (int, int) sse_decode_record_usize_usize(SseDeserializer deserializer);
@@ -117,6 +134,10 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
       Uint8List self, SseSerializer serializer);
 
   @protected
+  void sse_encode_list_record_usize_list_record_usize_usize(
+      List<(int, List<(int, int)>)> self, SseSerializer serializer);
+
+  @protected
   void sse_encode_list_record_usize_usize(
       List<(int, int)> self, SseSerializer serializer);
 
@@ -125,6 +146,10 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   void sse_encode_opt_box_autoadd_usize(int? self, SseSerializer serializer);
+
+  @protected
+  void sse_encode_record_usize_list_record_usize_usize(
+      (int, List<(int, int)>) self, SseSerializer serializer);
 
   @protected
   void sse_encode_record_usize_usize((int, int) self, SseSerializer serializer);

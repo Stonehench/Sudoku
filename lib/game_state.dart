@@ -16,7 +16,7 @@ class GameState extends ChangeNotifier {
     return _instance!;
   }
 
-  GameState(String sudokuSource, this.xPositions) {
+  GameState(String sudokuSource, this.xPositions, this.zipperPositions) {
     board = sudokuSource
         .split(",")
         .takeWhile((str) => str.isNotEmpty)
@@ -42,6 +42,7 @@ class GameState extends ChangeNotifier {
   List<int> initialClues = [];
   List<List<int>> drafts = [];
   List<(int, int)> xPositions;
+  List<(int, List<(int, int)>)> zipperPositions;
 
   Future<bool> updateDigit(int position) async {
     if (selectedDigit == 0) {

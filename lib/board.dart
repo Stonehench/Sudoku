@@ -3,6 +3,8 @@ import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:sudoku/cell.dart';
 import 'package:sudoku/game_state.dart';
+import 'package:sudoku/x_rule_gui.dart';
+import 'package:sudoku/zipper_rule_gui.dart';
 
 class Board extends StatefulWidget {
   const Board({super.key});
@@ -60,58 +62,8 @@ class _BoardState extends State<Board> {
                   );
                 },
               ),
-              // Horizontal X-rule
-              GridView.builder(
-                padding: EdgeInsets.fromLTRB(
-                    (340 / (state.size)) / 2, 0, (340 / (state.size)) / 2, 0),
-                itemCount: state.board.length - state.size,
-                gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                    crossAxisCount: state.size - 1,
-                    crossAxisSpacing: 2,
-                    mainAxisSpacing: 2),
-                itemBuilder: (context, index) {
-                  return Container(
-                    alignment: Alignment.center,
-                    child: state.xPositions.any((t) =>
-                            t.$1 ==
-                                ((index % (state.size - 1)) +
-                                    ((index ~/ (state.size - 1)) *
-                                        state.size)) &&
-                            t.$2 ==
-                                ((index % (state.size - 1)) +
-                                        (index ~/ (state.size - 1)) *
-                                            state.size) +
-                                    1)
-                        ? Text("X",
-                            style: TextStyle(
-                                fontSize: fontSize / 3 * 2,
-                                color: const Color.fromARGB(255, 19, 22, 54)))
-                        : const Text(""),
-                  );
-                },
-              ),
-              // Vertical X-rule
-              GridView.builder(
-                padding: EdgeInsets.fromLTRB(
-                    0, (340 / (state.size)) / 2, 0, (340 / (state.size)) / 2),
-                itemCount: state.board.length - state.size,
-                gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                    crossAxisCount: state.size,
-                    crossAxisSpacing: 2,
-                    mainAxisSpacing: 2),
-                itemBuilder: (context, index) {
-                  return Container(
-                    alignment: Alignment.center,
-                    child: state.xPositions.any(
-                            (t) => t.$1 == index && t.$2 == t.$1 + state.size)
-                        ? Text("X",
-                            style: TextStyle(
-                                fontSize: fontSize / 3 * 2,
-                                color: const Color.fromARGB(255, 19, 22, 54)))
-                        : const Text(""),
-                  );
-                },
-              ),
+              const Zipper(),
+              const X(),
               ListenableBuilder(
                 listenable: state,
                 builder: (ctx, _) => GridView.builder(

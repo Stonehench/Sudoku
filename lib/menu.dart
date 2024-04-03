@@ -54,6 +54,9 @@ class _MenuState extends State<Menu> {
     ("Knights move", "KnightsMove", false),
     ("X rule", "XRule", false),
     ("Diaginal rule", "DiagonalRule", false),
+    ("Parity Domino", "ParityRule", false),
+    ("Consecutive", "ConsecutiveRule", false),
+    ("Zippers", "ZipperRule", false),
   ];
 
   bool initialized = false;
