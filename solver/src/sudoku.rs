@@ -17,7 +17,7 @@ use regex_macro::regex;
 use smallvec::{smallvec, SmallVec};
 use threadpool::ThreadPool;
 
-use crate::rules::{column_rule::ColumnRule, row_rule::RowRule, zipper_rule, DynRule};
+use crate::rules::{column_rule::ColumnRule, row_rule::RowRule, DynRule};
 
 pub enum Difficulty {
     Easy,
@@ -257,7 +257,7 @@ impl Sudoku {
                 )?,
                 _ => {
                     // Der er ikke flere naked singles, så der tjekkes for hidden singles
-                    
+
                     for rule in &self.rules {
                         if let Some((n, hidden_index)) = rule.hidden_singles(self) {
                             //Put nuværende cell tilbage i priority queue
@@ -298,33 +298,29 @@ impl Sudoku {
                             continue 'main;
                         }
                     }
-                    
 
-                    // TODO:
-                    // Current problems invole 4x4 with knights move, here it is able to produce invalid solutions
-                    // Currently the hard coded version of the zipper is impossible in knights mode
                     for rule in self.rules.iter().filter(|r| {
-                        if r.needs_square_for_locked() && r.can_multi_remove() {
+                        if r.needs_square_for_locked() {
                             return has_square;
-                        } 
-                        false
+                        }
+                        true
                     }) {
-                        let multi_remove_indecies = rule.multi_remove(self,  &mut big_buffer);
-                        if !multi_remove_indecies.is_empty(){
+                        let multi_remove_indecies = rule.multi_remove(self, &mut big_buffer);
+                        if !multi_remove_indecies.is_empty() {
                             //Put nuværende cell tilbage i priority queue
                             pri_queue.push(index, entropy);
 
-                            for (value, index) in multi_remove_indecies{
+                            for (value, index) in multi_remove_indecies {
                                 self.cells[*index].remove(*value)?;
                                 pri_queue.change_priority(
                                     index,
                                     Entropy(self.cells[*index].available.len()),
                                 );
-                            }  
+                            }
 
-                            continue 'main;                         
+                            continue 'main;
                         }
-                    } 
+                    }
 
                     //Der er flere muligheder for hvad der kan vælges. Derfor pushes state på branch stacken og der vælges en mulighed
                     //Vælg random
@@ -354,7 +350,19 @@ impl Sudoku {
                     }
 
                     self.update_cell(n, index, &mut pri_queue, &mut ret_buffer)?;
+                }
+            }
 
+            if pri_queue.is_empty() {
+                //Check om alle regler bliver overholdt
+                if !self.rules.iter().all(|r| r.finished_legal(&self)) {
+                    //Der er ingen løsning på den nuværende branch. Derfor popper vi en branch og løser den i stedet
+                    let Some((cells, new_pri_queue)) = branch_stack.pop() else {
+                        return Err(SudokuSolveError::UnsolveableError);
+                    };
+
+                    self.cells = cells;
+                    pri_queue = new_pri_queue;
                 }
             }
         }
@@ -890,7 +898,6 @@ fn solve_zipper9x9_test() {
     let file_str = std::fs::read_to_string("./sudokuZipper9x9").unwrap();
     let mut sudoku: Sudoku = file_str.parse().unwrap();
 
-
     sudoku.solve(None, None).unwrap();
 
     println!("{sudoku}");
@@ -902,7 +909,6 @@ fn solve_zipper9x9_test() {
             .trim()
     );
 }
-
 
 #[test]
 fn solve_knights_move_sudoku() {
