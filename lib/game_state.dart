@@ -151,6 +151,7 @@ class GameState extends ChangeNotifier {
           notifyListeners();
           return;
         }
+        value = (value * account.multiplier!).toInt();
 
         try {
           _scoreSubmitStatus = ScoreSubmissionStatus.inAir;
@@ -182,9 +183,6 @@ class GameState extends ChangeNotifier {
 
   bool drafting = false;
 }
-
-
-
 
 enum ScoreSubmissionStatus {
   gameNotDone,

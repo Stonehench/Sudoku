@@ -10,7 +10,9 @@ Uri serverAddress = Uri.http("jensogkarsten.site");
 class Account {
   final String username;
   final String userID;
-  const Account(this.username, this.userID);
+  final int? streak;
+  final double? multiplier;
+  const Account(this.username, this.userID, {this.streak, this.multiplier});
 }
 
 class AccountState extends ChangeNotifier {
@@ -69,6 +71,9 @@ class AccountState extends ChangeNotifier {
       Account account = Account(username, body["user_id"]);
       await _prefs.setString("username", account.username);
       await _prefs.setString("userID", account.userID);
+
+      await updateStreak();
+
       _account = account;
       notifyListeners();
       return true;
@@ -129,6 +134,37 @@ class AccountState extends ChangeNotifier {
       });
 
       return response.statusCode == 200;
+    } catch (e) {
+      return false;
+    }
+  }
+
+  Future<bool> updateStreak() async {
+    Account? acc = get();
+    if (acc == null) {
+      return false;
+    }
+
+    try {
+      var response = await http.post(serverAddress.resolve("/streak"), body: {
+        "user_id": _account!.userID,
+      });
+
+      var jsonMap = jsonDecode(response.body) as Map<String, dynamic>;
+
+      Account newAccount = Account(
+        acc.username,
+        acc.userID,
+        streak: jsonMap["streak"] as int,
+        multiplier: jsonMap["multiplier"] as double,
+      );
+
+      if (newAccount != _account) {
+        _account = newAccount;
+        notifyListeners();
+      }
+
+      return true;
     } catch (e) {
       return false;
     }

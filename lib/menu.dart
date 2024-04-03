@@ -1,7 +1,11 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'dart:math';
-
+import 'package:http/http.dart' as http;
 import 'package:flutter/services.dart';
+import 'package:flutter_spinkit/flutter_spinkit.dart';
+import 'package:sudoku/api.dart';
 import 'package:sudoku/gameloader.dart';
 import 'package:sudoku/scoreboard.dart';
 import 'package:sudoku/src/rust/api/simple.dart';
@@ -139,13 +143,66 @@ class _MenuState extends State<Menu> {
     );
   }
 
+  bool failedToFetchDaily = false;
+  bool? dailySolved;
+  String? dailyPuzzle;
+  bool notLoggedIn = false;
+
   @override
   Widget build(BuildContext context) {
+    AccountState accState = AccountState.instance();
+    accState.updateStreak();
+
+    if (dailySolved == null &&
+        notLoggedIn == false &&
+        failedToFetchDaily == false) {
+      getDaily().then((value) {
+        if (value == null) {
+          notLoggedIn = true;
+          return;
+        }
+        var (newPuzzle, newStatus) = value;
+        setState(() {
+          dailyPuzzle = newPuzzle;
+          dailySolved = newStatus;
+          failedToFetchDaily = false;
+        });
+      });
+    }
+
     return Scaffold(
       body: Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
+            ListenableBuilder(
+              listenable: accState,
+              builder: (context, _) {
+                Account? acc = accState.get();
+
+                const double h = 60;
+                if (acc == null) {
+                  return const SizedBox(
+                    height: h,
+                  );
+                }
+                if (acc.multiplier == null || acc.streak == null) {
+                  return const SizedBox(
+                    height: h,
+                  );
+                }
+
+                return SizedBox(
+                  height: h,
+                  child: Column(
+                    children: [
+                      Text("Streak: ${acc.streak} days"),
+                      Text("Multiplier: ${acc.multiplier!.toStringAsFixed(2)}"),
+                    ],
+                  ),
+                );
+              },
+            ),
             SizedBox(
               width: 250,
               child: TextField(
@@ -194,11 +251,11 @@ class _MenuState extends State<Menu> {
                               sudokuSource, gameModes, gameDifficulty, size),
                         ),
                       );
-                      if (res != null) {
-                        setState(() {
+                      setState(() {
+                        if (res != null) {
                           sizeText = res.toString();
-                        });
-                      }
+                        }
+                      });
                     }();
                   },
                   child: const Text('Create Sudoku'),
@@ -207,15 +264,63 @@ class _MenuState extends State<Menu> {
                   width: 10,
                 ),
                 OutlinedButton(
-                  onPressed: () => Navigator.of(context).push(MaterialPageRoute(
-                      builder: (context) => const ScoreboardPage())),
+                  onPressed: () async {
+                    await Navigator.of(context).push(MaterialPageRoute(
+                        builder: (context) => const ScoreboardPage()));
+                    setState(() {
+                      //Rebuild
+                    });
+                  },
                   child: const Text("Scoreboard"),
                 )
+              ],
+            ),
+            const SizedBox(
+              height: 10,
+            ),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                if (AccountState.instance().get() == null) ...[
+                  const Text("Login to solve daily puzzles"),
+                ] else if (failedToFetchDaily) ...[
+                  const Text("Failed to fetch daily puzzle"),
+                ] else if (dailySolved == null) ...[
+                  SpinKitCircle(
+                    color: Theme.of(context).highlightColor,
+                  )
+                ] else if (dailySolved == true) ...[
+                  const ElevatedButton(
+                      onPressed: null, child: Text("Already solved")),
+                ] else ...[
+                  ElevatedButton(
+                      onPressed: () {}, child: const Text("Daily puzzle")),
+                ]
               ],
             )
           ],
         ),
       ),
     );
+  }
+}
+
+Future<(String, bool?)?> getDaily() async {
+  Account? acc = AccountState.instance().get();
+  Map<String, String>? body;
+  if (acc != null) {
+    body = {"user_id": acc.userID};
+  }
+
+  try {
+    var response = await http.post(serverAddress.resolve("/daily"), body: body);
+
+    Map<String, dynamic> jsonBody = jsonDecode(response.body);
+
+    bool? dailySolved = jsonBody["solved"];
+    String puzzle = jsonBody["puzzle"];
+    return (puzzle, dailySolved);
+  } catch (e) {
+    return null;
   }
 }
