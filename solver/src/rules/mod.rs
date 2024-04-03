@@ -83,7 +83,7 @@ pub trait Rule: Debug {
         return big_buffer;
     }
 
-    fn finished_legal(&self, sudoku: &Sudoku) -> bool {
+    fn finished_legal(&self, _sudoku: &Sudoku) -> bool {
         true
     }
 }

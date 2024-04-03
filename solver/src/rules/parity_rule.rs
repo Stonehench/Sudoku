@@ -26,7 +26,7 @@ impl Rule for ParityRule {
         buffer
     }
 
-    fn hidden_singles(&self, sudoku: &Sudoku) -> Option<(u16, usize)> {
+    fn hidden_singles(&self, _sudoku: &Sudoku) -> Option<(u16, usize)> {
         // TODO: hidden singles should not really do anything
         // if 
         None
@@ -34,8 +34,8 @@ impl Rule for ParityRule {
 
     fn locked_candidate<'buf>(
         &self,
-        sudoku: &Sudoku,
-        buffer: &'buf mut Vec<usize>,
+        _sudoku: &Sudoku,
+        _buffer: &'buf mut Vec<usize>,
         _arena: &mut Bump,
     ) -> Option<(u16, &'buf [usize])> {
         // TODO: in a cell where only one parity remains, the opposite parity should only remain in the other cell

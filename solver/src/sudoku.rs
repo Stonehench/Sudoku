@@ -17,7 +17,7 @@ use regex_macro::regex;
 use smallvec::{smallvec, SmallVec};
 use threadpool::ThreadPool;
 
-use crate::rules::{column_rule::ColumnRule, row_rule::RowRule, zipper_rule, DynRule};
+use crate::rules::{column_rule::ColumnRule, row_rule::RowRule, DynRule};
 
 pub enum Difficulty {
     Easy,

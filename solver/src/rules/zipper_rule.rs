@@ -1,9 +1,8 @@
 use super::{DynRule, Rule};
-use bumpalo::Bump;
 use integer_sqrt::IntegerSquareRoot;
 use std::fmt::Debug;
 
-use crate::sudoku::{self, Sudoku};
+use crate::sudoku::Sudoku;
 
 #[derive(Debug, Clone)]
 pub struct ZipperRule {
@@ -341,6 +340,7 @@ fn zipper_hidden_single_test() {
 #[test]
 
 fn avalible_test() {
+    use bumpalo::Bump;
     let mut sudoku = Sudoku::new(9, vec![super::square_rule::SquareRule::new()]);
     let mut zipper_rule = ZipperRule {
         zipper_clue: vec![(40, vec![(39, 41), (48, 32), (47, 33), (46, 34), (45, 35)])],
