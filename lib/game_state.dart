@@ -143,7 +143,10 @@ class GameState extends ChangeNotifier {
       case ScoreSubmissionStatus.serverError:
         return;
       case ScoreSubmissionStatus.unSubmitted:
-        int value = (size * board.length) ~/ initialClues.length;
+        int value = (size * board.length);
+        if (initialClues.isNotEmpty) {
+          value = (size * board.length) ~/ initialClues.length;
+        }
 
         Account? account = AccountState.instance().get();
         if (account == null) {

@@ -386,12 +386,10 @@ impl Sudoku {
     ) -> Result<Self, SudokuSolveError> {
         let mut sudoku = Sudoku::new(size, rules);
 
+        // THIS IS A PARTICULAR SUDOKU IN A 9x9 GRID WHERE NO GIVIN DIGITS ARE NEEDED TO SOLVE
+        /* 
         if let Some(zipper_rule) = sudoku.rules.iter_mut().find_map(|r| r.to_zipper_rule()) {
-            if sudoku.size == 4 {
-                //zipper_rule.zipper_clue.push((2,vec![(1 , 6 ) , (0, 10)]))
-            }
             if sudoku.size == 9 {
-                //zipper_rule.zipper_clue.push((40,vec![(39,41) , (48,32), (47, 33), (46, 34), (45, 35)]));
                 //zipper_rule.zipper_clue.push((0,vec![(1,9),(2,18)]));
                 //zipper_rule.zipper_clue.push((30,vec![(21,29),(12,28),(3,27)]));
                 //zipper_rule.zipper_clue.push((13,vec![(4,22)]));
@@ -402,9 +400,8 @@ impl Sudoku {
                 //zipper_rule.zipper_clue.push((56,vec![(47,55),(46,64),(45,73)]));
                 //zipper_rule.zipper_clue.push((66,vec![(57,65)])); 
                 //zipper_rule.zipper_clue.push((70,vec![(71,79),(62,78)]));
-
             }      
-        }
+        }*/
 
         sudoku.solve(None, None)?;
 
@@ -548,7 +545,7 @@ impl Sudoku {
                                 right_surrounding.push(k + sudoku.size + 1);
                             }
                         }
-                        println!("{left_surrounding:?} {right_surrounding:?} {k}");
+                        //println!("{left_surrounding:?} {right_surrounding:?} {k}");
                         if left_index == right_index {break;}
                     }
 
