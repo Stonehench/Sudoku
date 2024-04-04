@@ -425,14 +425,14 @@ impl Sudoku {
         // if zipper-rule is part of the rule-set insert some Zippers
         // do some depth first kinda thing
         if let Some(zipper_rule) = sudoku.rules.iter_mut().find_map(|r| r.to_zipper_rule()){
-            println!("Creating Zippers");
+            //println!("Creating Zippers");
             let tries = sudoku.size * 3;
             let mut seen = vec![];
 
             'zippers: for i in 0..tries {
                 let mut random_index = random::<usize>() % (sudoku.size * sudoku.size);
                 while seen.contains(&random_index) && seen.len() < (sudoku.size * sudoku.size){
-                    println!("Atemting to create zipper at an occupiued index while at zipper {i}");
+                    //println!("Atemting to create zipper at an occupiued index while at zipper {i}");
                     random_index = random::<usize>() % (sudoku.size * sudoku.size);
                 }
 
