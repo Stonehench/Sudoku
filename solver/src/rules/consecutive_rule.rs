@@ -29,7 +29,7 @@ impl Rule for ConsecutiveRule {
         buffer
     }
 
-    fn hidden_singles(&self, sudoku: &Sudoku) -> Option<(u16, usize)> {
+    fn hidden_singles(&self, _sudoku: &Sudoku) -> Option<(u16, usize)> {
         // TODO: if one side is locked in, and only one of the consecutive numbers remain
         // this number is garuenteed to be a hidden single
         None
@@ -37,8 +37,8 @@ impl Rule for ConsecutiveRule {
 
     fn locked_candidate<'buf>(
         &self,
-        sudoku: &Sudoku,
-        buffer: &'buf mut Vec<usize>,
+        _sudoku: &Sudoku,
+        _buffer: &'buf mut Vec<usize>,
         _arena: &mut Bump,
     ) -> Option<(u16, &'buf [usize])> {
         // TODO:

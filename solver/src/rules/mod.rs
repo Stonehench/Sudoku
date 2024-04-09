@@ -66,10 +66,6 @@ pub trait Rule: Debug {
         None
     }
 
-    fn can_multi_remove(&self) -> bool {
-        false
-    }
-
     fn needs_square_for_locked(&self) -> bool {
         false
     }
@@ -85,6 +81,10 @@ pub trait Rule: Debug {
     ) ->  &'buf [(u16, usize)] {
         big_buffer.clear();
         return big_buffer;
+    }
+
+    fn finished_legal(&self, _sudoku: &Sudoku) -> bool {
+        true
     }
 }
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
