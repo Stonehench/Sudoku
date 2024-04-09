@@ -32,7 +32,7 @@ impl Rule for ParityRule {
         big_buffer: &'buf mut Vec<(u16, usize)>,
     ) -> &'buf [(u16, usize)] {
         big_buffer.clear();
-        'pairs: for (left_index, right_index) in &self.parity_clue {
+        for (left_index, right_index) in &self.parity_clue {
             if sudoku.cells[*left_index].locked_in && !sudoku.cells[*right_index].locked_in {
                 let value = sudoku.cells[*left_index].available[0];
                 if value & 1 == 0 {
@@ -63,51 +63,71 @@ impl Rule for ParityRule {
                         }
                     }
                 }
-            } else if !sudoku.cells[*left_index].locked_in && !sudoku.cells[*right_index].locked_in {
-                if sudoku.cells[*left_index].available[0] & 1 == 0 {
+            } else if !sudoku.cells[*left_index].locked_in && !sudoku.cells[*right_index].locked_in
+            {
+                let mut same_parity_left = true;
+                if sudoku.cells[*left_index].available[0] & 1 == 0 && same_parity_left {
                     for i in sudoku.cells[*left_index].available.iter() {
                         if *i & 1 != 0 {
-                            // TODO: jump to first right index if
+                            same_parity_left = false;
                             break;
                         }
                     }
-                    for i in 1..=(sudoku.size as u16 / 2) {
-                        if sudoku.cells[*right_index].available.contains(&(i * 2)) {
-                            big_buffer.push((i * 2, *right_index));
+                    if same_parity_left {
+                        for i in 1..=(sudoku.size as u16 / 2) {
+                            if sudoku.cells[*right_index].available.contains(&(i * 2)) {
+                                big_buffer.push((i * 2, *right_index));
+                            }
                         }
                     }
-                } else if sudoku.cells[*left_index].available[0] & 1 == 1 {
+                } else if sudoku.cells[*left_index].available[0] & 1 == 1 && same_parity_left {
                     for i in sudoku.cells[*left_index].available.iter() {
                         if *i & 1 != 1 {
-                            // TODO: jump to first right index if
-                            continue 'pairs;
+                            same_parity_left = false;
+                            break;
                         }
                     }
-                    for i in 0..=(sudoku.size as u16 / 2) {
-                        if sudoku.cells[*right_index].available.contains(&(i * 2 + 1)) {
-                            big_buffer.push(((i * 2 + 1), *right_index));
+                    if same_parity_left {
+                        for i in 0..=(sudoku.size as u16 / 2) {
+                            if sudoku.cells[*right_index].available.contains(&(i * 2 + 1)) {
+                                big_buffer.push(((i * 2 + 1), *right_index));
+                            }
                         }
                     }
-                } else if sudoku.cells[*right_index].available[0] & 1 == 0 {
+                }
+                let mut same_parity_right = true;
+                if sudoku.cells[*right_index].available[0] & 1 == 0
+                    && same_parity_right
+                    && !same_parity_left
+                {
                     for i in sudoku.cells[*right_index].available.iter() {
                         if *i & 1 != 0 {
-                            continue 'pairs;
+                            same_parity_right = false;
+                            break;
                         }
                     }
-                    for i in 1..=(sudoku.size as u16 / 2) {
-                        if sudoku.cells[*left_index].available.contains(&(i * 2)) {
-                            big_buffer.push((i * 2, *left_index));
+                    if same_parity_right {
+                        for i in 1..=(sudoku.size as u16 / 2) {
+                            if sudoku.cells[*left_index].available.contains(&(i * 2)) {
+                                big_buffer.push((i * 2, *left_index));
+                            }
                         }
                     }
-                } else if sudoku.cells[*right_index].available[0] & 1 == 1 {
+                } else if sudoku.cells[*right_index].available[0] & 1 == 1
+                    && same_parity_right
+                    && !same_parity_left
+                {
                     for i in sudoku.cells[*right_index].available.iter() {
                         if *i & 1 != 1 {
-                            continue 'pairs;
+                            same_parity_right = false;
+                            break;
                         }
                     }
-                    for i in 0..=(sudoku.size as u16 / 2) {
-                        if sudoku.cells[*left_index].available.contains(&(i * 2 + 1)) {
-                            big_buffer.push(((i * 2 + 1), *left_index));
+                    if same_parity_right {
+                        for i in 0..=(sudoku.size as u16 / 2) {
+                            if sudoku.cells[*left_index].available.contains(&(i * 2 + 1)) {
+                                big_buffer.push(((i * 2 + 1), *left_index));
+                            }
                         }
                     }
                 }
