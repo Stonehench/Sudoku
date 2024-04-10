@@ -43,10 +43,13 @@ class _ParityState extends State<Parity> {
                             ((index % (state.size - 1)) +
                                     (index ~/ (state.size - 1)) * state.size) +
                                 1)
-                    ? Text("O",
-                        style: TextStyle(
-                            fontSize: fontSize / 3 * 2,
-                            color: const Color.fromARGB(255, 19, 22, 54)))
+                    ? CircleAvatar(
+                        backgroundColor: Theme.of(context).hoverColor, // Not correct color, work in progress
+                        child: Text("O",
+                            style: TextStyle(
+                                fontSize: fontSize / 3 * 2,
+                                color: const Color.fromARGB(255, 19, 22, 54))),
+                      )
                     : const Text(""),
               );
             },
