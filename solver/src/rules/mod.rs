@@ -95,8 +95,7 @@ pub trait Rule: Debug {
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
 pub enum ExecutionPriority {
     High = 0,
-    Medium = 1,
-    Low = 2,
+    Medium = 1,Low = 2,
 }
 
 #[derive(Debug)]

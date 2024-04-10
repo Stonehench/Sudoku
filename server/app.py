@@ -53,6 +53,7 @@ def mk_sudoku(diffculty: str):
 @app.route("/streak", methods=["POST"])
 def streak():
     conn = pool.get_connection()
+    conn.auto_reconnect = True
     cursor = conn.cursor()
 
     cursor.execute(
@@ -74,7 +75,7 @@ def streak():
     # todaydiff = 8851
 
     streak = 0
-    if data[0] == todaydiff or data[0] == todaydiff - 1:
+    if len(data) != 0 and (data[0] == todaydiff or data[0] == todaydiff - 1):
         streak = 1
         # Today or yesterday
         for i in range(len(data) - 1):
@@ -92,6 +93,7 @@ def streak():
 @app.route("/daily", methods=["GET", "POST"])
 def get_daily():
     conn = pool.get_connection()
+    conn.auto_reconnect = True
     cursor = conn.cursor()
     cursor.execute("select puzzle from DailyChallenges order by dato desc limit 1")
 
@@ -126,6 +128,7 @@ def get_daily():
 @app.route("/scoreboard")
 def scoreboard():
     conn = pool.get_connection()
+    conn.auto_reconnect = True
     cursor = conn.cursor()
     cursor.execute("select * from userscores")
 
@@ -156,6 +159,7 @@ def login():
     password = request.form["password"]
 
     conn = pool.get_connection()
+    conn.auto_reconnect = True
     cursor = conn.cursor()
     cursor.execute(
         "select user_id from users where username = ? and password = ?",
@@ -177,6 +181,7 @@ def register():
     password = request.form["password"]
 
     conn = pool.get_connection()
+    conn.auto_reconnect = True
     cursor = conn.cursor()
     cursor.execute("insert into users values (?,?,?)", [user_id, username, password])
 
@@ -215,6 +220,7 @@ def change_passw():
     new_passwd = request.form["password"]
 
     conn = pool.get_connection()
+    conn.auto_reconnect = True
     cursor = conn.cursor()
     cursor.execute(
         "update users set password = ? where user_id = ?", [new_passwd, user_id]
@@ -222,3 +228,13 @@ def change_passw():
     conn.commit()
     conn.close()
     return {}
+
+
+@app.route("/rebuild")
+def rebuild():
+    missing = 20 - len(pool._connections_free)
+    for _ in range(missing):
+        pool.add_connection()
+
+    print("added", missing, "connections")
+    return "ok"
