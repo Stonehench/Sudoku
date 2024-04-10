@@ -148,6 +148,7 @@ class _MenuState extends State<Menu> {
   bool failedToFetchDaily = false;
   bool? dailySolved;
   String? dailyPuzzle;
+  String? dailyDate;
   bool notLoggedIn = false;
 
   @override
@@ -163,10 +164,11 @@ class _MenuState extends State<Menu> {
           notLoggedIn = true;
           return;
         }
-        var (newPuzzle, newStatus) = value;
+        var (newPuzzle, newStatus, date) = value;
         setState(() {
           dailyPuzzle = newPuzzle;
           dailySolved = newStatus;
+          dailyDate = date;
           failedToFetchDaily = false;
         });
       });
@@ -301,11 +303,14 @@ class _MenuState extends State<Menu> {
                         var xPositions = await getXPositions();
                         var parityPositions = await getParityPositions();
                         var zipperPositions = await getZipperPositions();
-                        GameState.setInstance(GameState(dailyPuzzle!,
-                            xPositions, parityPositions, zipperPositions));
+                        GameState.setInstance(GameState(
+                            dailyPuzzle!.split("\n\n")[1],
+                            xPositions,
+                            parityPositions,
+                            zipperPositions,
+                            daily: dailyDate!));
                         setState(() {
-                          Navigator.of(context)
-                              .pushReplacement(MaterialPageRoute(
+                          Navigator.of(context).push(MaterialPageRoute(
                             builder: (context) =>
                                 const GameView({"SquareRule"}),
                           ));
@@ -322,7 +327,7 @@ class _MenuState extends State<Menu> {
   }
 }
 
-Future<(String, bool?)?> getDaily() async {
+Future<(String, bool?, String)?> getDaily() async {
   Account? acc = AccountState.instance().get();
   Map<String, String>? body;
   if (acc != null) {
@@ -336,7 +341,8 @@ Future<(String, bool?)?> getDaily() async {
 
     bool? dailySolved = jsonBody["solved"];
     String puzzle = jsonBody["puzzle"];
-    return (puzzle, dailySolved);
+    String dato = jsonBody["dato"];
+    return (puzzle, dailySolved, dato);
   } catch (e) {
     return null;
   }

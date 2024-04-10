@@ -5,6 +5,7 @@ import sys
 import uuid
 import subprocess
 import datetime
+from datetime import date
 
 # Connect to MariaDB Platform
 try:
@@ -95,7 +96,7 @@ def get_daily():
     conn = pool.get_connection()
     conn.auto_reconnect = True
     cursor = conn.cursor()
-    cursor.execute("select puzzle from DailyChallenges order by dato desc limit 1")
+    cursor.execute("select puzzle from DailyChallenges where dato = curdate()")
 
     data = cursor.fetchone()
 
@@ -119,10 +120,7 @@ def get_daily():
     conn.commit()
     conn.close()
 
-    return {
-        "puzzle": data,
-        "solved": solved,
-    }
+    return {"puzzle": data, "solved": solved, "dato": date.today()}
 
 
 @app.route("/scoreboard")

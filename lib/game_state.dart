@@ -16,7 +16,9 @@ class GameState extends ChangeNotifier {
     return _instance!;
   }
 
-  GameState(String sudokuSource, this.xPositions, this.parityPositions, this.zipperPositions) {
+  GameState(String sudokuSource, this.xPositions, this.parityPositions,
+      this.zipperPositions,
+      {this.daily}) {
     board = sudokuSource
         .split(",")
         .takeWhile((str) => str.isNotEmpty)
@@ -34,7 +36,7 @@ class GameState extends ChangeNotifier {
     size = sqrt(board.length).toInt();
     addListener(_trySubmitScore);
   }
-
+  String? daily;
   late final int size;
 
   int selectedDigit = 1;
@@ -167,6 +169,7 @@ class GameState extends ChangeNotifier {
               await http.post(serverAddress.resolve("/add_score"), body: {
             "user_id": account.userID,
             "value": value.toString(),
+            if (daily != null) ...{"daily_dato": daily!}
           });
 
           if (response.statusCode != 200) {
