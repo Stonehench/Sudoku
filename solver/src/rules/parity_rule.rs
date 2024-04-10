@@ -9,7 +9,7 @@ pub struct ParityRule {
     pub parity_clue: Vec<(usize, usize)>,
 }
 
-impl ParityRule {
+impl ParityRule { 
     pub fn new(parity_clue: Vec<(usize, usize)>) -> DynRule {
         DynRule(Box::new(ParityRule { parity_clue }))
     }
@@ -142,6 +142,10 @@ impl Rule for ParityRule {
 
     fn get_name(&self) -> &'static str {
         "ParityRule"
+    }
+
+    fn to_parity_rule(&mut self) -> Option<&mut ParityRule> {
+        Some(self)
     }
 }
 

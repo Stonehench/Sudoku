@@ -2,6 +2,7 @@ use crate::rules::diagonal_rule::DiagonalRule;
 use crate::rules::knight_rule::KnightRule;
 use crate::rules::square_rule::SquareRule;
 use crate::rules::x_rule::XRule;
+use crate::rules::parity_rule::ParityRule;
 use bumpalo::Bump;
 use std::{
     fmt::Debug,
@@ -59,6 +60,10 @@ pub trait Rule: Debug {
     fn get_name(&self) -> &'static str;
 
     fn to_x_rule(&mut self) -> Option<&mut XRule> {
+        None
+    }
+
+    fn to_parity_rule(&mut self) -> Option<&mut ParityRule> {
         None
     }
 
@@ -166,7 +171,19 @@ impl FromStr for DynRule {
                             })
                             .collect::<Result<_, _>>()?,
                     })))},
-                    //Some("ParityRule") => return Err(s.to_owned()), // TODO: finish this for parity should be almost the same as xrule
+                    Some("ParityRule") => Ok(DynRule(Box::new(ParityRule {
+                        parity_clue: rule_params
+                            .map(|s| {
+                                let Some((l, r)) = s.split_once(',') else {
+                                    return Err(format!("Failed to split {s} on ,"));
+                                };
+                                let l = l.parse().map_err(|e| format!("{e:?}"))?;
+                                let r = r.parse().map_err(|e| format!("{e:?}"))?;
+
+                                Ok((l, r))
+                            })
+                            .collect::<Result<_, _>>()?,
+                    }))), // TODO: finish this for parity should be almost the same as xrule
                     //Some("ConsecutiveRule") => return Err(s.to_owned()), // TODO: finish this for consecutive should be almost the same as xrule
                     _ => return Err(s.to_owned()),
                 }

@@ -17,6 +17,9 @@ Future<String?> generateWithSize(
 Future<List<(int, int)>> getXPositions({dynamic hint}) =>
     RustLib.instance.api.getXPositions(hint: hint);
 
+Future<List<(int, int)>> getParityPositions({dynamic hint}) =>
+    RustLib.instance.api.getParityPositions(hint: hint);
+
 Future<List<(int, List<(int, int)>)>> getZipperPositions({dynamic hint}) =>
     RustLib.instance.api.getZipperPositions(hint: hint);
 

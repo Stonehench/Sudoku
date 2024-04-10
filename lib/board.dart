@@ -3,6 +3,7 @@ import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:sudoku/cell.dart';
 import 'package:sudoku/game_state.dart';
+import 'package:sudoku/parity_rule_gui.dart';
 import 'package:sudoku/x_rule_gui.dart';
 import 'package:sudoku/zipper_rule_gui.dart';
 
@@ -64,6 +65,8 @@ class _BoardState extends State<Board> {
               ),
               const Zipper(),
               const X(),
+              const Parity(),
+
               ListenableBuilder(
                 listenable: state,
                 builder: (ctx, _) => GridView.builder(

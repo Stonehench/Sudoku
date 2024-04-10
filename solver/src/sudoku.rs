@@ -427,6 +427,35 @@ impl Sudoku {
             }
         }
 
+        // if parity-rule is part of the rule-set insert some Paritys
+        if let Some(parity_rule) = sudoku.rules.iter_mut().find_map(|r| r.to_parity_rule()) {
+            println!("Creating Paritys");
+            for index in 0..sudoku.cells.len() {
+                if let Some(current) = sudoku.cells[index].available.get(0) {
+                    if index + 1 >= sudoku.cells.len() {
+                        continue;
+                    }
+                    if let Some(right) = sudoku.cells[index + 1].available.get(0) {
+                        if ((current & 1) == 0 && (right & 1) != 0) || ((current & 1) != 0 && (right & 1) == 0) {
+                            // parity rule should have (current , right)
+                            println!("burde pushe 1");
+                            parity_rule.parity_clue.push((index, index + 1));
+                        } 
+                    }
+                    if index + sudoku.size >= sudoku.cells.len() {
+                        continue;
+                    }
+                    if let Some(below) = sudoku.cells[index + sudoku.size].available.get(0) {
+                        if (current & 1 == 0 && below & 1 != 0) || (current & 1 != 0 && below & 1 == 0){
+                            // parity rule should have (index , below)
+                            println!("burde pushe 2");
+                            parity_rule.parity_clue.push((index, index + sudoku.size));
+                        }
+                    }
+                }
+            }
+        }
+
         // if zipper-rule is part of the rule-set insert some Zippers
         // do some depth first kinda thing
         if let Some(zipper_rule) = sudoku.rules.iter_mut().find_map(|r| r.to_zipper_rule()){
