@@ -75,7 +75,7 @@ def streak():
     # todaydiff = 8851
 
     streak = 0
-    if data[0] == todaydiff or data[0] == todaydiff - 1:
+    if len(data) != 0 and (data[0] == todaydiff or data[0] == todaydiff - 1):
         streak = 1
         # Today or yesterday
         for i in range(len(data) - 1):
