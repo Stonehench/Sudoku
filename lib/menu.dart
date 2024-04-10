@@ -299,9 +299,10 @@ class _MenuState extends State<Menu> {
                       onPressed: () async {
                         await setFromStr(sudoku: dailyPuzzle!);
                         var xPositions = await getXPositions();
+                        var parityPositions = await getParityPositions();
                         var zipperPositions = await getZipperPositions();
-                        GameState.setInstance(GameState(
-                            dailyPuzzle!, xPositions, zipperPositions));
+                        GameState.setInstance(GameState(dailyPuzzle!,
+                            xPositions, parityPositions, zipperPositions));
                         setState(() {
                           Navigator.of(context)
                               .pushReplacement(MaterialPageRoute(
