@@ -84,6 +84,8 @@ abstract class RustLibApi extends BaseApi {
 
   Future<void> initApp({dynamic hint});
 
+  Future<void> setFromStr({required String sudoku, dynamic hint});
+
   Future<int?> waitForProgess({dynamic hint});
 }
 
@@ -274,6 +276,31 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   TaskConstMeta get kInitAppConstMeta => const TaskConstMeta(
         debugName: "init_app",
         argNames: [],
+      );
+
+  @override
+  Future<void> setFromStr({required String sudoku, dynamic hint}) {
+    return handler.executeNormal(NormalTask(
+      callFfi: (port_) {
+        final serializer = SseSerializer(generalizedFrbRustBinding);
+        sse_encode_String(sudoku, serializer);
+        pdeCallFfi(generalizedFrbRustBinding, serializer,
+            funcId: 9, port: port_);
+      },
+      codec: SseCodec(
+        decodeSuccessData: sse_decode_unit,
+        decodeErrorData: null,
+      ),
+      constMeta: kSetFromStrConstMeta,
+      argValues: [sudoku],
+      apiImpl: this,
+      hint: hint,
+    ));
+  }
+
+  TaskConstMeta get kSetFromStrConstMeta => const TaskConstMeta(
+        debugName: "set_from_str",
+        argNames: ["sudoku"],
       );
 
   @override

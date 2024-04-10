@@ -564,6 +564,7 @@ impl Sudoku {
             }
         }
 
+        #[cfg(debug_assertions)]
         println!("Solved rules: {:#?}", sudoku.rules);
 
         let remove_limit = difficulty.get_removes(size);

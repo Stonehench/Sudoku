@@ -35,3 +35,6 @@ Future<int?> difficultyValues(
         {required int size, required String difficulty, dynamic hint}) =>
     RustLib.instance.api
         .difficultyValues(size: size, difficulty: difficulty, hint: hint);
+
+Future<void> setFromStr({required String sudoku, dynamic hint}) =>
+    RustLib.instance.api.setFromStr(sudoku: sudoku, hint: hint);

@@ -135,3 +135,12 @@ pub fn difficulty_values(size: usize, difficulty: String) -> Option<usize> {
 
     Some(difficulty.get_removes(size))
 }
+
+pub fn set_from_str(sudoku: String) {
+    let mut sudoku: Sudoku = sudoku.parse().unwrap();
+    let unsolved = sudoku.clone();
+    sudoku.solve(None, None).unwrap();
+
+    let mut state_lock = get_state();
+    state_lock.current_sudoku = Some((unsolved, sudoku));
+}

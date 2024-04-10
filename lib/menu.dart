@@ -6,6 +6,8 @@ import 'package:http/http.dart' as http;
 import 'package:flutter/services.dart';
 import 'package:flutter_spinkit/flutter_spinkit.dart';
 import 'package:sudoku/api.dart';
+import 'package:sudoku/game_state.dart';
+import 'package:sudoku/game_view.dart';
 import 'package:sudoku/gameloader.dart';
 import 'package:sudoku/scoreboard.dart';
 import 'package:sudoku/src/rust/api/simple.dart';
@@ -294,7 +296,21 @@ class _MenuState extends State<Menu> {
                       onPressed: null, child: Text("Already solved")),
                 ] else ...[
                   ElevatedButton(
-                      onPressed: () {}, child: const Text("Daily puzzle")),
+                      onPressed: () async {
+                        await setFromStr(sudoku: dailyPuzzle!);
+                        var xPositions = await getXPositions();
+                        var zipperPositions = await getZipperPositions();
+                        GameState.setInstance(GameState(
+                            dailyPuzzle!, xPositions, zipperPositions));
+                        setState(() {
+                          Navigator.of(context)
+                              .pushReplacement(MaterialPageRoute(
+                            builder: (context) =>
+                                const GameView({"SquareRule"}),
+                          ));
+                        });
+                      },
+                      child: const Text("Daily puzzle")),
                 ]
               ],
             )
