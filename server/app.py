@@ -203,7 +203,7 @@ def add_score():
     conn = pool.get_connection()
     cursor = conn.cursor()
     cursor.execute(
-        "insert into scores (user_id, value, dailty_dato) values (?,?,?)",
+        "insert into scores (user_id, value, daily_dato) values (?,?,?)",
         [user_id, value, daily_dato],
     )
 
