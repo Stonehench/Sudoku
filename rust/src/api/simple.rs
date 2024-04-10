@@ -45,6 +45,7 @@ pub fn generate_with_size(
 
     let mut state = get_state();
     state.x_positions = vec![];
+    state.parity_positions = vec![];
     state.zipper_positions = vec![];
 
     if let Some(x_rule) = sudoku.rules.iter_mut().find_map(|r| r.to_x_rule()) {
@@ -52,11 +53,16 @@ pub fn generate_with_size(
         println!("{x_rule:?}");
     }
 
+    if let Some(parity_rule) = sudoku.rules.iter_mut().find_map(|r| r.to_parity_rule()) {
+        state.parity_positions = parity_rule.parity_clue.clone();
+        println!("{parity_rule:?}");
+    }
+
     if let Some(zipper_rule) = sudoku.rules.iter_mut().find_map(|r| r.to_zipper_rule()) {
         state.zipper_positions = zipper_rule.zipper_clue.clone();
         println!("{zipper_rule:?}");
     }
-
+    
     let mut solved = sudoku.clone();
     if let Err(err) = solved.solve(None, None) {
         println!("Failed to solve generated sudoku: {err}");
@@ -82,6 +88,10 @@ pub fn generate_with_size(
 
 pub fn get_x_positions() -> Vec<(usize, usize)> {
     get_state().x_positions.clone()
+}
+
+pub fn get_parity_positions() -> Vec<(usize, usize)> {
+    get_state().parity_positions.clone()
 }
 
 pub fn get_zipper_positions() -> Vec<(usize, Vec<(usize, usize)>)> {
