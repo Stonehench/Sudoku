@@ -310,10 +310,31 @@ class _MenuState extends State<Menu> {
                             zipperPositions,
                             daily: dailyDate!));
                         setState(() {
-                          Navigator.of(context).push(MaterialPageRoute(
+                          Navigator.of(context)
+                              .push(MaterialPageRoute(
                             builder: (context) =>
                                 const GameView({"SquareRule"}),
-                          ));
+                          ))
+                              .then((_) {
+                            getDaily().then((value) {
+                              setState(() {
+                                dailySolved = null;
+                                dailyPuzzle = null;
+                                dailyDate = null;
+                              });
+                              if (value == null) {
+                                notLoggedIn = true;
+                                return;
+                              }
+                              var (newPuzzle, newStatus, date) = value;
+                              setState(() {
+                                dailyPuzzle = newPuzzle;
+                                dailySolved = newStatus;
+                                dailyDate = date;
+                                failedToFetchDaily = false;
+                              });
+                            });
+                          });
                         });
                       },
                       child: const Text("Daily puzzle")),
