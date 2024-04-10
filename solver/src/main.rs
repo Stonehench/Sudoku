@@ -33,15 +33,16 @@ fn main() {
         let sudoku =
             Sudoku::generate_with_size(9, vec![SquareRule::new()], None, difficulty).unwrap();
 
-        for (i, cell) in sudoku.cells.iter().enumerate() {
-            if i > 0 && i % sudoku.size == 0 {
-                println!("");
-            }
+        println!("SquareRule\n");
+
+        for (index, cell) in sudoku.cells.iter().enumerate() {
             match cell.available.as_slice() {
                 [value] => print!("{value}"),
                 _ => print!("0"),
             }
-            print!(",");
+            if index + 1 < sudoku.cells.len() {
+                print!(",");
+            }
         }
         println!("");
         return;

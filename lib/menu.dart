@@ -6,6 +6,8 @@ import 'package:http/http.dart' as http;
 import 'package:flutter/services.dart';
 import 'package:flutter_spinkit/flutter_spinkit.dart';
 import 'package:sudoku/api.dart';
+import 'package:sudoku/game_state.dart';
+import 'package:sudoku/game_view.dart';
 import 'package:sudoku/gameloader.dart';
 import 'package:sudoku/scoreboard.dart';
 import 'package:sudoku/src/rust/api/simple.dart';
@@ -146,6 +148,7 @@ class _MenuState extends State<Menu> {
   bool failedToFetchDaily = false;
   bool? dailySolved;
   String? dailyPuzzle;
+  String? dailyDate;
   bool notLoggedIn = false;
 
   @override
@@ -161,10 +164,11 @@ class _MenuState extends State<Menu> {
           notLoggedIn = true;
           return;
         }
-        var (newPuzzle, newStatus) = value;
+        var (newPuzzle, newStatus, date) = value;
         setState(() {
           dailyPuzzle = newPuzzle;
           dailySolved = newStatus;
+          dailyDate = date;
           failedToFetchDaily = false;
         });
       });
@@ -239,7 +243,6 @@ class _MenuState extends State<Menu> {
                     setState(() {
                       sizeText = "${size}x$size";
                     });
-
                     Future<String?> sudokuSource = generateWithSize(
                         size: size,
                         rulesSrc: gameModes.toList(),
@@ -294,7 +297,46 @@ class _MenuState extends State<Menu> {
                       onPressed: null, child: Text("Already solved")),
                 ] else ...[
                   ElevatedButton(
-                      onPressed: () {}, child: const Text("Daily puzzle")),
+                      onPressed: () async {
+                        await setFromStr(sudoku: dailyPuzzle!);
+                        var xPositions = await getXPositions();
+                        var parityPositions = await getParityPositions();
+                        var zipperPositions = await getZipperPositions();
+                        GameState.setInstance(GameState(
+                            dailyPuzzle!.split("\n\n")[1],
+                            xPositions,
+                            parityPositions,
+                            zipperPositions,
+                            daily: dailyDate!));
+                        setState(() {
+                          Navigator.of(context)
+                              .push(MaterialPageRoute(
+                            builder: (context) =>
+                                const GameView({"SquareRule"}),
+                          ))
+                              .then((_) {
+                            getDaily().then((value) {
+                              setState(() {
+                                dailySolved = null;
+                                dailyPuzzle = null;
+                                dailyDate = null;
+                              });
+                              if (value == null) {
+                                notLoggedIn = true;
+                                return;
+                              }
+                              var (newPuzzle, newStatus, date) = value;
+                              setState(() {
+                                dailyPuzzle = newPuzzle;
+                                dailySolved = newStatus;
+                                dailyDate = date;
+                                failedToFetchDaily = false;
+                              });
+                            });
+                          });
+                        });
+                      },
+                      child: const Text("Daily puzzle")),
                 ]
               ],
             )
@@ -305,7 +347,7 @@ class _MenuState extends State<Menu> {
   }
 }
 
-Future<(String, bool?)?> getDaily() async {
+Future<(String, bool?, String)?> getDaily() async {
   Account? acc = AccountState.instance().get();
   Map<String, String>? body;
   if (acc != null) {
@@ -319,7 +361,8 @@ Future<(String, bool?)?> getDaily() async {
 
     bool? dailySolved = jsonBody["solved"];
     String puzzle = jsonBody["puzzle"];
-    return (puzzle, dailySolved);
+    String dato = jsonBody["dato"];
+    return (puzzle, dailySolved, dato);
   } catch (e) {
     return null;
   }

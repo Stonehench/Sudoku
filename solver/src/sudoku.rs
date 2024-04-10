@@ -17,7 +17,7 @@ use regex_macro::regex;
 use smallvec::{smallvec, SmallVec};
 use threadpool::ThreadPool;
 
-use crate::rules::{column_rule::ColumnRule, row_rule::RowRule, zipper_rule, DynRule};
+use crate::rules::{column_rule::ColumnRule, row_rule::RowRule, DynRule};
 
 pub enum Difficulty {
     Easy,
@@ -257,7 +257,7 @@ impl Sudoku {
                 )?,
                 _ => {
                     // Der er ikke flere naked singles, så der tjekkes for hidden singles
-                    
+
                     for rule in &self.rules {
                         if let Some((n, hidden_index)) = rule.hidden_singles(self) {
                             //Put nuværende cell tilbage i priority queue
@@ -298,33 +298,34 @@ impl Sudoku {
                             continue 'main;
                         }
                     }
-                    
 
-                    // TODO:
-                    // Current problems invole 4x4 with knights move, here it is able to produce invalid solutions
-                    // Currently the hard coded version of the zipper is impossible in knights mode
                     for rule in self.rules.iter().filter(|r| {
-                        if r.needs_square_for_locked() && r.can_multi_remove() {
+                        if r.needs_square_for_locked() {
                             return has_square;
-                        } 
-                        false
+                        }
+                        true
                     }) {
-                        let multi_remove_indecies = rule.multi_remove(self,  &mut big_buffer);
-                        if !multi_remove_indecies.is_empty(){
+                        let multi_remove_indecies = rule.multi_remove(self, &mut big_buffer);
+                        if !multi_remove_indecies.is_empty() {
                             //Put nuværende cell tilbage i priority queue
                             pri_queue.push(index, entropy);
 
-                            for (value, index) in multi_remove_indecies{
+                            let mut last_index = 0;
+                            for (value, index) in multi_remove_indecies {
+                                if last_index != *index && last_index != 0 {
+                                    pri_queue.change_priority(
+                                        &last_index,
+                                        Entropy(self.cells[last_index].available.len()),
+                                    );
+                                } else {
+                                    last_index = *index;
+                                }
                                 self.cells[*index].remove(*value)?;
-                                pri_queue.change_priority(
-                                    index,
-                                    Entropy(self.cells[*index].available.len()),
-                                );
-                            }  
+                            }
 
-                            continue 'main;                         
+                            continue 'main;
                         }
-                    } 
+                    }
 
                     //Der er flere muligheder for hvad der kan vælges. Derfor pushes state på branch stacken og der vælges en mulighed
                     //Vælg random
@@ -354,7 +355,19 @@ impl Sudoku {
                     }
 
                     self.update_cell(n, index, &mut pri_queue, &mut ret_buffer)?;
+                }
+            }
 
+            if pri_queue.is_empty() {
+                //Check om alle regler bliver overholdt
+                if !self.rules.iter().all(|r| r.finished_legal(&self)) {
+                    //Der er ingen løsning på den nuværende branch. Derfor popper vi en branch og løser den i stedet
+                    let Some((cells, new_pri_queue)) = branch_stack.pop() else {
+                        return Err(SudokuSolveError::UnsolveableError);
+                    };
+
+                    self.cells = cells;
+                    pri_queue = new_pri_queue;
                 }
             }
         }
@@ -377,26 +390,6 @@ impl Sudoku {
         difficulty: Difficulty,
     ) -> Result<Self, SudokuSolveError> {
         let mut sudoku = Sudoku::new(size, rules);
-
-        if let Some(zipper_rule) = sudoku.rules.iter_mut().find_map(|r| r.to_zipper_rule()) {
-            if sudoku.size == 4 {
-                zipper_rule.zipper_clue.push((2,vec![(1 , 6 ) , (0, 10)]))
-            }
-            if sudoku.size == 9 {
-                //zipper_rule.zipper_clue.push((40,vec![(39,41) , (48,32), (47, 33), (46, 34), (45, 35)]));
-                zipper_rule.zipper_clue.push((0,vec![(1,9),(2,18)]));
-                zipper_rule.zipper_clue.push((30,vec![(21,29),(12,28),(3,27)]));
-                zipper_rule.zipper_clue.push((13,vec![(4,22)]));
-                zipper_rule.zipper_clue.push((14,vec![(5,23)]));
-                zipper_rule.zipper_clue.push((40,vec![(41,49),(42,58),(43,67),(44,76),(53,77),(52,68),(51,59),(61,69)]));
-                zipper_rule.zipper_clue.push((26,vec![(17,25),(8,24),(7,15)]));
-                zipper_rule.zipper_clue.push((37,vec![(36,38)]));
-                zipper_rule.zipper_clue.push((56,vec![(47,55),(46,64),(45,73)]));
-                zipper_rule.zipper_clue.push((66,vec![(57,65)])); 
-                zipper_rule.zipper_clue.push((70,vec![(71,79),(62,78)]));
-
-            }      
-        }
 
         sudoku.solve(None, None)?;
 
@@ -432,9 +425,203 @@ impl Sudoku {
                     }
                 }
             }
+            let count = x_rule.x_clue.len();
+            if count > sudoku.size * 2 {
+                for i in 0..count - (sudoku.size * 3)/2 {
+                    x_rule
+                        .x_clue
+                        .remove(random::<usize>() % (count - i));
+                }
+        }}
+
+        // if parity-rule is part of the rule-set insert some Paritys
+        if let Some(parity_rule) = sudoku.rules.iter_mut().find_map(|r| r.to_parity_rule()) {
+            for index in 0..sudoku.cells.len() {
+                if let Some(current) = sudoku.cells[index].available.get(0) {
+                    if index + 1 >= sudoku.cells.len() {
+                        continue;
+                    }
+                    if let Some(right) = sudoku.cells[index + 1].available.get(0) {
+                        if ((current & 1) == 0 && (right & 1) != 0)
+                            || ((current & 1) != 0 && (right & 1) == 0)
+                        {
+                            // parity rule should have (current , right)
+                            parity_rule.parity_clue.push((index, index + 1));
+                        }
+                    }
+                    if index + sudoku.size >= sudoku.cells.len() {
+                        continue;
+                    }
+                    if let Some(below) = sudoku.cells[index + sudoku.size].available.get(0) {
+                        if (current & 1 == 0 && below & 1 != 0)
+                            || (current & 1 != 0 && below & 1 == 0)
+                        {
+                            // parity rule should have (index , below)
+                            parity_rule.parity_clue.push((index, index + sudoku.size));
+                        }
+                    }
+                }
+            }
+            let count = parity_rule.parity_clue.len();
+            if count > sudoku.size * 2 {
+                for i in 0..count - sudoku.size * 2 {
+                    parity_rule
+                        .parity_clue
+                        .remove(random::<usize>() % (count - i));
+                }
+            }
         }
 
+        // if zipper-rule is part of the rule-set insert some Zippers
+        // do some depth first kinda thing
+        if let Some(zipper_rule) = sudoku.rules.iter_mut().find_map(|r| r.to_zipper_rule()) {
+            //println!("Creating Zippers");
+            let tries = sudoku.size * 3;
+            let mut seen = vec![];
 
+            'zippers: for i in 0..tries {
+                let mut random_index = random::<usize>() % (sudoku.size * sudoku.size);
+                while seen.contains(&random_index) && seen.len() < (sudoku.size * sudoku.size) {
+                    //println!("Atemting to create zipper at an occupiued index while at zipper {i}");
+                    random_index = random::<usize>() % (sudoku.size * sudoku.size);
+                }
+
+                // get the value at the random selected cell
+                let center_cell_value = &sudoku.cells[random_index].available[0];
+                if center_cell_value == &1 {
+                    // the value at the center of a zipper can never be 1
+                    continue 'zippers;
+                }
+                let mut zipper_arms: Vec<(usize, usize)> = vec![];
+
+                let mut searching = true;
+                let mut left_index: usize = random_index;
+                let mut right_index: usize = random_index;
+                let mut left_surrounding: Vec<usize> = vec![];
+                let mut right_surrounding: Vec<usize> = vec![];
+
+                'searching: while searching {
+                    left_surrounding.clear();
+                    right_surrounding.clear();
+
+                    // get the surronding digits to the left arm
+                    for k in vec![left_index, right_index] {
+                        if k >= sudoku.size {
+                            //above
+                            if k == left_index {
+                                left_surrounding.push(k - sudoku.size);
+                            }
+                            if k == right_index {
+                                right_surrounding.push(k - sudoku.size);
+                            }
+                        }
+                        if !(k % sudoku.size == 0) {
+                            //left
+                            if k == left_index {
+                                left_surrounding.push(k - 1);
+                            }
+                            if k == right_index {
+                                right_surrounding.push(k - 1);
+                            }
+                        }
+                        if k % sudoku.size != (sudoku.size - 1) {
+                            //right
+                            if k == left_index {
+                                left_surrounding.push(k + 1);
+                            }
+                            if k == right_index {
+                                right_surrounding.push(k + 1);
+                            }
+                        }
+                        if k < sudoku.size * sudoku.size - sudoku.size {
+                            //below
+                            if k == left_index {
+                                left_surrounding.push(k + sudoku.size);
+                            }
+                            if k == right_index {
+                                right_surrounding.push(k + sudoku.size);
+                            }
+                        }
+                        if k >= sudoku.size && k % sudoku.size != (sudoku.size - 1) {
+                            //above right
+                            if k == left_index {
+                                left_surrounding.push(k - sudoku.size + 1);
+                            }
+                            if k == right_index {
+                                right_surrounding.push(k - sudoku.size + 1);
+                            }
+                        }
+                        if k < sudoku.size * sudoku.size - sudoku.size && !(k % sudoku.size == 0) {
+                            //below left
+                            if k == left_index {
+                                left_surrounding.push(k + sudoku.size - 1);
+                            }
+                            if k == right_index {
+                                right_surrounding.push(k + sudoku.size - 1);
+                            }
+                        }
+                        if k >= sudoku.size && !(k % sudoku.size == 0) {
+                            //above left
+                            if k == left_index {
+                                left_surrounding.push(k - sudoku.size - 1);
+                            }
+                            if k == right_index {
+                                right_surrounding.push(k - sudoku.size - 1);
+                            }
+                        }
+                        if k < sudoku.size * sudoku.size - sudoku.size
+                            && k % sudoku.size != (sudoku.size - 1)
+                        {
+                            //below right
+                            if k == left_index {
+                                left_surrounding.push(k + sudoku.size + 1);
+                            }
+                            if k == right_index {
+                                right_surrounding.push(k + sudoku.size + 1);
+                            }
+                        }
+                        //println!("{left_surrounding:?} {right_surrounding:?} {k}");
+                        if left_index == right_index {
+                            break;
+                        }
+                    }
+
+                    // for all indecies surronding left
+                    for i_in_l in &left_surrounding {
+                        // and all indecies surronding right
+                        for i_in_r in &right_surrounding {
+                            // if the inxed is not in any other zipper (including this one)
+                            // and the values of the incecies add to the center value
+                            // these should be added as a pair
+                            //println!("{seen:?} left: {i_in_l} right: {i_in_r} center value: {center_cell_value}");
+
+                            if i_in_l != i_in_r
+                                && !seen.contains(i_in_l)
+                                && !seen.contains(i_in_r)
+                                && sudoku.cells[*i_in_l].available[0]
+                                    + sudoku.cells[*i_in_r].available[0]
+                                    == *center_cell_value
+                            {
+                                seen.push(*i_in_l);
+                                seen.push(*i_in_r);
+                                zipper_arms.push((*i_in_l, *i_in_r));
+                                right_index = *i_in_r;
+                                left_index = *i_in_l;
+
+                                continue 'searching;
+                            }
+                        }
+                    }
+                    searching = false;
+                }
+                if !zipper_arms.is_empty() {
+                    seen.push(random_index);
+                    zipper_rule.zipper_clue.push((random_index, zipper_arms));
+                }
+            }
+        }
+
+        #[cfg(debug_assertions)]
         println!("Solved rules: {:#?}", sudoku.rules);
 
         let remove_limit = difficulty.get_removes(size);
@@ -593,7 +780,7 @@ pub struct Cell {
 }
 
 impl Cell {
-    fn single(n: u16) -> Self {
+    pub fn single(n: u16) -> Self {
         Self {
             available: smallvec![n],
             locked_in: true,
@@ -629,6 +816,23 @@ impl Clone for Sudoku {
     }
 }
 
+//########################### TEST ###############################
+#[test]
+fn generate_sudoku_zipper() {
+    let sudoku = Sudoku::generate_with_size(
+        4,
+        vec![
+            super::rules::square_rule::SquareRule::new(),
+            crate::rules::zipper_rule::ZipperRule::new(vec![]),
+        ],
+        None,
+        Difficulty::Expert,
+    )
+    .unwrap();
+
+    println!("{sudoku:?}");
+    println!("{sudoku}");
+}
 #[test]
 fn read_file_test() {
     let file_str = std::fs::read_to_string("./sudokuBenchmark").unwrap();
@@ -781,7 +985,6 @@ fn solve_zipper9x9_test() {
     let file_str = std::fs::read_to_string("./sudokuZipper9x9").unwrap();
     let mut sudoku: Sudoku = file_str.parse().unwrap();
 
-
     sudoku.solve(None, None).unwrap();
 
     println!("{sudoku}");
@@ -793,7 +996,6 @@ fn solve_zipper9x9_test() {
             .trim()
     );
 }
-
 
 #[test]
 fn solve_knights_move_sudoku() {

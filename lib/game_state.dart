@@ -16,7 +16,9 @@ class GameState extends ChangeNotifier {
     return _instance!;
   }
 
-  GameState(String sudokuSource, this.xPositions, this.zipperPositions) {
+  GameState(String sudokuSource, this.xPositions, this.parityPositions,
+      this.zipperPositions,
+      {this.daily}) {
     board = sudokuSource
         .split(",")
         .takeWhile((str) => str.isNotEmpty)
@@ -34,7 +36,7 @@ class GameState extends ChangeNotifier {
     size = sqrt(board.length).toInt();
     addListener(_trySubmitScore);
   }
-
+  String? daily;
   late final int size;
 
   int selectedDigit = 1;
@@ -42,6 +44,7 @@ class GameState extends ChangeNotifier {
   List<int> initialClues = [];
   List<List<int>> drafts = [];
   List<(int, int)> xPositions;
+  List<(int, int)> parityPositions;
   List<(int, List<(int, int)>)> zipperPositions;
 
   Future<bool> updateDigit(int position) async {
@@ -143,7 +146,10 @@ class GameState extends ChangeNotifier {
       case ScoreSubmissionStatus.serverError:
         return;
       case ScoreSubmissionStatus.unSubmitted:
-        int value = (size * board.length) ~/ initialClues.length;
+        int value = (size * board.length);
+        if (initialClues.isNotEmpty) {
+          value = (size * board.length) ~/ initialClues.length;
+        }
 
         Account? account = AccountState.instance().get();
         if (account == null) {
@@ -151,7 +157,9 @@ class GameState extends ChangeNotifier {
           notifyListeners();
           return;
         }
-        value = (value * account.multiplier!).toInt();
+        if (account.multiplier != null) {
+          value = (value * account.multiplier!).toInt();
+        }
 
         try {
           _scoreSubmitStatus = ScoreSubmissionStatus.inAir;
@@ -161,6 +169,7 @@ class GameState extends ChangeNotifier {
               await http.post(serverAddress.resolve("/add_score"), body: {
             "user_id": account.userID,
             "value": value.toString(),
+            if (daily != null) ...{"daily_dato": daily!}
           });
 
           if (response.statusCode != 200) {

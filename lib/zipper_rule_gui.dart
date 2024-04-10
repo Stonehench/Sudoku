@@ -1,6 +1,7 @@
 import 'dart:math';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/widgets.dart';
 import 'package:sudoku/game_state.dart';
 
 class Zipper extends StatefulWidget {
@@ -26,16 +27,20 @@ class _ZipperState extends State<Zipper> {
           gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
               crossAxisCount: state.size),
           itemBuilder: (context, index) {
+            int dotWidth = 100;
             return Container(
               alignment: Alignment.center,
-              child: state.zipperPositions.any((zipper) =>
-                      // if the center has a neighbour below
-                      zipper.$1 == index ||
-                      zipper.$2.any((element) =>
-                          element.$1 == index || element.$2 == index))
+              child: state.zipperPositions.any((zipper) {
+                if (zipper.$1 == index) {
+                  dotWidth = 200;
+                }
+                return zipper.$1 == index ||
+                    zipper.$2.any((element) =>
+                        element.$1 == index || element.$2 == index);
+              })
                   ? Container(
-                      width: 10,
-                      height: 10,
+                      width: dotWidth / state.size,
+                      height: dotWidth / state.size,
                       //color: lineColor,
                       decoration: BoxDecoration(
                         shape: BoxShape.circle,
@@ -62,34 +67,38 @@ class _ZipperState extends State<Zipper> {
                     ((index ~/ (state.size - 1)) * state.size));
                 // if the center has a neighbour to the right
                 for (int j = 0; j < zipper.$2.length; j++) {
-                  if (j < zipper.$2.length - 1 &&
-                      (zipper.$2[j].$1 == i && zipper.$2[j + 1].$1 == i + 1 ||
-                          zipper.$2[j].$1 == i &&
-                              zipper.$2[j + 1].$2 == i + 1 ||
-                          zipper.$2[j].$2 == i &&
-                              zipper.$2[j + 1].$1 == i + 1 ||
-                          zipper.$2[j].$2 == i &&
-                              zipper.$2[j + 1].$2 == i + 1)) {
-                    return true;
+                  int prevL = -1;
+                  int prevR = -1;
+                  int nextL = -1;
+                  int nextR = -1;
+                  if (j > 0) {
+                    prevL = zipper.$2[j - 1].$1;
+                    prevR = zipper.$2[j - 1].$2;
                   }
-                  if (j > 0 &&
-                      (zipper.$2[j].$1 == i && zipper.$2[j - 1].$1 == i + 1 ||
-                          zipper.$2[j].$1 == i &&
-                              zipper.$2[j - 1].$2 == i + 1 ||
-                          zipper.$2[j].$2 == i &&
-                              zipper.$2[j - 1].$1 == i + 1 ||
-                          zipper.$2[j].$2 == i &&
-                              zipper.$2[j - 1].$2 == i + 1)) {
-                    return true;
+                  int left = zipper.$2[j].$1;
+                  int right = zipper.$2[j].$2;
+                  if (j < zipper.$2.length - 1) {
+                    nextL = zipper.$2[j + 1].$1;
+                    nextR = zipper.$2[j + 1].$2;
                   }
-                  if (zipper.$2[j].$1 == i && zipper.$1 == i + 1 ||
-                      zipper.$2[j].$2 == i && zipper.$1 == i + 1) {
+
+                  if ((prevL != -1 && left + 1 == prevL && i == left) ||
+                      (prevR != -1 && right + 1 == prevR && i == right) ||
+                      (nextL != -1 && left + 1 == nextL && i == left) ||
+                      (nextR != -1 && right + 1 == nextR && i == right) ||
+                      zipper.$1 == i &&
+                          (zipper.$2.first.$1 == zipper.$1 + 1 ||
+                              zipper.$2.first.$2 == zipper.$1 + 1) ||
+                      i == left &&
+                          left + 1 == zipper.$1 &&
+                          zipper.$2.first.$1 == left ||
+                      i == right &&
+                          right + 1 == zipper.$1 &&
+                          zipper.$2.first.$2 == right) {
                     return true;
                   }
                 }
-                return zipper.$1 == i &&
-                    (zipper.$2.first.$1 == zipper.$1 + 1 ||
-                        zipper.$2.first.$2 == zipper.$1 + 1);
+                return false;
               })
                   ? getHorizontal(state)
                   : const Text(""),
@@ -108,29 +117,37 @@ class _ZipperState extends State<Zipper> {
             return Container(
               alignment: Alignment.center,
               child: state.zipperPositions.any((zipper) {
+                int s = state.size;
                 // if the center has a neighbour to the right
                 for (int j = 0; j < zipper.$2.length; j++) {
+                  int prevL = -1;
+                  int prevR = -1;
+                  int nextL = -1;
+                  int nextR = -1;
+                  if (j > 0) {
+                    prevL = zipper.$2[j - 1].$1;
+                    prevR = zipper.$2[j - 1].$2;
+                  }
                   int left = zipper.$2[j].$1;
                   int right = zipper.$2[j].$2;
-                  if (j < zipper.$2.length - 1 &&
-                          (left == index &&
-                                  left + state.size == zipper.$2[j + 1].$1 ||
-                              right == index &&
-                                  right + state.size == zipper.$2[j + 1].$2) ||
-                      j > 0 &&
-                          (left == index &&
-                                  left + state.size == zipper.$2[j - 1].$1 ||
-                              right == index &&
-                                  right + state.size == zipper.$2[j - 1].$2) ||
-                      // next to cente
+                  if (j < zipper.$2.length - 1) {
+                    nextL = zipper.$2[j + 1].$1;
+                    nextR = zipper.$2[j + 1].$2;
+                  }
+
+                  if ((prevL != -1 && left + s == prevL && index == left) ||
+                      (prevR != -1 && right + s == prevR && index == right) ||
+                      (nextL != -1 && left + s == nextL && index == left) ||
+                      (nextR != -1 && right + s == nextR && index == right) ||
                       zipper.$1 == index &&
-                          zipper.$1 + state.size == zipper.$2.first.$1 ||
-                      zipper.$1 == index &&
-                          zipper.$1 + state.size == zipper.$2.first.$2 ||
-                      zipper.$2[j].$1 == index &&
-                          zipper.$1 == index + state.size ||
-                      zipper.$2[j].$2 == index &&
-                          zipper.$1 == index + state.size) {
+                          (zipper.$2.first.$1 == zipper.$1 + s ||
+                              zipper.$2.first.$2 == zipper.$1 + s) ||
+                      index == left &&
+                          left + s == zipper.$1 &&
+                          zipper.$2.first.$1 == left ||
+                      index == right &&
+                          right + s == zipper.$1 &&
+                          zipper.$2.first.$2 == right) {
                     return true;
                   }
                 }
@@ -142,7 +159,7 @@ class _ZipperState extends State<Zipper> {
           },
         ),
 
-        // diagonals
+        // diagonals from top left to bottom right
         GridView.builder(
           padding: EdgeInsets.fromLTRB(
               (340 / (state.size)) / 2,
@@ -158,41 +175,309 @@ class _ZipperState extends State<Zipper> {
             return Container(
               alignment: Alignment.center,
               child: state.zipperPositions.any((zipper) {
+                int s = state.size;
                 // if the center has a neighbour to the right
                 for (int j = 0; j < zipper.$2.length; j++) {
+                  int prevL = -1;
+                  int prevR = -1;
+                  int nextL = -1;
+                  int nextR = -1;
+                  if (j > 0) {
+                    prevL = zipper.$2[j - 1].$1;
+                    prevR = zipper.$2[j - 1].$2;
+                  }
                   int left = zipper.$2[j].$1;
                   int right = zipper.$2[j].$2;
-                  if (j < zipper.$2.length - 1 &&
-                          (left == i &&
-                                  left + state.size + 1 ==
-                                      zipper.$2[j + 1].$1 ||
-                              right == i &&
-                                  right + state.size + 1 ==
-                                      zipper.$2[j + 1].$2) ||
-                      j > 0 &&
-                          (left == i &&
-                                  left + state.size + 1 ==
-                                      zipper.$2[j - 1].$1 ||
-                              right == i &&
-                                  right + state.size + 1 ==
-                                      zipper.$2[j - 1].$2) ||
-                      // next to cente
+                  if (j < zipper.$2.length - 1) {
+                    nextL = zipper.$2[j + 1].$1;
+                    nextR = zipper.$2[j + 1].$2;
+                  }
+
+                  if ((prevL != -1 && left + s + 1 == prevL && i == left) ||
+                      (prevR != -1 && right + s + 1 == prevR && i == right) ||
+                      (nextL != -1 && left + s + 1 == nextL && i == left) ||
+                      (nextR != -1 && right + s + 1 == nextR && i == right) ||
                       zipper.$1 == i &&
-                          zipper.$1 + state.size + 1 == zipper.$2.first.$1 ||
-                      zipper.$1 == i &&
-                          zipper.$1 + state.size + 1 == zipper.$2.first.$2 ||
-                      zipper.$2[j].$1 == zipper.$2.first.$1 &&
-                          zipper.$2[j].$1 == i &&
-                          zipper.$1 == i + state.size + 1 ||
-                      zipper.$2[j].$2 == zipper.$2.first.$2 &&
-                          zipper.$2[j].$2 == i &&
-                          zipper.$1 == i + state.size + 1) {
+                          (zipper.$2.first.$1 == zipper.$1 + s + 1 ||
+                              zipper.$2.first.$2 == zipper.$1 + s + 1) ||
+                      i == left &&
+                          left + s + 1 == zipper.$1 &&
+                          zipper.$2.first.$1 == left ||
+                      i == right &&
+                          right + s + 1 == zipper.$1 &&
+                          zipper.$2.first.$2 == right) {
                     return true;
                   }
                 }
                 return false;
               })
                   ? getDiagonal(state, 0.785398163)
+                  : const Text(""),
+            );
+          },
+        ),
+        GridView.builder(
+          padding: EdgeInsets.zero,
+          itemCount: state.board.length,
+          gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+              crossAxisCount: state.size),
+          itemBuilder: (context, index) {
+            int i = index;
+            return Container(
+              alignment: Alignment.center,
+              child: state.zipperPositions.any((zipper) {
+                int s = state.size;
+                // if the center has a neighbour to the right
+                for (int j = 0; j < zipper.$2.length; j++) {
+                  int prevL = -1;
+                  int prevR = -1;
+                  int nextL = -1;
+                  int nextR = -1;
+                  if (j > 0) {
+                    prevL = zipper.$2[j - 1].$1;
+                    prevR = zipper.$2[j - 1].$2;
+                  }
+                  int left = zipper.$2[j].$1;
+                  int right = zipper.$2[j].$2;
+                  if (j < zipper.$2.length - 1) {
+                    nextL = zipper.$2[j + 1].$1;
+                    nextR = zipper.$2[j + 1].$2;
+                  }
+
+                  if ((prevL != -1 && left + s + 1 == prevL && i == left) ||
+                      (prevR != -1 && right + s + 1 == prevR && i == right) ||
+                      (nextL != -1 && left + s + 1 == nextL && i == left) ||
+                      (nextR != -1 && right + s + 1 == nextR && i == right) ||
+                      zipper.$1 == i &&
+                          (zipper.$2.first.$1 == zipper.$1 + s + 1 ||
+                              zipper.$2.first.$2 == zipper.$1 + s + 1) ||
+                      i == left &&
+                          left + s + 1 == zipper.$1 &&
+                          zipper.$2.first.$1 == left ||
+                      i == right &&
+                          right + s + 1 == zipper.$1 &&
+                          zipper.$2.first.$2 == right) {
+                    return true;
+                  }
+                }
+                return false;
+              })
+                  ? getSmallDiagonal(state, 0.785398163, Alignment.bottomRight)
+                  : const Text(""),
+            );
+          },
+        ),
+
+        GridView.builder(
+          padding: EdgeInsets.zero,
+          itemCount: state.board.length,
+          gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+              crossAxisCount: state.size),
+          itemBuilder: (context, index) {
+            int i = index;
+            return Container(
+              alignment: Alignment.center,
+              child: state.zipperPositions.any((zipper) {
+                int s = state.size;
+                // if the center has a neighbour to the right
+                for (int j = 0; j < zipper.$2.length; j++) {
+                  int prevL = -1;
+                  int prevR = -1;
+                  int nextL = -1;
+                  int nextR = -1;
+                  if (j > 0) {
+                    prevL = zipper.$2[j - 1].$1;
+                    prevR = zipper.$2[j - 1].$2;
+                  }
+                  int left = zipper.$2[j].$1;
+                  int right = zipper.$2[j].$2;
+                  if (j < zipper.$2.length - 1) {
+                    nextL = zipper.$2[j + 1].$1;
+                    nextR = zipper.$2[j + 1].$2;
+                  }
+                  // TODO: THIS MIGHT NOT BE CORRECT
+                  if ((prevL != -1 && left - s - 1 == prevL && i == left) ||
+                      (prevR != -1 && right - s - 1 == prevR && i == right) ||
+                      (nextL != -1 && left - s - 1 == nextL && i == left) ||
+                      (nextR != -1 && right - s - 1 == nextR && i == right) ||
+                      zipper.$1 == i &&
+                          (zipper.$2.first.$1 == zipper.$1 - s - 1 ||
+                              zipper.$2.first.$2 == zipper.$1 - s - 1) ||
+                      i == left &&
+                          left - s - 1 == zipper.$1 &&
+                          zipper.$2.first.$1 == left ||
+                      i == right &&
+                          right - s - 1 == zipper.$1 &&
+                          zipper.$2.first.$2 == right) {
+                    return true;
+                  }
+                }
+                return false;
+              })
+                  ? getSmallDiagonal(state, 0.785398163, Alignment.topLeft)
+                  : const Text(""),
+            );
+          },
+        ),
+
+        GridView.builder(
+          padding: EdgeInsets.zero,
+          itemCount: state.board.length,
+          gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+              crossAxisCount: state.size),
+          itemBuilder: (context, index) {
+            int i = index;
+            return Container(
+              alignment: Alignment.center,
+              child: state.zipperPositions.any((zipper) {
+                int s = state.size;
+                // if the center has a neighbour to the right
+                for (int j = 0; j < zipper.$2.length; j++) {
+                  int prevL = -1;
+                  int prevR = -1;
+                  int nextL = -1;
+                  int nextR = -1;
+                  if (j > 0) {
+                    prevL = zipper.$2[j - 1].$1;
+                    prevR = zipper.$2[j - 1].$2;
+                  }
+                  int left = zipper.$2[j].$1;
+                  int right = zipper.$2[j].$2;
+                  if (j < zipper.$2.length - 1) {
+                    nextL = zipper.$2[j + 1].$1;
+                    nextR = zipper.$2[j + 1].$2;
+                  }
+                  // TODO: THIS MIGHT NOT BE CORRECT
+                  if ((prevL != -1 && left + s - 1 == prevL && i == left) ||
+                      (prevR != -1 && right + s - 1 == prevR && i == right) ||
+                      (nextL != -1 && left + s - 1 == nextL && i == left) ||
+                      (nextR != -1 && right + s - 1 == nextR && i == right) ||
+                      zipper.$1 == i &&
+                          (zipper.$2.first.$1 == zipper.$1 + s - 1 ||
+                              zipper.$2.first.$2 == zipper.$1 + s - 1) ||
+                      i == left &&
+                          left + s - 1 == zipper.$1 &&
+                          zipper.$2.first.$1 == left ||
+                      i == right &&
+                          right + s - 1 == zipper.$1 &&
+                          zipper.$2.first.$2 == right) {
+                    return true;
+                  }
+                }
+                return false;
+              })
+                  ? getSmallDiagonal(state, -0.785398163, Alignment.bottomLeft)
+                  : const Text(""),
+            );
+          },
+        ),
+
+        GridView.builder(
+          padding: EdgeInsets.zero,
+          itemCount: state.board.length,
+          gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+              crossAxisCount: state.size),
+          itemBuilder: (context, index) {
+            int i = index;
+            return Container(
+              alignment: Alignment.center,
+              child: state.zipperPositions.any((zipper) {
+                int s = state.size;
+                // if the center has a neighbour to the right
+                for (int j = 0; j < zipper.$2.length; j++) {
+                  int prevL = -1;
+                  int prevR = -1;
+                  int nextL = -1;
+                  int nextR = -1;
+                  if (j > 0) {
+                    prevL = zipper.$2[j - 1].$1;
+                    prevR = zipper.$2[j - 1].$2;
+                  }
+                  int left = zipper.$2[j].$1;
+                  int right = zipper.$2[j].$2;
+                  if (j < zipper.$2.length - 1) {
+                    nextL = zipper.$2[j + 1].$1;
+                    nextR = zipper.$2[j + 1].$2;
+                  }
+                  // TODO: THIS MIGHT NOT BE CORRECT
+                  if ((prevL != -1 && left - s + 1 == prevL && i == left) ||
+                      (prevR != -1 && right - s + 1 == prevR && i == right) ||
+                      (nextL != -1 && left - s + 1 == nextL && i == left) ||
+                      (nextR != -1 && right - s + 1 == nextR && i == right) ||
+                      zipper.$1 == i &&
+                          (zipper.$2.first.$1 == zipper.$1 - s + 1 ||
+                              zipper.$2.first.$2 == zipper.$1 - s + 1) ||
+                      i == left &&
+                          left - s + 1 == zipper.$1 &&
+                          zipper.$2.first.$1 == left ||
+                      i == right &&
+                          right - s + 1 == zipper.$1 &&
+                          zipper.$2.first.$2 == right) {
+                    return true;
+                  }
+                }
+                return false;
+              })
+                  ? getSmallDiagonal(state, -0.785398163, Alignment.topRight)
+                  : const Text(""),
+            );
+          },
+        ),
+
+        // diagonals from top right to bottom left
+        GridView.builder(
+          padding: EdgeInsets.fromLTRB(
+              (340 / (state.size)) / 2,
+              (340 / (state.size)) / 2,
+              (340 / (state.size)) / 2,
+              (340 / (state.size)) / 2),
+          itemCount: state.board.length - state.size,
+          gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+              crossAxisCount: state.size - 1),
+          itemBuilder: (context, index) {
+            int i = ((index % (state.size - 1)) +
+                    ((index ~/ (state.size - 1)) * state.size)) +
+                1;
+            return Container(
+              alignment: Alignment.center,
+              child: state.zipperPositions.any((zipper) {
+                int s = state.size;
+                // if the center has a neighbour to the right
+                for (int j = 0; j < zipper.$2.length; j++) {
+                  int prevL = -1;
+                  int prevR = -1;
+                  int nextL = -1;
+                  int nextR = -1;
+                  if (j > 0) {
+                    prevL = zipper.$2[j - 1].$1;
+                    prevR = zipper.$2[j - 1].$2;
+                  }
+                  int left = zipper.$2[j].$1;
+                  int right = zipper.$2[j].$2;
+                  if (j < zipper.$2.length - 1) {
+                    nextL = zipper.$2[j + 1].$1;
+                    nextR = zipper.$2[j + 1].$2;
+                  }
+
+                  if ((prevL != -1 && left + s - 1 == prevL && i == left) ||
+                      (prevR != -1 && right + s - 1 == prevR && i == right) ||
+                      (nextL != -1 && left + s - 1 == nextL && i == left) ||
+                      (nextR != -1 && right + s - 1 == nextR && i == right) ||
+                      zipper.$1 == i &&
+                          (zipper.$2.first.$1 == zipper.$1 + s - 1 ||
+                              zipper.$2.first.$2 == zipper.$1 + s - 1) ||
+                      i == left &&
+                          left + s - 1 == zipper.$1 &&
+                          zipper.$2.first.$1 == left ||
+                      i == right &&
+                          right + s - 1 == zipper.$1 &&
+                          zipper.$2.first.$2 == right) {
+                    return true;
+                  }
+                }
+                return false;
+              })
+                  ? getDiagonal(state, -0.785398163)
                   : const Text(""),
             );
           },
@@ -204,7 +489,7 @@ class _ZipperState extends State<Zipper> {
   Widget getHorizontal(GameState state) {
     return SizedBox(
         width: 340 / state.size,
-        height: 10,
+        height: 100 / state.size,
         child: Container(
           color: lineColor,
         ));
@@ -213,19 +498,44 @@ class _ZipperState extends State<Zipper> {
   Widget getVertical(GameState state) {
     return SizedBox(
         height: 340 / state.size,
-        width: 10,
+        width: 100 / state.size,
         child: Container(
           color: lineColor,
         ));
   }
 
+  Widget getSmallDiagonal(GameState state, double angle, Alignment alignment) {
+    return Align(
+      alignment: alignment,
+      child: SizedBox(
+          height: 200 / state.size,
+          width: 200 / state.size,
+          child: Align(
+            alignment: Alignment.center,
+            child: Transform.rotate(
+              angle: angle,
+              child: Container(
+                  height: 100 / state.size,
+                  width: 200 / state.size,
+                  color: lineColor),
+            ),
+          )),
+    );
+  }
+
   Widget getDiagonal(GameState state, double angle) {
-    return Transform.rotate(
-        angle: angle,
-        child: Container(
-          width: 100,
-          height: 10,
-          color: lineColor,
+    return SizedBox(
+        height: 340 / state.size,
+        width: 340 / state.size,
+        child: Align(
+          alignment: Alignment.center,
+          child: Transform.rotate(
+              angle: angle,
+              child: Container(
+                width: 340 / state.size,
+                height: 100 / state.size,
+                color: lineColor,
+              )),
         ));
   }
 }

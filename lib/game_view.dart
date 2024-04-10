@@ -73,7 +73,7 @@ class GameView extends StatelessWidget {
             ...switch (state.scoreStatus()) {
               ScoreSubmissionStatus.gameNotDone ||
               ScoreSubmissionStatus.unSubmitted =>
-                throw "Unreachable",
+                [SpinKitCircle(color: Theme.of(context).highlightColor)],
               ScoreSubmissionStatus.inAir => [
                   SpinKitCircle(color: Theme.of(context).highlightColor)
                 ],
