@@ -3,14 +3,16 @@ import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:sudoku/game_state.dart';
 
-class X extends StatefulWidget {
-  const X({super.key});
+class Domino extends StatefulWidget {
+  String symbol;
+  List<(int, int)> positions;
+  Domino(this.symbol, this.positions, {super.key});
 
   @override
-  State<StatefulWidget> createState() => _XState();
+  State<StatefulWidget> createState() => _DominoState();
 }
 
-class _XState extends State<X> {
+class _DominoState extends State<Domino> {
   Color lineColor = const Color.fromARGB(255, 152, 118, 175);
 
   @override
@@ -37,7 +39,7 @@ class _XState extends State<X> {
             itemBuilder: (context, index) {
               return Container(
                 alignment: Alignment.center,
-                child: state.xPositions.any((t) =>
+                child: widget.positions.any((t) =>
                         t.$1 ==
                             ((index % (state.size - 1)) +
                                 ((index ~/ (state.size - 1)) * state.size)) &&
@@ -45,7 +47,7 @@ class _XState extends State<X> {
                             ((index % (state.size - 1)) +
                                     (index ~/ (state.size - 1)) * state.size) +
                                 1)
-                    ? Text("X",
+                    ? Text(widget.symbol,
                         style: TextStyle(
                             fontSize: fontSize / 3 * 2,
                             color: const Color.fromARGB(255, 19, 22, 54)))
@@ -65,9 +67,9 @@ class _XState extends State<X> {
             itemBuilder: (context, index) {
               return Container(
                 alignment: Alignment.center,
-                child: state.xPositions
+                child: widget.positions
                         .any((t) => t.$1 == index && t.$2 == t.$1 + state.size)
-                    ? Text("X",
+                    ? Text(widget.symbol,
                         style: TextStyle(
                             fontSize: fontSize / 3 * 2,
                             color: const Color.fromARGB(255, 19, 22, 54)))

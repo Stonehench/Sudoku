@@ -3,8 +3,7 @@ import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:sudoku/cell.dart';
 import 'package:sudoku/game_state.dart';
-import 'package:sudoku/parity_rule_gui.dart';
-import 'package:sudoku/x_rule_gui.dart';
+import 'package:sudoku/domino_gui.dart';
 import 'package:sudoku/zipper_rule_gui.dart';
 
 class Board extends StatefulWidget {
@@ -64,9 +63,9 @@ class _BoardState extends State<Board> {
                 },
               ),
               const Zipper(),
-              const X(),
-              const Parity(),
-
+              Domino("X", state.xPositions),
+              Domino("O", state.parityPositions),
+              Domino("☻", state.consecutivePositions),
               ListenableBuilder(
                 listenable: state,
                 builder: (ctx, _) => GridView.builder(

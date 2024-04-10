@@ -4,7 +4,7 @@ use std::sync::{mpsc, Mutex};
 use std::time::Duration;
 
 use lazy_static::lazy_static;
-use solver::rules::DynRule;
+use solver::rules::{consecutive_rule, DynRule};
 use solver::sudoku::{AllSolutionsContext, Difficulty, Sudoku};
 
 use crate::appstate::get_state;
@@ -47,6 +47,7 @@ pub fn generate_with_size(
     state.x_positions = vec![];
     state.parity_positions = vec![];
     state.zipper_positions = vec![];
+    state.consecutive_positions = vec![];
 
     if let Some(x_rule) = sudoku.rules.iter_mut().find_map(|r| r.to_x_rule()) {
         state.x_positions = x_rule.x_clue.clone();
@@ -56,6 +57,11 @@ pub fn generate_with_size(
     if let Some(parity_rule) = sudoku.rules.iter_mut().find_map(|r| r.to_parity_rule()) {
         state.parity_positions = parity_rule.parity_clue.clone();
         println!("{parity_rule:?}");
+    }
+
+    if let Some(consecutive_rule) = sudoku.rules.iter_mut().find_map(|r| r.to_consecutive_rule()) {
+        state.consecutive_positions = consecutive_rule.consecutive_clue.clone();
+        println!("{consecutive_rule:?}");
     }
 
     if let Some(zipper_rule) = sudoku.rules.iter_mut().find_map(|r| r.to_zipper_rule()) {
@@ -88,6 +94,10 @@ pub fn generate_with_size(
 
 pub fn get_x_positions() -> Vec<(usize, usize)> {
     get_state().x_positions.clone()
+}
+
+pub fn get_consecutive_positions() -> Vec<(usize, usize)> {
+    get_state().consecutive_positions.clone()
 }
 
 pub fn get_parity_positions() -> Vec<(usize, usize)> {

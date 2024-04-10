@@ -7,6 +7,7 @@ pub struct AppState {
     pub current_sudoku: Option<(Sudoku, Sudoku)>,
     pub x_positions: Vec<(usize, usize)>,
     pub parity_positions: Vec<(usize, usize)>,
+    pub consecutive_positions: Vec<(usize, usize)>,
     pub zipper_positions: Vec<(usize, Vec<(usize, usize)>)>
 }
 
@@ -15,6 +16,7 @@ lazy_static! {
         current_sudoku: None,
         x_positions: vec![],
         parity_positions: vec![],
+        consecutive_positions: vec![],
         zipper_positions: vec![],
     });
 }
