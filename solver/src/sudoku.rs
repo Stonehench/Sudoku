@@ -310,13 +310,18 @@ impl Sudoku {
                             //Put nuværende cell tilbage i priority queue
                             pri_queue.push(index, entropy);
 
-                            for (value, index) in multi_remove_indecies {
-                                self.cells[*index].remove(*value)?;
-                                pri_queue.change_priority(
-                                    index,
-                                    Entropy(self.cells[*index].available.len()),
-                                );
-                            }
+                            let mut last_index = 0;
+                            for (value, index) in multi_remove_indecies{
+                                if last_index != *index && last_index != 0 {
+                                    pri_queue.change_priority(
+                                        &last_index,
+                                        Entropy(self.cells[last_index].available.len()),
+                                    );
+                                } else {
+                                    last_index = *index;
+                                }
+                                self.cells[*index].remove(*value)?;      
+                            }  
 
                             continue 'main;
                         }
@@ -416,6 +421,35 @@ impl Sudoku {
                         {
                             // x rule should have (index , below)
                             x_rule.x_clue.push((index, index + sudoku.size));
+                        }
+                    }
+                }
+            }
+        }
+
+        // if parity-rule is part of the rule-set insert some Paritys
+        if let Some(parity_rule) = sudoku.rules.iter_mut().find_map(|r| r.to_parity_rule()) {
+            println!("Creating Paritys");
+            for index in 0..sudoku.cells.len() {
+                if let Some(current) = sudoku.cells[index].available.get(0) {
+                    if index + 1 >= sudoku.cells.len() {
+                        continue;
+                    }
+                    if let Some(right) = sudoku.cells[index + 1].available.get(0) {
+                        if ((current & 1) == 0 && (right & 1) != 0) || ((current & 1) != 0 && (right & 1) == 0) {
+                            // parity rule should have (current , right)
+                            println!("burde pushe 1");
+                            parity_rule.parity_clue.push((index, index + 1));
+                        } 
+                    }
+                    if index + sudoku.size >= sudoku.cells.len() {
+                        continue;
+                    }
+                    if let Some(below) = sudoku.cells[index + sudoku.size].available.get(0) {
+                        if (current & 1 == 0 && below & 1 != 0) || (current & 1 != 0 && below & 1 == 0){
+                            // parity rule should have (index , below)
+                            println!("burde pushe 2");
+                            parity_rule.parity_clue.push((index, index + sudoku.size));
                         }
                     }
                 }
@@ -723,7 +757,7 @@ pub struct Cell {
 }
 
 impl Cell {
-    fn single(n: u16) -> Self {
+    pub fn single(n: u16) -> Self {
         Self {
             available: smallvec![n],
             locked_in: true,
