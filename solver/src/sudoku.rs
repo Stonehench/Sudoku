@@ -17,7 +17,7 @@ use regex_macro::regex;
 use smallvec::{smallvec, SmallVec};
 use threadpool::ThreadPool;
 
-use crate::rules::{column_rule::ColumnRule, row_rule::RowRule, DynRule};
+use crate::rules::{column_rule::ColumnRule, row_rule::RowRule, thermometer_rule, DynRule};
 
 pub enum Difficulty {
     Easy,
@@ -473,6 +473,94 @@ impl Sudoku {
         }
 
         // if zipper-rule is part of the rule-set insert some Zippers
+        if let Some(thermometer_rule) = sudoku.rules.iter_mut().find_map(|r| r.to_themometer_rule()) {
+            let tries = sudoku.size * 3;
+            let mut seen = vec![];
+
+            'themometers: for i in 0..tries {
+                let mut random_index = random::<usize>() % (sudoku.size * sudoku.size);
+                while seen.contains(&random_index) && seen.len() < (sudoku.size * sudoku.size) {
+                    random_index = random::<usize>() % (sudoku.size * sudoku.size);
+                }
+            
+                let bottom_cell_value = &sudoku.cells[random_index].available[0];
+                if *bottom_cell_value == sudoku.size as u16 {
+                    // The value at the bottom of a themometer can not be the highest value
+                    continue 'themometers;
+                }
+
+                let mut current_themometer: Vec<usize> = vec![];
+
+                let mut searching = true;
+                let mut surrounding: Vec<usize> = vec![];
+                let mut current_index: usize = random_index;
+
+                while searching {
+
+                    if current_index >= sudoku.size {
+                        //above
+                        surrounding.push(current_index - sudoku.size);
+                    }
+                    if !(current_index % sudoku.size == 0) {
+                        //left
+                        surrounding.push(current_index - 1);
+                    }
+                    if current_index % sudoku.size != (sudoku.size - 1) {
+                        //right
+                        surrounding.push(current_index + 1);
+                    }
+                    if current_index < sudoku.size * sudoku.size - sudoku.size {
+                        //below
+                        surrounding.push(current_index + sudoku.size);
+                    }
+                    if current_index >= sudoku.size && current_index % sudoku.size != (sudoku.size - 1) {
+                        //above right
+                        surrounding.push(current_index - sudoku.size + 1);
+                    }
+                    if current_index < sudoku.size * sudoku.size - sudoku.size && !(current_index % sudoku.size == 0) {
+                        //below left
+                        surrounding.push(current_index + sudoku.size - 1);
+                    }
+                    if current_index >= sudoku.size && !(current_index % sudoku.size == 0) {
+                        //above left
+                        surrounding.push(current_index - sudoku.size - 1);
+                    }
+                    if current_index < sudoku.size * sudoku.size - sudoku.size
+                        && current_index % sudoku.size != (sudoku.size - 1)
+                    {
+                        //below right
+                        surrounding.push(current_index + sudoku.size + 1);
+                    }
+
+                    let mut found_one = false;
+
+                    // for all surronding indecies
+                    for index in &surrounding {
+                        // if the inxed is not in any other zipper (including this one)
+                        // and the values of the incecies add to the center value
+                        // these should be added as a pair
+                        //println!("{seen:?} left: {i_in_l} right: {i_in_r} center value: {center_cell_value}");
+
+                        if !seen.contains(index)
+                            && sudoku.cells[*index].available[0] > *bottom_cell_value
+                        {
+                            seen.push(*index);
+                            current_themometer.push(*index);
+                            current_index = *index;
+                        } 
+                    }
+                    if !found_one {
+                        searching = false;
+                    }
+                }
+                if !current_themometer.is_empty() {
+                    seen.push(random_index);
+                    thermometer_rule.themometer_clue.push((random_index, current_themometer));
+                }
+            }
+        }
+
+        // if zipper-rule is part of the rule-set insert some Zippers
         // do some depth first kinda thing
         if let Some(zipper_rule) = sudoku.rules.iter_mut().find_map(|r| r.to_zipper_rule()) {
             //println!("Creating Zippers");
@@ -488,7 +576,7 @@ impl Sudoku {
 
                 // get the value at the random selected cell
                 let center_cell_value = &sudoku.cells[random_index].available[0];
-                if center_cell_value == &1 {
+                if *center_cell_value == 1 {
                     // the value at the center of a zipper can never be 1
                     continue 'zippers;
                 }

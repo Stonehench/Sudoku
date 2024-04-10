@@ -69,10 +69,6 @@ impl Rule for ThemometerRule {
         None
     }
 
-    fn can_multi_remove(&self) -> bool {
-        true
-    }
-
     fn needs_square_for_locked(&self) -> bool {
         true
     }
