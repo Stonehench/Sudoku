@@ -311,7 +311,7 @@ impl Sudoku {
                             pri_queue.push(index, entropy);
 
                             let mut last_index = 0;
-                            for (value, index) in multi_remove_indecies{
+                            for (value, index) in multi_remove_indecies {
                                 if last_index != *index && last_index != 0 {
                                     pri_queue.change_priority(
                                         &last_index,
@@ -320,8 +320,8 @@ impl Sudoku {
                                 } else {
                                     last_index = *index;
                                 }
-                                self.cells[*index].remove(*value)?;      
-                            }  
+                                self.cells[*index].remove(*value)?;
+                            }
 
                             continue 'main;
                         }
@@ -425,135 +425,153 @@ impl Sudoku {
                     }
                 }
             }
-        }
+            let count = x_rule.x_clue.len();
+            if count > sudoku.size * 2 {
+                for i in 0..count - (sudoku.size * 3)/2 {
+                    x_rule
+                        .x_clue
+                        .remove(random::<usize>() % (count - i));
+                }
+        }}
 
         // if parity-rule is part of the rule-set insert some Paritys
         if let Some(parity_rule) = sudoku.rules.iter_mut().find_map(|r| r.to_parity_rule()) {
-            println!("Creating Paritys");
             for index in 0..sudoku.cells.len() {
                 if let Some(current) = sudoku.cells[index].available.get(0) {
                     if index + 1 >= sudoku.cells.len() {
                         continue;
                     }
                     if let Some(right) = sudoku.cells[index + 1].available.get(0) {
-                        if ((current & 1) == 0 && (right & 1) != 0) || ((current & 1) != 0 && (right & 1) == 0) {
+                        if ((current & 1) == 0 && (right & 1) != 0)
+                            || ((current & 1) != 0 && (right & 1) == 0)
+                        {
                             // parity rule should have (current , right)
-                            println!("burde pushe 1");
                             parity_rule.parity_clue.push((index, index + 1));
-                        } 
+                        }
                     }
                     if index + sudoku.size >= sudoku.cells.len() {
                         continue;
                     }
                     if let Some(below) = sudoku.cells[index + sudoku.size].available.get(0) {
-                        if (current & 1 == 0 && below & 1 != 0) || (current & 1 != 0 && below & 1 == 0){
+                        if (current & 1 == 0 && below & 1 != 0)
+                            || (current & 1 != 0 && below & 1 == 0)
+                        {
                             // parity rule should have (index , below)
-                            println!("burde pushe 2");
                             parity_rule.parity_clue.push((index, index + sudoku.size));
                         }
                     }
+                }
+            }
+            let count = parity_rule.parity_clue.len();
+            if count > sudoku.size * 2 {
+                for i in 0..count - sudoku.size * 2 {
+                    parity_rule
+                        .parity_clue
+                        .remove(random::<usize>() % (count - i));
                 }
             }
         }
 
         // if zipper-rule is part of the rule-set insert some Zippers
         // do some depth first kinda thing
-        if let Some(zipper_rule) = sudoku.rules.iter_mut().find_map(|r| r.to_zipper_rule()){
+        if let Some(zipper_rule) = sudoku.rules.iter_mut().find_map(|r| r.to_zipper_rule()) {
             //println!("Creating Zippers");
             let tries = sudoku.size * 3;
             let mut seen = vec![];
 
             'zippers: for i in 0..tries {
                 let mut random_index = random::<usize>() % (sudoku.size * sudoku.size);
-                while seen.contains(&random_index) && seen.len() < (sudoku.size * sudoku.size){
+                while seen.contains(&random_index) && seen.len() < (sudoku.size * sudoku.size) {
                     //println!("Atemting to create zipper at an occupiued index while at zipper {i}");
                     random_index = random::<usize>() % (sudoku.size * sudoku.size);
                 }
 
                 // get the value at the random selected cell
-                let center_cell_value =  &sudoku.cells[random_index].available[0];
+                let center_cell_value = &sudoku.cells[random_index].available[0];
                 if center_cell_value == &1 {
                     // the value at the center of a zipper can never be 1
                     continue 'zippers;
                 }
                 let mut zipper_arms: Vec<(usize, usize)> = vec![];
-                
+
                 let mut searching = true;
                 let mut left_index: usize = random_index;
                 let mut right_index: usize = random_index;
-                let mut left_surrounding:Vec<usize> = vec![];
-                let mut right_surrounding:Vec<usize> = vec![];
+                let mut left_surrounding: Vec<usize> = vec![];
+                let mut right_surrounding: Vec<usize> = vec![];
 
                 'searching: while searching {
                     left_surrounding.clear();
                     right_surrounding.clear();
-                    
+
                     // get the surronding digits to the left arm
-                    for k in vec![left_index, right_index]{
+                    for k in vec![left_index, right_index] {
                         if k >= sudoku.size {
                             //above
-                            if k == left_index{
+                            if k == left_index {
                                 left_surrounding.push(k - sudoku.size);
-                            } 
-                            if k == right_index{
+                            }
+                            if k == right_index {
                                 right_surrounding.push(k - sudoku.size);
                             }
                         }
                         if !(k % sudoku.size == 0) {
                             //left
-                            if k == left_index{
+                            if k == left_index {
                                 left_surrounding.push(k - 1);
-                            } 
-                            if k == right_index{
+                            }
+                            if k == right_index {
                                 right_surrounding.push(k - 1);
                             }
                         }
-                        if k % sudoku.size != (sudoku.size - 1){
+                        if k % sudoku.size != (sudoku.size - 1) {
                             //right
                             if k == left_index {
                                 left_surrounding.push(k + 1);
-                            } 
+                            }
                             if k == right_index {
                                 right_surrounding.push(k + 1);
-                            } 
+                            }
                         }
                         if k < sudoku.size * sudoku.size - sudoku.size {
                             //below
                             if k == left_index {
                                 left_surrounding.push(k + sudoku.size);
-                            } 
+                            }
                             if k == right_index {
                                 right_surrounding.push(k + sudoku.size);
                             }
                         }
-                        if k >= sudoku.size && k % sudoku.size != (sudoku.size - 1){
+                        if k >= sudoku.size && k % sudoku.size != (sudoku.size - 1) {
                             //above right
-                            if k == left_index{
+                            if k == left_index {
                                 left_surrounding.push(k - sudoku.size + 1);
-                            } 
-                            if k == right_index{
+                            }
+                            if k == right_index {
                                 right_surrounding.push(k - sudoku.size + 1);
                             }
                         }
-                        if k < sudoku.size * sudoku.size - sudoku.size && !(k % sudoku.size == 0){
+                        if k < sudoku.size * sudoku.size - sudoku.size && !(k % sudoku.size == 0) {
                             //below left
-                            if k == left_index{
+                            if k == left_index {
                                 left_surrounding.push(k + sudoku.size - 1);
                             }
                             if k == right_index {
                                 right_surrounding.push(k + sudoku.size - 1);
                             }
                         }
-                        if k >= sudoku.size && !(k % sudoku.size == 0){
+                        if k >= sudoku.size && !(k % sudoku.size == 0) {
                             //above left
-                            if k == left_index{
+                            if k == left_index {
                                 left_surrounding.push(k - sudoku.size - 1);
-                            } 
-                            if k == right_index{
+                            }
+                            if k == right_index {
                                 right_surrounding.push(k - sudoku.size - 1);
                             }
                         }
-                        if k < sudoku.size * sudoku.size - sudoku.size  && k % sudoku.size != (sudoku.size - 1){
+                        if k < sudoku.size * sudoku.size - sudoku.size
+                            && k % sudoku.size != (sudoku.size - 1)
+                        {
                             //below right
                             if k == left_index {
                                 left_surrounding.push(k + sudoku.size + 1);
@@ -563,11 +581,11 @@ impl Sudoku {
                             }
                         }
                         //println!("{left_surrounding:?} {right_surrounding:?} {k}");
-                        if left_index == right_index {break;}
+                        if left_index == right_index {
+                            break;
+                        }
                     }
 
-                   
-                    
                     // for all indecies surronding left
                     for i_in_l in &left_surrounding {
                         // and all indecies surronding right
@@ -576,11 +594,17 @@ impl Sudoku {
                             // and the values of the incecies add to the center value
                             // these should be added as a pair
                             //println!("{seen:?} left: {i_in_l} right: {i_in_r} center value: {center_cell_value}");
-                            
-                            if i_in_l != i_in_r && !seen.contains(i_in_l) && !seen.contains(i_in_r) && sudoku.cells[*i_in_l].available[0] + sudoku.cells[*i_in_r].available[0] == *center_cell_value {
+
+                            if i_in_l != i_in_r
+                                && !seen.contains(i_in_l)
+                                && !seen.contains(i_in_r)
+                                && sudoku.cells[*i_in_l].available[0]
+                                    + sudoku.cells[*i_in_r].available[0]
+                                    == *center_cell_value
+                            {
                                 seen.push(*i_in_l);
                                 seen.push(*i_in_r);
-                                zipper_arms.push((*i_in_l,*i_in_r));
+                                zipper_arms.push((*i_in_l, *i_in_r));
                                 right_index = *i_in_r;
                                 left_index = *i_in_l;
 
@@ -590,11 +614,10 @@ impl Sudoku {
                     }
                     searching = false;
                 }
-                if !zipper_arms.is_empty(){
+                if !zipper_arms.is_empty() {
                     seen.push(random_index);
                     zipper_rule.zipper_clue.push((random_index, zipper_arms));
                 }
-
             }
         }
 
@@ -792,7 +815,6 @@ impl Clone for Sudoku {
         }
     }
 }
-
 
 //########################### TEST ###############################
 #[test]
