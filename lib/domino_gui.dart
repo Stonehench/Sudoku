@@ -6,7 +6,8 @@ import 'package:sudoku/game_state.dart';
 class Domino extends StatefulWidget {
   String symbol;
   List<(int, int)> positions;
-  Domino(this.symbol, this.positions, {super.key});
+  Color color;
+  Domino(this.symbol, this.positions, this.color, {super.key});
 
   @override
   State<StatefulWidget> createState() => _DominoState();
@@ -27,7 +28,7 @@ class _DominoState extends State<Domino> {
     return Center(
       child: Stack(
         children: [
-          // Horizontal X-rule
+          // Horizontal
           GridView.builder(
             padding: EdgeInsets.fromLTRB(
                 (340 / (state.size)) / 2, 0, (340 / (state.size)) / 2, 0),
@@ -47,19 +48,14 @@ class _DominoState extends State<Domino> {
                             ((index % (state.size - 1)) +
                                     (index ~/ (state.size - 1)) * state.size) +
                                 1)
-                    ? CircleAvatar(
-                        backgroundColor: Theme.of(context)
-                            .hoverColor, // Not correct color, work in progress
-                        child: Text(widget.symbol,
-                            style: TextStyle(
-                                fontSize: fontSize / 3 * 2,
-                                color: const Color.fromARGB(255, 19, 22, 54))),
-                      )
+                    ? Text(widget.symbol,
+                        style: TextStyle(
+                            fontSize: fontSize / 3 * 2, color: widget.color))
                     : const Text(""),
               );
             },
           ),
-          // Vertical X-rule
+          // Vertical
           GridView.builder(
             padding: EdgeInsets.fromLTRB(
                 0, (340 / (state.size)) / 2, 0, (340 / (state.size)) / 2),
@@ -75,8 +71,7 @@ class _DominoState extends State<Domino> {
                         .any((t) => t.$1 == index && t.$2 == t.$1 + state.size)
                     ? Text(widget.symbol,
                         style: TextStyle(
-                            fontSize: fontSize / 3 * 2,
-                            color: const Color.fromARGB(255, 19, 22, 54)))
+                            fontSize: fontSize / 3 * 2, color: widget.color))
                     : const Text(""),
               );
             },

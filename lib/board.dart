@@ -22,6 +22,13 @@ class _BoardState extends State<Board> {
         : state.size <= 16
             ? 15.0
             : 6.0;
+    List<(int, int)> dominoPositions = List.empty(growable: true);
+    dominoPositions.addAll(state.consecutivePositions);
+    dominoPositions.addAll(state.xPositions);
+    dominoPositions.addAll(state.parityPositions);
+
+    Color cellColor = const Color.fromARGB(255, 143, 147, 179);
+    Color symbolColor = const Color.fromARGB(255, 44, 52, 134);
 
     return Center(
       child: SizedBox(
@@ -57,15 +64,14 @@ class _BoardState extends State<Board> {
                   mainAxisSpacing: 2,
                 ),
                 itemBuilder: (ctx, index) {
-                  return Container(
-                    color: Theme.of(context).highlightColor,
-                  );
+                  return Container(color: cellColor);
                 },
               ),
+              Domino("■", dominoPositions, cellColor),
               const Zipper(),
-              Domino("X", state.xPositions),
-              Domino("O", state.parityPositions),
-              Domino("☻", state.consecutivePositions),
+              Domino("X", state.xPositions, symbolColor),
+              Domino("O", state.parityPositions, symbolColor),
+              Domino("☻", state.consecutivePositions, symbolColor),
               ListenableBuilder(
                 listenable: state,
                 builder: (ctx, _) => GridView.builder(
