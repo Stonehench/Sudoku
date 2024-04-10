@@ -232,7 +232,7 @@ def change_passw():
 
 @app.route("/rebuild")
 def rebuild():
-    missing = 20 - pool.connection_count
+    missing = 20 - len(pool._connections_free)
     for _ in range(missing):
         pool.add_connection()
 
