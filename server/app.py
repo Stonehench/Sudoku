@@ -64,6 +64,8 @@ def streak():
 
     startdate = datetime.date(2000, 1, 1)
 
+    
+
     data = []
     for stamp in cursor:
         datearr = [int(x) for x in str(stamp[0]).split()[0].split("-")]
@@ -120,7 +122,7 @@ def get_daily():
     conn.commit()
     conn.close()
 
-    return {"puzzle": data, "solved": solved, "dato": date.today()}
+    return {"puzzle": data, "solved": solved, "dato": str(date.today())}
 
 
 @app.route("/scoreboard")
