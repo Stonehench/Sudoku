@@ -313,11 +313,14 @@ impl Sudoku {
 
                             let mut last_index = 0;
                             for (value, index) in multi_remove_indecies {
-                                pri_queue.change_priority(
-                                    &last_index,
-                                    Entropy(self.cells[last_index].available.len()),
-                                );
-
+                                if last_index != *index && last_index != 0 {
+                                    pri_queue.change_priority(
+                                        &last_index,
+                                        Entropy(self.cells[last_index].available.len()),
+                                    );
+                                } else {
+                                    last_index = *index;
+                                }
                                 self.cells[*index].remove(*value)?;
                             }
 
@@ -423,11 +426,17 @@ impl Sudoku {
                     }
                 }
             }
-        }
+            let count = x_rule.x_clue.len();
+            if count > sudoku.size * 2 {
+                for i in 0..count - (sudoku.size * 3)/2 {
+                    x_rule
+                        .x_clue
+                        .remove(random::<usize>() % (count - i));
+                }
+        }}
 
         // if parity-rule is part of the rule-set insert some Paritys
         if let Some(parity_rule) = sudoku.rules.iter_mut().find_map(|r| r.to_parity_rule()) {
-            println!("Creating Paritys");
             for index in 0..sudoku.cells.len() {
                 if let Some(current) = sudoku.cells[index].available.get(0) {
                     if index + 1 >= sudoku.cells.len() {
@@ -438,7 +447,6 @@ impl Sudoku {
                             || ((current & 1) != 0 && (right & 1) == 0)
                         {
                             // parity rule should have (current , right)
-                            println!("burde pushe 1");
                             parity_rule.parity_clue.push((index, index + 1));
                         }
                     }
@@ -450,10 +458,17 @@ impl Sudoku {
                             || (current & 1 != 0 && below & 1 == 0)
                         {
                             // parity rule should have (index , below)
-                            println!("burde pushe 2");
                             parity_rule.parity_clue.push((index, index + sudoku.size));
                         }
                     }
+                }
+            }
+            let count = parity_rule.parity_clue.len();
+            if count > sudoku.size * 2 {
+                for i in 0..count - sudoku.size * 2 {
+                    parity_rule
+                        .parity_clue
+                        .remove(random::<usize>() % (count - i));
                 }
             }
         }

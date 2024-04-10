@@ -148,6 +148,7 @@ class _MenuState extends State<Menu> {
   bool failedToFetchDaily = false;
   bool? dailySolved;
   String? dailyPuzzle;
+  String? dailyDate;
   bool notLoggedIn = false;
 
   @override
@@ -163,10 +164,11 @@ class _MenuState extends State<Menu> {
           notLoggedIn = true;
           return;
         }
-        var (newPuzzle, newStatus) = value;
+        var (newPuzzle, newStatus, date) = value;
         setState(() {
           dailyPuzzle = newPuzzle;
           dailySolved = newStatus;
+          dailyDate = date;
           failedToFetchDaily = false;
         });
       });
@@ -241,7 +243,6 @@ class _MenuState extends State<Menu> {
                     setState(() {
                       sizeText = "${size}x$size";
                     });
-
                     Future<String?> sudokuSource = generateWithSize(
                         size: size,
                         rulesSrc: gameModes.toList(),
@@ -304,17 +305,39 @@ class _MenuState extends State<Menu> {
                         var consecutivePositions =
                             await getConsecutivePositions();
                         GameState.setInstance(GameState(
-                            dailyPuzzle!,
+                            dailyPuzzle!.split("\n\n")[1],
                             xPositions,
                             parityPositions,
                             consecutivePositions,
-                            zipperPositions));
+                            zipperPositions,
+                            daily: dailyDate!));
+
                         setState(() {
                           Navigator.of(context)
-                              .pushReplacement(MaterialPageRoute(
+                              .push(MaterialPageRoute(
                             builder: (context) =>
                                 const GameView({"SquareRule"}),
-                          ));
+                          ))
+                              .then((_) {
+                            getDaily().then((value) {
+                              setState(() {
+                                dailySolved = null;
+                                dailyPuzzle = null;
+                                dailyDate = null;
+                              });
+                              if (value == null) {
+                                notLoggedIn = true;
+                                return;
+                              }
+                              var (newPuzzle, newStatus, date) = value;
+                              setState(() {
+                                dailyPuzzle = newPuzzle;
+                                dailySolved = newStatus;
+                                dailyDate = date;
+                                failedToFetchDaily = false;
+                              });
+                            });
+                          });
                         });
                       },
                       child: const Text("Daily puzzle")),
@@ -328,7 +351,7 @@ class _MenuState extends State<Menu> {
   }
 }
 
-Future<(String, bool?)?> getDaily() async {
+Future<(String, bool?, String)?> getDaily() async {
   Account? acc = AccountState.instance().get();
   Map<String, String>? body;
   if (acc != null) {
@@ -342,7 +365,8 @@ Future<(String, bool?)?> getDaily() async {
 
     bool? dailySolved = jsonBody["solved"];
     String puzzle = jsonBody["puzzle"];
-    return (puzzle, dailySolved);
+    String dato = jsonBody["dato"];
+    return (puzzle, dailySolved, dato);
   } catch (e) {
     return null;
   }

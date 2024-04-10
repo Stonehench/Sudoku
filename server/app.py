@@ -5,6 +5,7 @@ import sys
 import uuid
 import subprocess
 import datetime
+from datetime import date
 
 # Connect to MariaDB Platform
 try:
@@ -63,6 +64,8 @@ def streak():
 
     startdate = datetime.date(2000, 1, 1)
 
+    
+
     data = []
     for stamp in cursor:
         datearr = [int(x) for x in str(stamp[0]).split()[0].split("-")]
@@ -95,7 +98,7 @@ def get_daily():
     conn = pool.get_connection()
     conn.auto_reconnect = True
     cursor = conn.cursor()
-    cursor.execute("select puzzle from DailyChallenges order by dato desc limit 1")
+    cursor.execute("select puzzle from DailyChallenges where dato = curdate()")
 
     data = cursor.fetchone()
 
@@ -119,10 +122,7 @@ def get_daily():
     conn.commit()
     conn.close()
 
-    return {
-        "puzzle": data,
-        "solved": solved,
-    }
+    return {"puzzle": data, "solved": solved, "dato": str(date.today())}
 
 
 @app.route("/scoreboard")
@@ -205,7 +205,7 @@ def add_score():
     conn = pool.get_connection()
     cursor = conn.cursor()
     cursor.execute(
-        "insert into scores (user_id, value, dailty_dato) values (?,?,?)",
+        "insert into scores (user_id, value, daily_dato) values (?,?,?)",
         [user_id, value, daily_dato],
     )
 
