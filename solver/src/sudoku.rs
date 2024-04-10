@@ -235,6 +235,7 @@ impl Sudoku {
 
         let mut branch_stack: Vec<(Vec<Cell>, PriorityQueue<usize, Entropy>)> = vec![];
         let mut ret_buffer = vec![];
+        let mut big_buffer = vec![];
         let mut arena = Self::get_arena();
 
         'main: while let Some((index, entropy)) = pri_queue.pop() {
@@ -298,6 +299,29 @@ impl Sudoku {
                         }
                     }
 
+                    for rule in self.rules.iter().filter(|r| {
+                        if r.needs_square_for_locked() {
+                            return has_square;
+                        }
+                        true
+                    }) {
+                        let multi_remove_indecies = rule.multi_remove(self, &mut big_buffer);
+                        if !multi_remove_indecies.is_empty() {
+                            //Put nuværende cell tilbage i priority queue
+                            pri_queue.push(index, entropy);
+
+                            for (value, index) in multi_remove_indecies {
+                                self.cells[*index].remove(*value)?;
+                                pri_queue.change_priority(
+                                    index,
+                                    Entropy(self.cells[*index].available.len()),
+                                );
+                            }
+
+                            continue 'main;
+                        }
+                    }
+
                     //Der er flere muligheder for hvad der kan vælges. Derfor pushes state på branch stacken og der vælges en mulighed
                     //Vælg random
                     let choice = random::<usize>() % entropy.0;
@@ -328,6 +352,19 @@ impl Sudoku {
                     self.update_cell(n, index, &mut pri_queue, &mut ret_buffer)?;
                 }
             }
+
+            if pri_queue.is_empty() {
+                //Check om alle regler bliver overholdt
+                if !self.rules.iter().all(|r| r.finished_legal(&self)) {
+                    //Der er ingen løsning på den nuværende branch. Derfor popper vi en branch og løser den i stedet
+                    let Some((cells, new_pri_queue)) = branch_stack.pop() else {
+                        return Err(SudokuSolveError::UnsolveableError);
+                    };
+
+                    self.cells = cells;
+                    pri_queue = new_pri_queue;
+                }
+            }
         }
 
         let mut lock = ARENA_POOL.lock().unwrap();
@@ -348,6 +385,7 @@ impl Sudoku {
         difficulty: Difficulty,
     ) -> Result<Self, SudokuSolveError> {
         let mut sudoku = Sudoku::new(size, rules);
+
         sudoku.solve(None, None)?;
 
         for cell in sudoku.cells.iter_mut() {
@@ -383,6 +421,149 @@ impl Sudoku {
                 }
             }
         }
+
+        // if zipper-rule is part of the rule-set insert some Zippers
+        // do some depth first kinda thing
+        if let Some(zipper_rule) = sudoku.rules.iter_mut().find_map(|r| r.to_zipper_rule()){
+            //println!("Creating Zippers");
+            let tries = sudoku.size * 3;
+            let mut seen = vec![];
+
+            'zippers: for i in 0..tries {
+                let mut random_index = random::<usize>() % (sudoku.size * sudoku.size);
+                while seen.contains(&random_index) && seen.len() < (sudoku.size * sudoku.size){
+                    //println!("Atemting to create zipper at an occupiued index while at zipper {i}");
+                    random_index = random::<usize>() % (sudoku.size * sudoku.size);
+                }
+
+                // get the value at the random selected cell
+                let center_cell_value =  &sudoku.cells[random_index].available[0];
+                if center_cell_value == &1 {
+                    // the value at the center of a zipper can never be 1
+                    continue 'zippers;
+                }
+                let mut zipper_arms: Vec<(usize, usize)> = vec![];
+                
+                let mut searching = true;
+                let mut left_index: usize = random_index;
+                let mut right_index: usize = random_index;
+                let mut left_surrounding:Vec<usize> = vec![];
+                let mut right_surrounding:Vec<usize> = vec![];
+
+                'searching: while searching {
+                    left_surrounding.clear();
+                    right_surrounding.clear();
+                    
+                    // get the surronding digits to the left arm
+                    for k in vec![left_index, right_index]{
+                        if k >= sudoku.size {
+                            //above
+                            if k == left_index{
+                                left_surrounding.push(k - sudoku.size);
+                            } 
+                            if k == right_index{
+                                right_surrounding.push(k - sudoku.size);
+                            }
+                        }
+                        if !(k % sudoku.size == 0) {
+                            //left
+                            if k == left_index{
+                                left_surrounding.push(k - 1);
+                            } 
+                            if k == right_index{
+                                right_surrounding.push(k - 1);
+                            }
+                        }
+                        if k % sudoku.size != (sudoku.size - 1){
+                            //right
+                            if k == left_index {
+                                left_surrounding.push(k + 1);
+                            } 
+                            if k == right_index {
+                                right_surrounding.push(k + 1);
+                            } 
+                        }
+                        if k < sudoku.size * sudoku.size - sudoku.size {
+                            //below
+                            if k == left_index {
+                                left_surrounding.push(k + sudoku.size);
+                            } 
+                            if k == right_index {
+                                right_surrounding.push(k + sudoku.size);
+                            }
+                        }
+                        if k >= sudoku.size && k % sudoku.size != (sudoku.size - 1){
+                            //above right
+                            if k == left_index{
+                                left_surrounding.push(k - sudoku.size + 1);
+                            } 
+                            if k == right_index{
+                                right_surrounding.push(k - sudoku.size + 1);
+                            }
+                        }
+                        if k < sudoku.size * sudoku.size - sudoku.size && !(k % sudoku.size == 0){
+                            //below left
+                            if k == left_index{
+                                left_surrounding.push(k + sudoku.size - 1);
+                            }
+                            if k == right_index {
+                                right_surrounding.push(k + sudoku.size - 1);
+                            }
+                        }
+                        if k >= sudoku.size && !(k % sudoku.size == 0){
+                            //above left
+                            if k == left_index{
+                                left_surrounding.push(k - sudoku.size - 1);
+                            } 
+                            if k == right_index{
+                                right_surrounding.push(k - sudoku.size - 1);
+                            }
+                        }
+                        if k < sudoku.size * sudoku.size - sudoku.size  && k % sudoku.size != (sudoku.size - 1){
+                            //below right
+                            if k == left_index {
+                                left_surrounding.push(k + sudoku.size + 1);
+                            }
+                            if k == right_index {
+                                right_surrounding.push(k + sudoku.size + 1);
+                            }
+                        }
+                        //println!("{left_surrounding:?} {right_surrounding:?} {k}");
+                        if left_index == right_index {break;}
+                    }
+
+                   
+                    
+                    // for all indecies surronding left
+                    for i_in_l in &left_surrounding {
+                        // and all indecies surronding right
+                        for i_in_r in &right_surrounding {
+                            // if the inxed is not in any other zipper (including this one)
+                            // and the values of the incecies add to the center value
+                            // these should be added as a pair
+                            //println!("{seen:?} left: {i_in_l} right: {i_in_r} center value: {center_cell_value}");
+                            
+                            if i_in_l != i_in_r && !seen.contains(i_in_l) && !seen.contains(i_in_r) && sudoku.cells[*i_in_l].available[0] + sudoku.cells[*i_in_r].available[0] == *center_cell_value {
+                                seen.push(*i_in_l);
+                                seen.push(*i_in_r);
+                                zipper_arms.push((*i_in_l,*i_in_r));
+                                right_index = *i_in_r;
+                                left_index = *i_in_l;
+
+                                continue 'searching;
+                            }
+                        }
+                    }
+                    searching = false;
+                }
+                if !zipper_arms.is_empty(){
+                    seen.push(random_index);
+                    zipper_rule.zipper_clue.push((random_index, zipper_arms));
+                }
+
+            }
+        }
+
         println!("Solved rules: {:#?}", sudoku.rules);
 
         let remove_limit = difficulty.get_removes(size);
@@ -577,6 +758,24 @@ impl Clone for Sudoku {
     }
 }
 
+
+//########################### TEST ###############################
+#[test]
+fn generate_sudoku_zipper() {
+    let sudoku = Sudoku::generate_with_size(
+        4,
+        vec![
+            super::rules::square_rule::SquareRule::new(),
+            crate::rules::zipper_rule::ZipperRule::new(vec![]),
+        ],
+        None,
+        Difficulty::Expert,
+    )
+    .unwrap();
+
+    println!("{sudoku:?}");
+    println!("{sudoku}");
+}
 #[test]
 fn read_file_test() {
     let file_str = std::fs::read_to_string("./sudokuBenchmark").unwrap();
@@ -712,6 +911,33 @@ fn solve_16x_test() {
     sudoku.solve(None, None).unwrap();
 
     println!("{sudoku}");
+}
+
+#[test]
+fn solve_zipper_test() {
+    let file_str = std::fs::read_to_string("./sudokuZipper").unwrap();
+    let mut sudoku: Sudoku = file_str.parse().unwrap();
+
+    sudoku.solve(None, None).unwrap();
+
+    println!("{sudoku}");
+}
+
+#[test]
+fn solve_zipper9x9_test() {
+    let file_str = std::fs::read_to_string("./sudokuZipper9x9").unwrap();
+    let mut sudoku: Sudoku = file_str.parse().unwrap();
+
+    sudoku.solve(None, None).unwrap();
+
+    println!("{sudoku}");
+    assert_eq!(
+        sudoku.to_string().trim(),
+        std::fs::read_to_string("./sudokuZipper9x9Solution")
+            .unwrap()
+            .replace("\r\n", "\n")
+            .trim()
+    );
 }
 
 #[test]

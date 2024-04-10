@@ -124,6 +124,7 @@ fn x_hidden_math_test() {
     println!("{sudoku}");
 
     let res = x_rule.hidden_singles(&sudoku);
+    // value , index
     assert_eq!(res, Some((4, 2)))
 }
 

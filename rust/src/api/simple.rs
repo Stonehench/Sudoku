@@ -45,10 +45,16 @@ pub fn generate_with_size(
 
     let mut state = get_state();
     state.x_positions = vec![];
+    state.zipper_positions = vec![];
 
     if let Some(x_rule) = sudoku.rules.iter_mut().find_map(|r| r.to_x_rule()) {
         state.x_positions = x_rule.x_clue.clone();
         println!("{x_rule:?}");
+    }
+
+    if let Some(zipper_rule) = sudoku.rules.iter_mut().find_map(|r| r.to_zipper_rule()) {
+        state.zipper_positions = zipper_rule.zipper_clue.clone();
+        println!("{zipper_rule:?}");
     }
 
     let mut solved = sudoku.clone();
@@ -76,6 +82,10 @@ pub fn generate_with_size(
 
 pub fn get_x_positions() -> Vec<(usize, usize)> {
     get_state().x_positions.clone()
+}
+
+pub fn get_zipper_positions() -> Vec<(usize, Vec<(usize, usize)>)> {
+    get_state().zipper_positions.clone()
 }
 
 lazy_static! {
