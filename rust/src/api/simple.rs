@@ -4,7 +4,7 @@ use std::sync::{mpsc, Mutex};
 use std::time::Duration;
 
 use lazy_static::lazy_static;
-use solver::rules::{consecutive_rule, DynRule};
+use solver::rules::DynRule;
 use solver::sudoku::{AllSolutionsContext, Difficulty, Sudoku};
 
 use crate::appstate::get_state;
@@ -59,7 +59,11 @@ pub fn generate_with_size(
         println!("{parity_rule:?}");
     }
 
-    if let Some(consecutive_rule) = sudoku.rules.iter_mut().find_map(|r| r.to_consecutive_rule()) {
+    if let Some(consecutive_rule) = sudoku
+        .rules
+        .iter_mut()
+        .find_map(|r| r.to_consecutive_rule())
+    {
         state.consecutive_positions = consecutive_rule.consecutive_clue.clone();
         println!("{consecutive_rule:?}");
     }
@@ -164,6 +168,7 @@ pub fn set_from_str(sudoku: String) {
     let mut parity = vec![];
     let mut zippers = vec![];
     let mut x = vec![];
+    let mut consecutive = vec![];
 
     if let Some(parity_rule) = solved.rules.iter_mut().find_map(|r| r.to_parity_rule()) {
         parity = parity_rule.parity_clue.clone();
@@ -177,9 +182,18 @@ pub fn set_from_str(sudoku: String) {
         x = x_rule.x_clue.clone();
     }
 
+    if let Some(consecutive_rule) = solved
+        .rules
+        .iter_mut()
+        .find_map(|r| r.to_consecutive_rule())
+    {
+        consecutive = consecutive_rule.consecutive_clue.clone();
+    }
+
     let mut state_lock = get_state();
     state_lock.current_sudoku = Some((sudoku, solved));
     state_lock.zipper_positions = zippers;
     state_lock.parity_positions = parity;
     state_lock.x_positions = x;
+    state_lock.consecutive_positions = consecutive;
 }
