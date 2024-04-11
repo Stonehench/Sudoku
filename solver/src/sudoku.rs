@@ -501,6 +501,15 @@ impl Sudoku {
                     }
                 }
             }
+            // remove some of the generated consecutive pairs
+            let count = consecutive_rule.consecutive_clue.len();
+            if count > sudoku.size * 2 {
+                for i in 0..count - sudoku.size * 2 {
+                    consecutive_rule
+                        .consecutive_clue
+                        .remove(random::<usize>() % (count - i));
+                }
+            }
         }
 
         // if zipper-rule is part of the rule-set insert some Zippers

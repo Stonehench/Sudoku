@@ -69,9 +69,9 @@ class _BoardState extends State<Board> {
               ),
               Domino("■", dominoPositions, cellColor),
               const Zipper(),
-              Domino("X", state.xPositions, symbolColor),
-              Domino("O", state.parityPositions, symbolColor),
-              Domino("☻", state.consecutivePositions, symbolColor),
+              Domino("⨯", state.xPositions, symbolColor),
+              Domino("◦", state.parityPositions, symbolColor),
+              Domino("•", state.consecutivePositions, symbolColor),
               ListenableBuilder(
                 listenable: state,
                 builder: (ctx, _) => GridView.builder(

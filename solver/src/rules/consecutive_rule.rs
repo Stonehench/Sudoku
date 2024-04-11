@@ -24,7 +24,7 @@ impl Rule for ConsecutiveRule {
     ) -> &'buf [usize] {
         buffer.clear();
 
-        // TODO: Might not need to affect stuff
+        // Might not need to affect stuff
 
         buffer
     }
