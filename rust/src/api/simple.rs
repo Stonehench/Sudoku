@@ -62,7 +62,7 @@ pub fn generate_with_size(
         state.zipper_positions = zipper_rule.zipper_clue.clone();
         println!("{zipper_rule:?}");
     }
-    
+
     let mut solved = sudoku.clone();
     if let Err(err) = solved.solve(None, None) {
         println!("Failed to solve generated sudoku: {err}");
@@ -147,10 +147,29 @@ pub fn difficulty_values(size: usize, difficulty: String) -> Option<usize> {
 }
 
 pub fn set_from_str(sudoku: String) {
-    let mut sudoku: Sudoku = sudoku.parse().unwrap();
-    let unsolved = sudoku.clone();
-    sudoku.solve(None, None).unwrap();
+    let sudoku: Sudoku = sudoku.parse().unwrap();
+    let mut solved = sudoku.clone();
+    solved.solve(None, None).unwrap();
+
+    let mut parity = vec![];
+    let mut zippers = vec![];
+    let mut x = vec![];
+
+    if let Some(parity_rule) = solved.rules.iter_mut().find_map(|r| r.to_parity_rule()) {
+        parity = parity_rule.parity_clue.clone();
+    }
+
+    if let Some(zipper_rule) = solved.rules.iter_mut().find_map(|r| r.to_zipper_rule()) {
+        zippers = zipper_rule.zipper_clue.clone();
+    }
+
+    if let Some(x_rule) = solved.rules.iter_mut().find_map(|r| r.to_x_rule()) {
+        x = x_rule.x_clue.clone();
+    }
 
     let mut state_lock = get_state();
-    state_lock.current_sudoku = Some((unsolved, sudoku));
+    state_lock.current_sudoku = Some((sudoku, solved));
+    state_lock.zipper_positions = zippers;
+    state_lock.parity_positions = parity;
+    state_lock.x_positions = x;
 }
