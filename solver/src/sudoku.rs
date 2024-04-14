@@ -17,7 +17,7 @@ use regex_macro::regex;
 use smallvec::{smallvec, SmallVec};
 use threadpool::ThreadPool;
 
-use crate::rules::{column_rule::ColumnRule, row_rule::RowRule, consecutive_rule, thermometer_rule, DynRule};
+use crate::rules::{column_rule::ColumnRule, row_rule::RowRule, DynRule};
 
 pub enum Difficulty {
     Easy,
@@ -512,7 +512,7 @@ impl Sudoku {
             }
         }
 
-        // if zipper-rule is part of the rule-set insert some Zippers
+        // ThermometerRule
         if let Some(thermometer_rule) = sudoku.rules.iter_mut().find_map(|r| r.to_thermometer_rule()) {
             let tries = sudoku.size * 3;
             let mut seen = vec![];
@@ -522,20 +522,20 @@ impl Sudoku {
                 while seen.contains(&random_index) && seen.len() < (sudoku.size * sudoku.size) {
                     random_index = random::<usize>() % (sudoku.size * sudoku.size);
                 }
-            
-                let bottom_cell_value = &sudoku.cells[random_index].available[0];
-                if *bottom_cell_value == sudoku.size as u16 {
+
+                let mut current_themometer: Vec<usize> = vec![];
+                let mut searching = true;
+                let mut surrounding: Vec<usize> = vec![];
+                let mut current_index: usize = random_index;
+                let mut current_value = sudoku.cells[random_index].available[0];
+                current_themometer.push(current_index);
+
+                if current_value == sudoku.size as u16 {
                     // The value at the bottom of a themometer can not be the highest value
                     continue 'themometers;
                 }
 
-                let mut current_themometer: Vec<usize> = vec![];
-
-                let mut searching = true;
-                let mut surrounding: Vec<usize> = vec![];
-                let mut current_index: usize = random_index;
-
-                while searching {
+                'searching: while searching {
 
                     if current_index >= sudoku.size {
                         //above
@@ -572,30 +572,25 @@ impl Sudoku {
                         surrounding.push(current_index + sudoku.size + 1);
                     }
 
-                    let mut found_one = false;
-
                     // for all surronding indecies
                     for index in &surrounding {
-                        // if the inxed is not in any other zipper (including this one)
-                        // and the values of the incecies add to the center value
-                        // these should be added as a pair
-                        //println!("{seen:?} left: {i_in_l} right: {i_in_r} center value: {center_cell_value}");
-
                         if !seen.contains(index)
-                            && sudoku.cells[*index].available[0] > *bottom_cell_value
+                            && sudoku.cells[*index].available[0] > current_value
                         {
                             seen.push(*index);
                             current_themometer.push(*index);
                             current_index = *index;
+                            current_value = sudoku.cells[*index].available[0];
+
+                            continue 'searching; 
                         } 
                     }
-                    if !found_one {
-                        searching = false;
-                    }
+                    searching = false;
+
                 }
-                if !current_themometer.is_empty() {
+                if current_themometer.len() > 1 {
                     seen.push(random_index);
-                    //thermometer_rule.themometer_clue.push((random_index, current_themometer));
+                    thermometer_rule.themometer_clue.push(current_themometer);
                 }
             }
         }
@@ -721,7 +716,6 @@ impl Sudoku {
                             // if the inxed is not in any other zipper (including this one)
                             // and the values of the incecies add to the center value
                             // these should be added as a pair
-                            //println!("{seen:?} left: {i_in_l} right: {i_in_r} center value: {center_cell_value}");
 
                             if i_in_l != i_in_r
                                 && !seen.contains(i_in_l)

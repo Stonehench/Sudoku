@@ -5,6 +5,7 @@ use crate::rules::x_rule::XRule;
 use crate::rules::parity_rule::ParityRule;
 use crate::rules::thermometer_rule::ThermometerRule;
 use crate::rules::consecutive_rule::ConsecutiveRule;
+use crate::rules::zipper_rule::ZipperRule;
 use bumpalo::Bump;
 use std::{
     fmt::Debug,
@@ -14,7 +15,7 @@ use std::{
 
 use crate::sudoku::Sudoku;
 
-use self::zipper_rule::ZipperRule;
+//use self::zipper_rule::ZipperRule;
 
 pub mod column_rule;
 pub mod diagonal_rule;
