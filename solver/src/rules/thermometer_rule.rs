@@ -39,25 +39,33 @@ impl Rule for ThermometerRule {
     fn hidden_singles(&self, sudoku: &Sudoku) -> Option<(u16, usize)> {
         for themometer in &self.themometer_clue {
             for (index, element) in themometer.iter().enumerate() {
-                if !sudoku.cells[*element].locked_in
+                // if the next element on the zipper is 2 this element must be 1
+                if !sudoku.cells[*element].locked_in && index + 1 < themometer.len()
                     && element == &themometer[0]
                     && sudoku.cells[themometer[index + 1]].locked_in
                     && sudoku.cells[themometer[index + 1]].available[0] == 2
                 {
                     return Some(((1), *element));
-                } else if !sudoku.cells[*element].locked_in
+                } 
+                
+                // if the previous element is one less than sudoku.size this element is sudoku.size
+                if !sudoku.cells[*element].locked_in && index > 0
                     && element == themometer.last().unwrap()
                     && sudoku.cells[themometer[index - 1]].locked_in
                     && sudoku.cells[themometer[index - 1]].available[0] == sudoku.size as u16 - 1
+                    && sudoku.cells[*element].available.contains(&(sudoku.size as u16))
                 {
                     return Some(((sudoku.size as u16), *element));
-                } else if !sudoku.cells[*element].locked_in
+                } 
+                
+                //
+                if !sudoku.cells[*element].locked_in && index + 1 < themometer.len() && index > 0
                     && element != &themometer[0]
                     && element != themometer.last().unwrap()
                     && sudoku.cells[*element - 1].locked_in
                     && sudoku.cells[*element + 1].locked_in
                 {   
-                    if element - 1 < themometer.len() &&  element + 1 < themometer.len(){
+                    if element > &0  &&  element + 1 < themometer.len(){
                         let previous = &sudoku.cells[themometer[element - 1]];
                         let next = &sudoku.cells[themometer[element + 1]];
 
@@ -87,6 +95,9 @@ impl Rule for ThermometerRule {
                 if sudoku.cells[*element].locked_in {
                     if let Some(value) = sudoku.cells[*element].available.get(0) {
                         for change in themometer {
+
+                            // TODO: I think this is wrong, in what context would it make sense to compare the indecies?
+                            // the thermometer might traverse in any direction 
                             if change < element {
                                 for i in 1..*value {
                                     big_buffer.push((i, *change))
@@ -98,7 +109,7 @@ impl Rule for ThermometerRule {
                             }
                         }
                     }
-                }
+                } 
             }
         }
 
@@ -149,8 +160,8 @@ fn themometer_multi_remove_test() {
     sudoku.set_cell(3, 2).unwrap();
 
     let mut big_buffer = vec![];
-    let mut indexes = themometer_rule.multi_remove(&sudoku, &mut big_buffer);
-
+    let indexes = themometer_rule.multi_remove(&sudoku, &mut big_buffer);
+    println!("{sudoku}");
     assert_eq!(
         indexes,
         vec![

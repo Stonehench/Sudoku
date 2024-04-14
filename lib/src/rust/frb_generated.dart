@@ -82,7 +82,7 @@ abstract class RustLibApi extends BaseApi {
 
   Future<List<(int, int)>> getParityPositions({dynamic hint});
 
-  Future<List<Uint8List>> getThermometerPositions({dynamic hint});
+  Future<List<Uint16List>> getThermometerPositions({dynamic hint});
 
   Future<List<(int, int)>> getXPositions({dynamic hint});
 
@@ -261,7 +261,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
       );
 
   @override
-  Future<List<Uint8List>> getThermometerPositions({dynamic hint}) {
+  Future<List<Uint16List>> getThermometerPositions({dynamic hint}) {
     return handler.executeNormal(NormalTask(
       callFfi: (port_) {
         final serializer = SseSerializer(generalizedFrbRustBinding);
@@ -269,7 +269,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
             funcId: 6, port: port_);
       },
       codec: SseCodec(
-        decodeSuccessData: sse_decode_list_list_prim_u_8_strict,
+        decodeSuccessData: sse_decode_list_list_prim_u_16_strict,
         decodeErrorData: null,
       ),
       constMeta: kGetThermometerPositionsConstMeta,
@@ -430,9 +430,17 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
-  List<Uint8List> dco_decode_list_list_prim_u_8_strict(dynamic raw) {
+  List<Uint16List> dco_decode_list_list_prim_u_16_strict(dynamic raw) {
     // Codec=Dco (DartCObject based), see doc to use other codecs
-    return (raw as List<dynamic>).map(dco_decode_list_prim_u_8_strict).toList();
+    return (raw as List<dynamic>)
+        .map(dco_decode_list_prim_u_16_strict)
+        .toList();
+  }
+
+  @protected
+  Uint16List dco_decode_list_prim_u_16_strict(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return raw as Uint16List;
   }
 
   @protected
@@ -551,16 +559,23 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
-  List<Uint8List> sse_decode_list_list_prim_u_8_strict(
+  List<Uint16List> sse_decode_list_list_prim_u_16_strict(
       SseDeserializer deserializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
 
     var len_ = sse_decode_i_32(deserializer);
-    var ans_ = <Uint8List>[];
+    var ans_ = <Uint16List>[];
     for (var idx_ = 0; idx_ < len_; ++idx_) {
-      ans_.add(sse_decode_list_prim_u_8_strict(deserializer));
+      ans_.add(sse_decode_list_prim_u_16_strict(deserializer));
     }
     return ans_;
+  }
+
+  @protected
+  Uint16List sse_decode_list_prim_u_16_strict(SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    var len_ = sse_decode_i_32(deserializer);
+    return deserializer.buffer.getUint16List(len_);
   }
 
   @protected
@@ -693,13 +708,21 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
-  void sse_encode_list_list_prim_u_8_strict(
-      List<Uint8List> self, SseSerializer serializer) {
+  void sse_encode_list_list_prim_u_16_strict(
+      List<Uint16List> self, SseSerializer serializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
     sse_encode_i_32(self.length, serializer);
     for (final item in self) {
-      sse_encode_list_prim_u_8_strict(item, serializer);
+      sse_encode_list_prim_u_16_strict(item, serializer);
     }
+  }
+
+  @protected
+  void sse_encode_list_prim_u_16_strict(
+      Uint16List self, SseSerializer serializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_i_32(self.length, serializer);
+    serializer.buffer.putUint16List(self);
   }
 
   @protected

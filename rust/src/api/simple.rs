@@ -80,7 +80,7 @@ pub fn generate_with_size(
         for thermo in thermometer_rule.themometer_clue.clone() {
             let mut temp_thermometer = vec![];
             for thermo_index in thermo {
-                temp_thermometer.push(thermo_index as u8);
+                temp_thermometer.push(thermo_index as u16);
             }
             temp_thermometer_rule.push(temp_thermometer);
         }
@@ -127,7 +127,7 @@ pub fn get_zipper_positions() -> Vec<(usize, Vec<(usize, usize)>)> {
     get_state().zipper_positions.clone()
 }
 
-pub fn get_thermometer_positions() -> Vec<Vec<u8>> {
+pub fn get_thermometer_positions() -> Vec<Vec<u16>> {
     get_state().thermometer_positions.clone()
 }
 
@@ -199,15 +199,7 @@ pub fn set_from_str(sudoku: String) {
     }
 
     if let Some(thermometer_rule) = solved.rules.iter_mut().find_map(|r| r.to_thermometer_rule()) {
-        let mut temp_thermometer_rule = vec![];
-        for thermo in thermometer_rule.themometer_clue.clone() {
-            let mut temp_thermometer = vec![];
-            for thermo_index in thermo {
-                temp_thermometer.push(thermo_index as u8);
-            }
-            temp_thermometer_rule.push(temp_thermometer);
-        }
-        thermometers = temp_thermometer_rule;
+        thermometers = thermometer_rule.themometer_clue.clone().into_iter().map(|thermo| thermo.into_iter().map(|i| i as u16).collect()).collect();
     }
 
     if let Some(x_rule) = solved.rules.iter_mut().find_map(|r| r.to_x_rule()) {

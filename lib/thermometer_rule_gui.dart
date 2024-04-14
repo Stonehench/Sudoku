@@ -12,7 +12,7 @@ class Thermometer extends StatefulWidget {
 }
 
 class _ThermometerState extends State<Thermometer> {
-  Color lineColor = const Color.fromARGB(255, 152, 118, 175);
+  Color lineColor = Color.fromARGB(255, 70, 112, 167);
 
   @override
   Widget build(BuildContext context) {
@@ -27,12 +27,12 @@ class _ThermometerState extends State<Thermometer> {
           gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
               crossAxisCount: state.size),
           itemBuilder: (context, index) {
-            int dotWidth = 100;
+            int dotWidth = 50;
             return Container(
               alignment: Alignment.center,
               child: state.thermometerPositions.any((thermometer) {
                 if (thermometer.first == index) {
-                  dotWidth = 200;
+                  dotWidth = 100;
                 }
                 return thermometer
                     .any((element) => element == index || element == index);
@@ -321,7 +321,7 @@ class _ThermometerState extends State<Thermometer> {
   Widget getHorizontal(GameState state) {
     return SizedBox(
         width: 340 / state.size,
-        height: 100 / state.size,
+        height: 50 / state.size,
         child: Container(
           color: lineColor,
         ));
@@ -330,7 +330,7 @@ class _ThermometerState extends State<Thermometer> {
   Widget getVertical(GameState state) {
     return SizedBox(
         height: 340 / state.size,
-        width: 100 / state.size,
+        width: 50 / state.size,
         child: Container(
           color: lineColor,
         ));
@@ -347,7 +347,7 @@ class _ThermometerState extends State<Thermometer> {
             child: Transform.rotate(
               angle: angle,
               child: Container(
-                  height: 100 / state.size,
+                  height: 50 / state.size,
                   width: 200 / state.size,
                   color: lineColor),
             ),
@@ -365,7 +365,7 @@ class _ThermometerState extends State<Thermometer> {
               angle: angle,
               child: Container(
                 width: 340 / state.size,
-                height: 100 / state.size,
+                height: 50 / state.size,
                 color: lineColor,
               )),
         ));

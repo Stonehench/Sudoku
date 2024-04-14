@@ -26,7 +26,7 @@ Future<List<(int, int)>> getParityPositions({dynamic hint}) =>
 Future<List<(int, List<(int, int)>)>> getZipperPositions({dynamic hint}) =>
     RustLib.instance.api.getZipperPositions(hint: hint);
 
-Future<List<Uint8List>> getThermometerPositions({dynamic hint}) =>
+Future<List<Uint16List>> getThermometerPositions({dynamic hint}) =>
     RustLib.instance.api.getThermometerPositions(hint: hint);
 
 Future<int?> waitForProgess({dynamic hint}) =>
