@@ -238,6 +238,37 @@ fn wire_get_parity_positions_impl(
         },
     )
 }
+fn wire_get_thermometer_positions_impl(
+    port_: flutter_rust_bridge::for_generated::MessagePort,
+    ptr_: flutter_rust_bridge::for_generated::PlatformGeneralizedUint8ListPtr,
+    rust_vec_len_: i32,
+    data_len_: i32,
+) {
+    FLUTTER_RUST_BRIDGE_HANDLER.wrap_normal::<flutter_rust_bridge::for_generated::SseCodec, _, _>(
+        flutter_rust_bridge::for_generated::TaskInfo {
+            debug_name: "get_thermometer_positions",
+            port: Some(port_),
+            mode: flutter_rust_bridge::for_generated::FfiCallMode::Normal,
+        },
+        move || {
+            let message = unsafe {
+                flutter_rust_bridge::for_generated::Dart2RustMessageSse::from_wire(
+                    ptr_,
+                    rust_vec_len_,
+                    data_len_,
+                )
+            };
+            let mut deserializer =
+                flutter_rust_bridge::for_generated::SseDeserializer::new(message);
+            deserializer.end();
+            move |context| {
+                transform_result_sse((move || {
+                    Result::<_, ()>::Ok(crate::api::simple::get_thermometer_positions())
+                })())
+            }
+        },
+    )
+}
 fn wire_get_x_positions_impl(
     port_: flutter_rust_bridge::for_generated::MessagePort,
     ptr_: flutter_rust_bridge::for_generated::PlatformGeneralizedUint8ListPtr,
@@ -424,6 +455,18 @@ impl SseDecode for Vec<String> {
     }
 }
 
+impl SseDecode for Vec<Vec<u8>> {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
+        let mut len_ = <i32>::sse_decode(deserializer);
+        let mut ans_ = vec![];
+        for idx_ in 0..len_ {
+            ans_.push(<Vec<u8>>::sse_decode(deserializer));
+        }
+        return ans_;
+    }
+}
+
 impl SseDecode for Vec<u8> {
     // Codec=Sse (Serialization based), see doc to use other codecs
     fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
@@ -542,17 +585,18 @@ fn pde_ffi_dispatcher_primary_impl(
 ) {
     // Codec=Pde (Serialization + dispatch), see doc to use other codecs
     match func_id {
-        7 => wire_check_legality_impl(port, ptr, rust_vec_len, data_len),
-        9 => wire_close_threads_impl(port, ptr, rust_vec_len, data_len),
-        10 => wire_difficulty_values_impl(port, ptr, rust_vec_len, data_len),
+        8 => wire_check_legality_impl(port, ptr, rust_vec_len, data_len),
+        10 => wire_close_threads_impl(port, ptr, rust_vec_len, data_len),
+        11 => wire_difficulty_values_impl(port, ptr, rust_vec_len, data_len),
         1 => wire_generate_with_size_impl(port, ptr, rust_vec_len, data_len),
         3 => wire_get_consecutive_positions_impl(port, ptr, rust_vec_len, data_len),
         4 => wire_get_parity_positions_impl(port, ptr, rust_vec_len, data_len),
+        6 => wire_get_thermometer_positions_impl(port, ptr, rust_vec_len, data_len),
         2 => wire_get_x_positions_impl(port, ptr, rust_vec_len, data_len),
         5 => wire_get_zipper_positions_impl(port, ptr, rust_vec_len, data_len),
-        8 => wire_init_app_impl(port, ptr, rust_vec_len, data_len),
-        11 => wire_set_from_str_impl(port, ptr, rust_vec_len, data_len),
-        6 => wire_wait_for_progess_impl(port, ptr, rust_vec_len, data_len),
+        9 => wire_init_app_impl(port, ptr, rust_vec_len, data_len),
+        12 => wire_set_from_str_impl(port, ptr, rust_vec_len, data_len),
+        7 => wire_wait_for_progess_impl(port, ptr, rust_vec_len, data_len),
         _ => unreachable!(),
     }
 }
@@ -591,6 +635,16 @@ impl SseEncode for Vec<String> {
         <i32>::sse_encode(self.len() as _, serializer);
         for item in self {
             <String>::sse_encode(item, serializer);
+        }
+    }
+}
+
+impl SseEncode for Vec<Vec<u8>> {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
+        <i32>::sse_encode(self.len() as _, serializer);
+        for item in self {
+            <Vec<u8>>::sse_encode(item, serializer);
         }
     }
 }

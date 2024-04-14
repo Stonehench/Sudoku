@@ -8,7 +8,8 @@ pub struct AppState {
     pub x_positions: Vec<(usize, usize)>,
     pub parity_positions: Vec<(usize, usize)>,
     pub consecutive_positions: Vec<(usize, usize)>,
-    pub zipper_positions: Vec<(usize, Vec<(usize, usize)>)>
+    pub zipper_positions: Vec<(usize, Vec<(usize, usize)>)>,
+    pub thermometer_positions: Vec<Vec<u8>>,
 }
 
 lazy_static! {
@@ -18,6 +19,7 @@ lazy_static! {
         parity_positions: vec![],
         consecutive_positions: vec![],
         zipper_positions: vec![],
+        thermometer_positions: vec![],
     });
 }
 

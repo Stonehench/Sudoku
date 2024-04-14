@@ -155,6 +155,10 @@ impl FromStr for DynRule {
                             })
                             .collect::<Result<_, _>>()?,
                     }))),
+                    Some("ThermometerRule") =>{ 
+                        Ok(DynRule(Box::new(ThermometerRule {
+                        themometer_clue: vec![] // TODO!!!
+                    })))},
                     Some("ZipperRule") =>{ 
                         Ok(DynRule(Box::new(ZipperRule {
                         zipper_clue: rule_params
