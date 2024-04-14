@@ -37,35 +37,37 @@ impl Rule for ThermometerRule {
     }
 
     fn hidden_singles(&self, sudoku: &Sudoku) -> Option<(u16, usize)> {
-        // for themometer in &self.themometer_clue {
-        //     for (index, element) in themometer.iter().enumerate() {
-        //         if !sudoku.cells[*element].locked_in
-        //             && element == &themometer[0]
-        //             && sudoku.cells[themometer[index + 1]].locked_in
-        //             && sudoku.cells[themometer[index + 1]].available[0] == 2
-        //         {
-        //             return Some(((1), *element));
-        //         } else if !sudoku.cells[*element].locked_in
-        //             && element == themometer.last().unwrap()
-        //             && sudoku.cells[themometer[index - 1]].locked_in
-        //             && sudoku.cells[themometer[index - 1]].available[0] == sudoku.size as u16 - 1
-        //         {
-        //             return Some(((sudoku.size as u16), *element));
-        //         } else if !sudoku.cells[*element].locked_in
-        //             && element != &themometer[0]
-        //             && element != themometer.last().unwrap()
-        //             && sudoku.cells[*element - 1].locked_in
-        //             && sudoku.cells[*element + 1].locked_in
-        //         {
-        //             let previous = &sudoku.cells[themometer[element - 1]];
-        //             let next = &sudoku.cells[themometer[element + 1]];
+        for themometer in &self.themometer_clue {
+            for (index, element) in themometer.iter().enumerate() {
+                if !sudoku.cells[*element].locked_in
+                    && element == &themometer[0]
+                    && sudoku.cells[themometer[index + 1]].locked_in
+                    && sudoku.cells[themometer[index + 1]].available[0] == 2
+                {
+                    return Some(((1), *element));
+                } else if !sudoku.cells[*element].locked_in
+                    && element == themometer.last().unwrap()
+                    && sudoku.cells[themometer[index - 1]].locked_in
+                    && sudoku.cells[themometer[index - 1]].available[0] == sudoku.size as u16 - 1
+                {
+                    return Some(((sudoku.size as u16), *element));
+                } else if !sudoku.cells[*element].locked_in
+                    && element != &themometer[0]
+                    && element != themometer.last().unwrap()
+                    && sudoku.cells[*element - 1].locked_in
+                    && sudoku.cells[*element + 1].locked_in
+                {   
+                    if element - 1 < themometer.len() &&  element + 1 < themometer.len(){
+                        let previous = &sudoku.cells[themometer[element - 1]];
+                        let next = &sudoku.cells[themometer[element + 1]];
 
-        //             if next.available[0] - previous.available[0] == 2 {
-        //                 return Some(((previous.available[0] + 1), *element));
-        //             }
-        //         }
-        //     }
-        // }
+                        if next.available[0] - previous.available[0] == 2 {
+                            return Some(((previous.available[0] + 1), *element));
+                        }
+                    } 
+                }
+            }
+        }
         None
     }
 
