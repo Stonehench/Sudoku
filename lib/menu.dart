@@ -302,12 +302,16 @@ class _MenuState extends State<Menu> {
                         var xPositions = await getXPositions();
                         var parityPositions = await getParityPositions();
                         var zipperPositions = await getZipperPositions();
+                        var consecutivePositions =
+                            await getConsecutivePositions();
                         GameState.setInstance(GameState(
                             dailyPuzzle!.split("\n\n")[1],
                             xPositions,
                             parityPositions,
+                            consecutivePositions,
                             zipperPositions,
                             daily: dailyDate!));
+
                         setState(() {
                           Navigator.of(context)
                               .push(MaterialPageRoute(

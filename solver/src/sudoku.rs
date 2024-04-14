@@ -17,7 +17,7 @@ use regex_macro::regex;
 use smallvec::{smallvec, SmallVec};
 use threadpool::ThreadPool;
 
-use crate::rules::{column_rule::ColumnRule, row_rule::RowRule, thermometer_rule, DynRule};
+use crate::rules::{column_rule::ColumnRule, row_rule::RowRule, consecutive_rule, thermometer_rule, DynRule};
 
 pub enum Difficulty {
     Easy,
@@ -239,6 +239,7 @@ impl Sudoku {
         let mut arena = Self::get_arena();
 
         'main: while let Some((index, entropy)) = pri_queue.pop() {
+            assert_eq!(entropy.0, self.cells[index].available.len(), "which happend at {index}");
             match entropy.0 {
                 0 => {
                     //Der er ingen løsning på den nuværende branch. Derfor popper vi en branch og løser den i stedet
@@ -310,17 +311,12 @@ impl Sudoku {
                             //Put nuværende cell tilbage i priority queue
                             pri_queue.push(index, entropy);
 
-                            let mut last_index = 0;
                             for (value, index) in multi_remove_indecies {
-                                if last_index != *index && last_index != 0 {
-                                    pri_queue.change_priority(
-                                        &last_index,
-                                        Entropy(self.cells[last_index].available.len()),
-                                    );
-                                } else {
-                                    last_index = *index;
-                                }
                                 self.cells[*index].remove(*value)?;
+                                pri_queue.change_priority(
+                                    index,
+                                    Entropy(self.cells[*index].available.len()),
+                                );
                             }
 
                             continue 'main;
@@ -467,6 +463,50 @@ impl Sudoku {
                 for i in 0..count - sudoku.size * 2 {
                     parity_rule
                         .parity_clue
+                        .remove(random::<usize>() % (count - i));
+                }
+            }
+        }
+
+        // if consecutive-rule is part of the rule set insert the X's
+        if let Some(consecutive_rule) = sudoku
+            .rules
+            .iter_mut()
+            .find_map(|r| r.to_consecutive_rule())
+        {
+            for index in 0..sudoku.cells.len() {
+                if let Some(current) = sudoku.cells[index].available.get(0) {
+                    if index + 1 >= sudoku.cells.len() {
+                        continue;
+                    }
+                    if let Some(left) = sudoku.cells[index + 1].available.get(0) {
+                        if current + 1 == *left
+                            || *current == left + 1 && (index + 1) % sudoku.size != 0
+                        {
+                            consecutive_rule.consecutive_clue.push((index, index + 1));
+                        }
+                    }
+                    if index + sudoku.size >= sudoku.cells.len() {
+                        continue;
+                    }
+                    if let Some(below) = sudoku.cells[index + sudoku.size].available.get(0) {
+                        if current + 1 == *below
+                            || *current == below + 1 && index + sudoku.size < sudoku.cells.len()
+                        {
+                            // x rule should have (index , below)
+                            consecutive_rule
+                                .consecutive_clue
+                                .push((index, index + sudoku.size));
+                        }
+                    }
+                }
+            }
+            // remove some of the generated consecutive pairs
+            let count = consecutive_rule.consecutive_clue.len();
+            if count > sudoku.size * 2 {
+                for i in 0..count - sudoku.size * 2 {
+                    consecutive_rule
+                        .consecutive_clue
                         .remove(random::<usize>() % (count - i));
                 }
             }

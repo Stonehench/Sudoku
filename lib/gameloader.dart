@@ -42,8 +42,10 @@ class _GameLoaderState extends State<GameLoader> {
         var xPositions = await getXPositions();
         var parityPositions = await getParityPositions();
         var zipperPositions = await getZipperPositions();
+        var consecutivePositions = await getConsecutivePositions();
 
-        GameState.setInstance(GameState(source, xPositions, parityPositions, zipperPositions));
+        GameState.setInstance(GameState(source, xPositions, parityPositions,
+            consecutivePositions, zipperPositions));
         setState(() {
           Navigator.of(context).pushReplacement(MaterialPageRoute(
             builder: (context) => GameView(widget.rules),

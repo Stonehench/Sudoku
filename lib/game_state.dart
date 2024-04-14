@@ -17,7 +17,7 @@ class GameState extends ChangeNotifier {
   }
 
   GameState(String sudokuSource, this.xPositions, this.parityPositions,
-      this.zipperPositions,
+      this.consecutivePositions, this.zipperPositions,
       {this.daily}) {
     board = sudokuSource
         .split(",")
@@ -45,6 +45,7 @@ class GameState extends ChangeNotifier {
   List<List<int>> drafts = [];
   List<(int, int)> xPositions;
   List<(int, int)> parityPositions;
+  List<(int, int)> consecutivePositions;
   List<(int, List<(int, int)>)> zipperPositions;
 
   Future<bool> updateDigit(int position) async {

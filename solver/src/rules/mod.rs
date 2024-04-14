@@ -4,6 +4,7 @@ use crate::rules::square_rule::SquareRule;
 use crate::rules::x_rule::XRule;
 use crate::rules::parity_rule::ParityRule;
 use crate::rules::thermometer_rule::ThermometerRule;
+use crate::rules::consecutive_rule::ConsecutiveRule;
 use bumpalo::Bump;
 use std::{
     fmt::Debug,
@@ -73,6 +74,10 @@ pub trait Rule: Debug {
     }
 
     fn to_thermometer_rule(&mut self) -> Option<&mut ThermometerRule> {
+        None
+    }
+    
+    fn to_consecutive_rule (&mut self) -> Option<&mut ConsecutiveRule> {
         None
     }
 
@@ -187,8 +192,20 @@ impl FromStr for DynRule {
                                 Ok((l, r))
                             })
                             .collect::<Result<_, _>>()?,
-                    }))), // TODO: finish this for parity should be almost the same as xrule
-                    //Some("ConsecutiveRule") => return Err(s.to_owned()), // TODO: finish this for consecutive should be almost the same as xrule
+                    }))), 
+                    Some("ConsecutiveRule") => Ok(DynRule(Box::new(ConsecutiveRule {
+                        consecutive_clue: rule_params
+                            .map(|s| {
+                                let Some((l, r)) = s.split_once(',') else {
+                                    return Err(format!("Failed to split {s} on ,"));
+                                };
+                                let l = l.parse().map_err(|e| format!("{e:?}"))?;
+                                let r = r.parse().map_err(|e| format!("{e:?}"))?;
+
+                                Ok((l, r))
+                            })
+                            .collect::<Result<_, _>>()?,
+                    }))),
                     _ => return Err(s.to_owned()),
                 }
             }
