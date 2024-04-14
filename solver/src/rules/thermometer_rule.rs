@@ -6,18 +6,18 @@ use std::fmt::Debug;
 use crate::sudoku::{self, Sudoku};
 
 #[derive(Debug, Clone)]
-pub struct ThemometerRule {
+pub struct ThermometerRule {
     // vector of themometers contaning indexes in order
     pub themometer_clue: Vec<Vec<usize>>,
 }
 
-impl ThemometerRule {
+impl ThermometerRule {
     pub fn new(themometer_clue: Vec<Vec<usize>>) -> DynRule {
-        DynRule(Box::new(ThemometerRule { themometer_clue }))
+        DynRule(Box::new(ThermometerRule { themometer_clue }))
     }
 }
 
-impl Rule for ThemometerRule {
+impl Rule for ThermometerRule {
     fn updates<'buf>(
         &self,
         _size: usize,
@@ -110,6 +110,10 @@ impl Rule for ThemometerRule {
     fn get_name(&self) -> &'static str {
         "ThemometerRule"
     }
+
+    fn to_thermometer_rule(&mut self) -> Option<&mut ThermometerRule> {
+        Some(self)
+    }
 }
 
 //########################### TEST ###############################
@@ -118,7 +122,7 @@ impl Rule for ThemometerRule {
 fn themometer_test() {
     let sudoku = Sudoku::new(9, vec![]);
 
-    let themometer_rule = ThemometerRule {
+    let themometer_rule = ThermometerRule {
         themometer_clue: vec![vec![0 as usize, 1 as usize, 2 as usize]],
     };
 
@@ -136,7 +140,7 @@ fn themometer_test() {
 fn themometer_multi_remove_test() {
     let mut sudoku = Sudoku::new(9, vec![]);
 
-    let themometer_rule = ThemometerRule {
+    let themometer_rule = ThermometerRule {
         themometer_clue: vec![vec![0 as usize, 1 as usize, 2 as usize, 3 as usize]],
     };
 
@@ -167,7 +171,7 @@ fn themometer_hidden_single_test() {
     // test 1
     let mut sudoku = Sudoku::new(9, vec![]);
 
-    let themometer_rule = ThemometerRule {
+    let themometer_rule = ThermometerRule {
         themometer_clue: vec![vec![0 as usize, 1 as usize, 2 as usize]],
     };
 
@@ -181,7 +185,7 @@ fn themometer_hidden_single_test() {
     // test 2
     let mut sudoku = Sudoku::new(9, vec![]);
 
-    let themometer_rule = ThemometerRule {
+    let themometer_rule = ThermometerRule {
         themometer_clue: vec![vec![
             0 as usize, 1 as usize, 2 as usize, 3 as usize, 4 as usize,
         ]],
@@ -199,7 +203,7 @@ fn themometer_hidden_single_test() {
     // test 3
     let mut sudoku = Sudoku::new(9, vec![]);
 
-    let themometer_rule = ThemometerRule {
+    let themometer_rule = ThermometerRule {
         themometer_clue: vec![vec![0 as usize, 1 as usize, 2 as usize]],
     };
 
@@ -212,7 +216,7 @@ fn themometer_hidden_single_test() {
     // test 4
     let mut sudoku = Sudoku::new(9, vec![]);
 
-    let themometer_rule = ThemometerRule {
+    let themometer_rule = ThermometerRule {
         themometer_clue: vec![vec![0 as usize, 1 as usize, 2 as usize]],
     };
 

@@ -3,6 +3,7 @@ use crate::rules::knight_rule::KnightRule;
 use crate::rules::square_rule::SquareRule;
 use crate::rules::x_rule::XRule;
 use crate::rules::parity_rule::ParityRule;
+use crate::rules::thermometer_rule::ThermometerRule;
 use bumpalo::Bump;
 use std::{
     fmt::Debug,
@@ -71,7 +72,7 @@ pub trait Rule: Debug {
         None
     }
 
-    fn to_themometer_rule(&mut self) -> Option<&mut ZipperRule> {
+    fn to_thermometer_rule(&mut self) -> Option<&mut ThermometerRule> {
         None
     }
 

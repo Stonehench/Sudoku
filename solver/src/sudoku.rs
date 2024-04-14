@@ -473,7 +473,7 @@ impl Sudoku {
         }
 
         // if zipper-rule is part of the rule-set insert some Zippers
-        if let Some(thermometer_rule) = sudoku.rules.iter_mut().find_map(|r| r.to_themometer_rule()) {
+        if let Some(thermometer_rule) = sudoku.rules.iter_mut().find_map(|r| r.to_thermometer_rule()) {
             let tries = sudoku.size * 3;
             let mut seen = vec![];
 
@@ -555,7 +555,7 @@ impl Sudoku {
                 }
                 if !current_themometer.is_empty() {
                     seen.push(random_index);
-                    thermometer_rule.themometer_clue.push((random_index, current_themometer));
+                    //thermometer_rule.themometer_clue.push((random_index, current_themometer));
                 }
             }
         }
