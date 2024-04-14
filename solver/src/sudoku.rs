@@ -536,6 +536,7 @@ impl Sudoku {
                 }
 
                 'searching: while searching {
+                    surrounding.clear();
 
                     if current_index >= sudoku.size {
                         //above
@@ -572,19 +573,21 @@ impl Sudoku {
                         surrounding.push(current_index + sudoku.size + 1);
                     }
 
-                    // for all surronding indecies
-                    for index in &surrounding {
-                        if !seen.contains(index)
-                            && sudoku.cells[*index].available[0] > current_value
-                        {
-                            seen.push(*index);
-                            current_themometer.push(*index);
-                            current_index = *index;
-                            current_value = sudoku.cells[*index].available[0];
+                    surrounding.retain(|e| sudoku.cells[*e].available[0] > current_value);
+                    surrounding.sort_by(|a , b| sudoku.cells[*a].available[0].cmp(&sudoku.cells[*b].available[0]));
+                    
+                    if !surrounding.is_empty() && !seen.contains(&surrounding[0])
+                        && sudoku.cells[surrounding[0]].available[0] > current_value
+                    {
+                        
+                        seen.push(surrounding[0]);
+                        current_themometer.push(surrounding[0]);
+                        current_index = surrounding[0];
+                        current_value = sudoku.cells[surrounding[0]].available[0];
 
-                            continue 'searching; 
-                        } 
-                    }
+                        continue 'searching; 
+                    } 
+
                     searching = false;
 
                 }
@@ -1157,6 +1160,20 @@ fn generate_sudoku() {
     let sudoku = Sudoku::generate_with_size(
         9,
         vec![super::rules::square_rule::SquareRule::new()],
+        None,
+        Difficulty::Expert,
+    )
+    .unwrap();
+
+    println!("{sudoku} at {:?}", timer.elapsed());
+}
+
+#[test]
+fn generate_thermometer_sudoku() {
+    let timer = std::time::Instant::now();
+    let sudoku = Sudoku::generate_with_size(
+        9,
+        vec![super::rules::square_rule::SquareRule::new(),crate::rules::thermometer_rule::ThermometerRule::new(vec![]),],
         None,
         Difficulty::Expert,
     )
