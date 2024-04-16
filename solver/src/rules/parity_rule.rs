@@ -1,7 +1,5 @@
 use super::{DynRule, Rule};
-use bumpalo::Bump;
 use std::fmt::Debug;
-
 use crate::sudoku::{self, Sudoku};
 
 #[derive(Debug, Clone)]

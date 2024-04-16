@@ -2,7 +2,7 @@ use super::{DynRule, Rule};
 use bumpalo::Bump;
 use std::fmt::Debug;
 
-use crate::sudoku::{self, Sudoku};
+use crate::sudoku::Sudoku;
 
 #[derive(Debug, Clone)]
 pub struct ConsecutiveRule {

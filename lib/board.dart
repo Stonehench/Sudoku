@@ -17,11 +17,6 @@ class _BoardState extends State<Board> {
   @override
   Widget build(BuildContext context) {
     GameState state = GameState.getInstance();
-    double fontSize = state.size <= 9
-        ? 30.0
-        : state.size <= 16
-            ? 15.0
-            : 6.0;
     List<(int, int)> dominoPositions = List.empty(growable: true);
     dominoPositions.addAll(state.consecutivePositions);
     dominoPositions.addAll(state.xPositions);

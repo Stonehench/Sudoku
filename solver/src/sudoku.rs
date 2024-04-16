@@ -17,7 +17,7 @@ use regex_macro::regex;
 use smallvec::{smallvec, SmallVec};
 use threadpool::ThreadPool;
 
-use crate::rules::{column_rule::ColumnRule, consecutive_rule, row_rule::RowRule, DynRule};
+use crate::rules::{column_rule::ColumnRule, row_rule::RowRule, DynRule};
 
 pub enum Difficulty {
     Easy,
@@ -515,14 +515,13 @@ impl Sudoku {
         // if zipper-rule is part of the rule-set insert some Zippers
         // do some depth first kinda thing
         if let Some(zipper_rule) = sudoku.rules.iter_mut().find_map(|r| r.to_zipper_rule()) {
-            //println!("Creating Zippers");
             let tries = sudoku.size * 3;
             let mut seen = vec![];
 
-            'zippers: for i in 0..tries {
+            for _ in 0..tries {
                 let mut random_index = random::<usize>() % (sudoku.size * sudoku.size);
+                // if the randomly chosen zipper-center is already a seen index, find a new one
                 while seen.contains(&random_index) && seen.len() < (sudoku.size * sudoku.size) {
-                    //println!("Atemting to create zipper at an occupiued index while at zipper {i}");
                     random_index = random::<usize>() % (sudoku.size * sudoku.size);
                 }
 
@@ -530,7 +529,7 @@ impl Sudoku {
                 let center_cell_value = &sudoku.cells[random_index].available[0];
                 if center_cell_value == &1 {
                     // the value at the center of a zipper can never be 1
-                    continue 'zippers;
+                    continue
                 }
                 let mut zipper_arms: Vec<(usize, usize)> = vec![];
 
