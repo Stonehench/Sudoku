@@ -17,7 +17,7 @@ use regex_macro::regex;
 use smallvec::{smallvec, SmallVec};
 use threadpool::ThreadPool;
 
-use crate::rules::{column_rule::ColumnRule, consecutive_rule, row_rule::RowRule, DynRule};
+use crate::rules::{column_rule::ColumnRule, row_rule::RowRule, DynRule};
 
 pub enum Difficulty {
     Easy,
@@ -512,6 +512,92 @@ impl Sudoku {
             }
         }
 
+        // ThermometerRule
+        if let Some(thermometer_rule) = sudoku.rules.iter_mut().find_map(|r| r.to_thermometer_rule()) {
+            let tries = sudoku.size * 3;
+            let mut seen = vec![];
+
+            'themometers: for i in 0..tries {
+                let mut random_index = random::<usize>() % (sudoku.size * sudoku.size);
+                while seen.contains(&random_index) && seen.len() < (sudoku.size * sudoku.size) {
+                    random_index = random::<usize>() % (sudoku.size * sudoku.size);
+                }
+
+                let mut current_themometer: Vec<usize> = vec![];
+                let mut searching = true;
+                let mut surrounding: Vec<usize> = vec![];
+                let mut current_index: usize = random_index;
+                let mut current_value = sudoku.cells[random_index].available[0];
+                current_themometer.push(current_index);
+
+                if current_value == sudoku.size as u16 {
+                    // The value at the bottom of a themometer can not be the highest value
+                    continue 'themometers;
+                }
+
+                'searching: while searching {
+                    surrounding.clear();
+
+                    if current_index >= sudoku.size {
+                        //above
+                        surrounding.push(current_index - sudoku.size);
+                    }
+                    if !(current_index % sudoku.size == 0) {
+                        //left
+                        surrounding.push(current_index - 1);
+                    }
+                    if current_index % sudoku.size != (sudoku.size - 1) {
+                        //right
+                        surrounding.push(current_index + 1);
+                    }
+                    if current_index < sudoku.size * sudoku.size - sudoku.size {
+                        //below
+                        surrounding.push(current_index + sudoku.size);
+                    }
+                    if current_index >= sudoku.size && current_index % sudoku.size != (sudoku.size - 1) {
+                        //above right
+                        surrounding.push(current_index - sudoku.size + 1);
+                    }
+                    if current_index < sudoku.size * sudoku.size - sudoku.size && !(current_index % sudoku.size == 0) {
+                        //below left
+                        surrounding.push(current_index + sudoku.size - 1);
+                    }
+                    if current_index >= sudoku.size && !(current_index % sudoku.size == 0) {
+                        //above left
+                        surrounding.push(current_index - sudoku.size - 1);
+                    }
+                    if current_index < sudoku.size * sudoku.size - sudoku.size
+                        && current_index % sudoku.size != (sudoku.size - 1)
+                    {
+                        //below right
+                        surrounding.push(current_index + sudoku.size + 1);
+                    }
+
+                    surrounding.retain(|e| sudoku.cells[*e].available[0] > current_value);
+                    surrounding.sort_by(|a , b| sudoku.cells[*a].available[0].cmp(&sudoku.cells[*b].available[0]));
+                    
+                    if !surrounding.is_empty() && !seen.contains(&surrounding[0])
+                        && sudoku.cells[surrounding[0]].available[0] > current_value
+                    {
+                        
+                        seen.push(surrounding[0]);
+                        current_themometer.push(surrounding[0]);
+                        current_index = surrounding[0];
+                        current_value = sudoku.cells[surrounding[0]].available[0];
+
+                        continue 'searching; 
+                    } 
+
+                    searching = false;
+
+                }
+                if current_themometer.len() > 1 {
+                    seen.push(random_index);
+                    thermometer_rule.themometer_clue.push(current_themometer);
+                }
+            }
+        }
+
         // if zipper-rule is part of the rule-set insert some Zippers
         // do some depth first kinda thing
         if let Some(zipper_rule) = sudoku.rules.iter_mut().find_map(|r| r.to_zipper_rule()) {
@@ -528,7 +614,7 @@ impl Sudoku {
 
                 // get the value at the random selected cell
                 let center_cell_value = &sudoku.cells[random_index].available[0];
-                if center_cell_value == &1 {
+                if *center_cell_value == 1 {
                     // the value at the center of a zipper can never be 1
                     continue 'zippers;
                 }
@@ -633,7 +719,6 @@ impl Sudoku {
                             // if the inxed is not in any other zipper (including this one)
                             // and the values of the incecies add to the center value
                             // these should be added as a pair
-                            //println!("{seen:?} left: {i_in_l} right: {i_in_r} center value: {center_cell_value}");
 
                             if i_in_l != i_in_r
                                 && !seen.contains(i_in_l)
@@ -1075,6 +1160,20 @@ fn generate_sudoku() {
     let sudoku = Sudoku::generate_with_size(
         9,
         vec![super::rules::square_rule::SquareRule::new()],
+        None,
+        Difficulty::Expert,
+    )
+    .unwrap();
+
+    println!("{sudoku} at {:?}", timer.elapsed());
+}
+
+#[test]
+fn generate_thermometer_sudoku() {
+    let timer = std::time::Instant::now();
+    let sudoku = Sudoku::generate_with_size(
+        9,
+        vec![super::rules::square_rule::SquareRule::new(),crate::rules::thermometer_rule::ThermometerRule::new(vec![]),],
         None,
         Difficulty::Expert,
     )
