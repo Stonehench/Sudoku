@@ -70,7 +70,7 @@ impl Rule for DiagonalRule {
             }
 
             if let Some(position) = found_position {
-                if !sudoku.cells[position].locked_in {
+                if !sudoku.cells[position].locked_in && sudoku.cells[position].available.contains(&value) {
                     return Some((value, position));
                 }
             }
@@ -90,7 +90,7 @@ impl Rule for DiagonalRule {
             }
 
             if let Some(position) = found_position {
-                if !sudoku.cells[position].locked_in {
+                if !sudoku.cells[position].locked_in && sudoku.cells[position].available.contains(&value){
                     return Some((value, position));
                 }
             }
@@ -154,7 +154,7 @@ impl Rule for DiagonalRule {
                         })
                     // but not in the box
                     {
-                        if sudoku.cells[remove_index].available.contains(&value) {
+                        if sudoku.cells[remove_index].available.contains(&value) && !sudoku.cells[remove_index].locked_in {
                             // only push indexes that contain the value
                             buffer.push(remove_index)
                         }
@@ -200,7 +200,7 @@ impl Rule for DiagonalRule {
                         })
                     // but not in the box
                     {
-                        if sudoku.cells[remove_index].available.contains(&value) {
+                        if sudoku.cells[remove_index].available.contains(&value) && !sudoku.cells[remove_index].locked_in {
                             // only push indexes that contain the value
                             buffer.push(remove_index)
                         }

@@ -93,9 +93,9 @@ abstract class RustLibApi extends BaseApi {
 
   Future<void> initApp({dynamic hint});
 
-  Future<void> setFromStr({required String sudoku, dynamic hint});
+  Stream<(int, int)> progress({dynamic hint});
 
-  Future<int?> waitForProgess({dynamic hint});
+  Future<void> setFromStr({required String sudoku, dynamic hint});
 }
 
 class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
@@ -385,13 +385,38 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
       );
 
   @override
+  Stream<(int, int)> progress({dynamic hint}) {
+    return handler.executeStream(StreamTask(
+      callFfi: (port_) {
+        final serializer = SseSerializer(generalizedFrbRustBinding);
+        pdeCallFfi(generalizedFrbRustBinding, serializer,
+            funcId: 13, port: port_);
+
+      },
+      codec: SseCodec(
+        decodeSuccessData: sse_decode_record_usize_usize,
+        decodeErrorData: null,
+      ),
+      constMeta: kProgressConstMeta,
+      argValues: [],
+      apiImpl: this,
+      hint: hint,
+    ));
+  }
+
+  TaskConstMeta get kProgressConstMeta => const TaskConstMeta(
+        debugName: "progress",
+        argNames: [],
+      );
+
+  @override
   Future<void> setFromStr({required String sudoku, dynamic hint}) {
     return handler.executeNormal(NormalTask(
       callFfi: (port_) {
         final serializer = SseSerializer(generalizedFrbRustBinding);
         sse_encode_String(sudoku, serializer);
         pdeCallFfi(generalizedFrbRustBinding, serializer,
-            funcId: 13, port: port_);
+            funcId: 8, port: port_);
       },
       codec: SseCodec(
         decodeSuccessData: sse_decode_unit,
@@ -407,30 +432,6 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   TaskConstMeta get kSetFromStrConstMeta => const TaskConstMeta(
         debugName: "set_from_str",
         argNames: ["sudoku"],
-      );
-
-  @override
-  Future<int?> waitForProgess({dynamic hint}) {
-    return handler.executeNormal(NormalTask(
-      callFfi: (port_) {
-        final serializer = SseSerializer(generalizedFrbRustBinding);
-        pdeCallFfi(generalizedFrbRustBinding, serializer,
-            funcId: 8, port: port_);
-      },
-      codec: SseCodec(
-        decodeSuccessData: sse_decode_opt_box_autoadd_usize,
-        decodeErrorData: null,
-      ),
-      constMeta: kWaitForProgessConstMeta,
-      argValues: [],
-      apiImpl: this,
-      hint: hint,
-    ));
-  }
-
-  TaskConstMeta get kWaitForProgessConstMeta => const TaskConstMeta(
-        debugName: "wait_for_progess",
-        argNames: [],
       );
 
   @protected

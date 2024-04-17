@@ -1,5 +1,4 @@
 import 'dart:async';
-
 import 'package:flutter/material.dart';
 import 'package:flutter_spinkit/flutter_spinkit.dart';
 import 'package:sudoku/game_state.dart';
@@ -20,72 +19,50 @@ class GameLoader extends StatefulWidget {
 }
 
 class _GameLoaderState extends State<GameLoader> {
-  bool awaiting = false;
-  int removed = 0;
-  int? targetRemoved;
   @override
-  Widget build(BuildContext context) {
-    if (!awaiting) {
-      awaiting = true;
+  void initState() {
+    super.initState();
 
-      () async {
-        var source = await widget.sudokuSource;
-        if (source == null) {
-          //I Dunno
-          setState(() {
-            Navigator.of(context)
-                .pop("Failed to generate sudoku with these rules");
-          });
-
-          return;
-        }
-        var xPositions = await getXPositions();
-        var parityPositions = await getParityPositions();
-        var zipperPositions = await getZipperPositions();
-        var consecutivePositions = await getConsecutivePositions();
-        var thermometerPositions = await getThermometerPositions();
-
-        GameState.setInstance(GameState(source, xPositions, parityPositions,
-            consecutivePositions, zipperPositions, thermometerPositions));
-        setState(() {
-          Navigator.of(context).pushReplacement(MaterialPageRoute(
-            builder: (context) => GameView(widget.rules),
-          ));
-        });
-      }();
-
-      () async {
-        var newTargetRemoved = await difficultyValues(
-            size: widget.size, difficulty: widget.difficulty);
-        if (newTargetRemoved != null) {
-          if (mounted) {
-            setState(() {
-              targetRemoved = newTargetRemoved;
-            });
-          }
-        } else {
-          throw "Backend failed to parse GUI difficulty (${widget.difficulty}). This is really fucking weird";
-        }
-      }();
-    }
-
+    //Await finished generation
     () async {
-      var progress = await waitForProgess();
-      if (progress != null) {
-        if (mounted) {
-          setState(() {
-            removed = progress;
-          });
-        }
-      } else {
-        Timer(const Duration(milliseconds: 500), () {
-          if (mounted) {
-            setState(() {});
-          }
+      var source = await widget.sudokuSource;
+      if (source == null) {
+        //I Dunno
+        setState(() {
+          Navigator.of(context)
+              .pop("Failed to generate sudoku with these rules");
         });
+        return;
       }
+      var xPositions = await getXPositions();
+      var parityPositions = await getParityPositions();
+      var zipperPositions = await getZipperPositions();
+      var consecutivePositions = await getConsecutivePositions();
+      var themometerPositions = await getThermometerPositions();
+
+      GameState.setInstance(GameState(source, xPositions, parityPositions,
+          consecutivePositions, zipperPositions, themometerPositions));
+      setState(() {
+        Navigator.of(context).pushReplacement(MaterialPageRoute(
+          builder: (context) => GameView(widget.rules),
+        ));
+      });
     }();
 
+    progressSink = progress();
+    progressSink.forEach((args) {
+      setState(() {
+        removed = args;
+      });
+    });
+  }
+
+  late Stream<(int, int)> progressSink;
+
+  (int, int)? removed;
+
+  @override
+  Widget build(BuildContext context) {
     return Scaffold(
       body: Center(
         child: Column(
@@ -94,9 +71,14 @@ class _GameLoaderState extends State<GameLoader> {
             SpinKitWave(
               color: Theme.of(context).highlightColor,
             ),
-            targetRemoved == null
-                ? Text("$removed")
-                : Text("$removed / $targetRemoved")
+            () {
+              if (removed != null) {
+                var (status, target) = removed!;
+                return Text("$status / $target");
+              } else {
+                return const Text("Me Thinkey");
+              }
+            }()
           ],
         ),
       ),
