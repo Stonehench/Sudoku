@@ -20,71 +20,52 @@ class GameLoader extends StatefulWidget {
 }
 
 class _GameLoaderState extends State<GameLoader> {
-  bool awaiting = false;
-  int removed = 0;
-  int? targetRemoved;
   @override
-  Widget build(BuildContext context) {
-    if (!awaiting) {
-      awaiting = true;
+  void initState() {
+    super.initState();
 
-      () async {
-        var source = await widget.sudokuSource;
-        if (source == null) {
-          //I Dunno
-          setState(() {
-            Navigator.of(context)
-                .pop("Failed to generate sudoku with these rules");
-          });
-
-          return;
-        }
-        var xPositions = await getXPositions();
-        var parityPositions = await getParityPositions();
-        var zipperPositions = await getZipperPositions();
-        var consecutivePositions = await getConsecutivePositions();
-
-        GameState.setInstance(GameState(source, xPositions, parityPositions,
-            consecutivePositions, zipperPositions));
-        setState(() {
-          Navigator.of(context).pushReplacement(MaterialPageRoute(
-            builder: (context) => GameView(widget.rules),
-          ));
-        });
-      }();
-
-      () async {
-        var newTargetRemoved = await difficultyValues(
-            size: widget.size, difficulty: widget.difficulty);
-        if (newTargetRemoved != null) {
-          if (mounted) {
-            setState(() {
-              targetRemoved = newTargetRemoved;
-            });
-          }
-        } else {
-          throw "Backend failed to parse GUI difficulty (${widget.difficulty}). This is really fucking weird";
-        }
-      }();
-    }
-
+    //Await finished generation
     () async {
-      var progress = await waitForProgess();
-      if (progress != null) {
-        if (mounted) {
-          setState(() {
-            removed = progress;
-          });
-        }
-      } else {
-        Timer(const Duration(milliseconds: 500), () {
-          if (mounted) {
-            setState(() {});
-          }
+      var source = await widget.sudokuSource;
+      if (source == null) {
+        //I Dunno
+        setState(() {
+          Navigator.of(context)
+              .pop("Failed to generate sudoku with these rules");
         });
+        return;
       }
+      var xPositions = await getXPositions();
+      var parityPositions = await getParityPositions();
+      var zipperPositions = await getZipperPositions();
+      var consecutivePositions = await getConsecutivePositions();
+
+      GameState.setInstance(GameState(source, xPositions, parityPositions,
+          consecutivePositions, zipperPositions));
+      setState(() {
+        Navigator.of(context).pushReplacement(MaterialPageRoute(
+          builder: (context) => GameView(widget.rules),
+        ));
+      });
     }();
 
+    progressSink = progress();
+    progressSink.forEach((args) {
+      var (cProgress, target) = args;
+      setState(() {
+        removed = cProgress;
+        targetRemoved = target;
+      });
+    });
+  }
+
+  late Stream<(int, int)> progressSink;
+
+  int removed = 0;
+  int? targetRemoved;
+
+  @override
+  Widget build(BuildContext context) {
     return Scaffold(
       body: Center(
         child: Column(

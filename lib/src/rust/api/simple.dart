@@ -6,6 +6,9 @@
 import '../frb_generated.dart';
 import 'package:flutter_rust_bridge/flutter_rust_bridge_for_generated.dart';
 
+Stream<(int, int)> progress({dynamic hint}) =>
+    RustLib.instance.api.progress(hint: hint);
+
 Future<String?> generateWithSize(
         {required int size,
         required List<String> rulesSrc,
@@ -25,9 +28,6 @@ Future<List<(int, int)>> getParityPositions({dynamic hint}) =>
 
 Future<List<(int, List<(int, int)>)>> getZipperPositions({dynamic hint}) =>
     RustLib.instance.api.getZipperPositions(hint: hint);
-
-Future<int?> waitForProgess({dynamic hint}) =>
-    RustLib.instance.api.waitForProgess(hint: hint);
 
 Future<bool> checkLegality(
         {required int position, required int value, dynamic hint}) =>
