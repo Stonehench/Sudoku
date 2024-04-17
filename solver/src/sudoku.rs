@@ -17,7 +17,9 @@ use regex_macro::regex;
 use smallvec::{smallvec, SmallVec};
 use threadpool::ThreadPool;
 
-use crate::rules::{column_rule::ColumnRule, row_rule::RowRule, DynRule};
+use crate::rules::{
+    column_rule::ColumnRule, row_rule::RowRule, square_rule::SquareRule, DynRule, Rule,
+};
 
 #[derive(Debug, Clone, Copy)]
 pub enum Difficulty {
@@ -120,7 +122,7 @@ impl AllSolutionsContext {
 
     fn wait_for_solutions(self) -> usize {
         self.pool.join();
-        let solutions = self.solutions.load(std::sync::atomic::Ordering::Relaxed);
+        let solutions = self.solutions.load(std::sync::atomic::Ordering::SeqCst);
         self.return_pool();
         solutions
     }
@@ -210,14 +212,17 @@ impl Sudoku {
     }
 
     fn get_arena() -> Bump {
-        let mut lock = ARENA_POOL.lock().unwrap();
-
-        if let Some(bump) = lock.pop() {
-            return bump;
+        if let Ok(mut lock) = ARENA_POOL.try_lock() {
+            if let Some(bump) = lock.pop() {
+                return bump;
+            }
         }
-        drop(lock);
-
         Bump::new()
+    }
+
+    fn free_arena(bump: Bump) {
+        let mut lock = ARENA_POOL.lock().unwrap();
+        lock.push(bump);
     }
 
     pub fn solve(
@@ -225,7 +230,10 @@ impl Sudoku {
         ctx: Option<&AllSolutionsContext>,
         pri_queue: Option<PriorityQueue<usize, Entropy>>,
     ) -> Result<(), SudokuSolveError> {
-        let has_square = self.rules.iter().any(|r| r.get_name() == "SquareRule");
+        let has_square = self
+            .rules
+            .iter()
+            .any(|r| r.get_name() == SquareRule.get_name());
 
         let mut pri_queue = if let Some(pri_queue) = pri_queue {
             pri_queue
@@ -274,14 +282,21 @@ impl Sudoku {
                             //Put nuværende cell tilbage i priority queue
                             pri_queue.push(index, entropy);
                             pri_queue.remove(&hidden_index);
-                            self.update_cell(n, hidden_index, &mut pri_queue, &mut ret_buffer)?;
+                            if let Err(_) =
+                                self.update_cell(n, hidden_index, &mut pri_queue, &mut ret_buffer)
+                            {
+                                let Some((cells, new_pri_queue)) = branch_stack.pop() else {
+                                    return Err(SudokuSolveError::UnsolveableError);
+                                };
+
+                                self.cells = cells;
+                                pri_queue = new_pri_queue;
+                            }
 
                             continue 'main;
                         }
                     }
 
-                    // TODO: Should only work on Hard and Expert in the future
-                    //Locked candidates
                     for rule in self.rules.iter().filter(|r| {
                         if r.needs_square_for_locked() {
                             has_square
@@ -299,7 +314,14 @@ impl Sudoku {
                             pri_queue.push(index, entropy);
 
                             for remove_index in removable_indexes {
-                                self.cells[*remove_index].remove(n)?;
+                                if let Err(_) = self.cells[*remove_index].remove(n) {
+                                    let Some((cells, new_pri_queue)) = branch_stack.pop() else {
+                                        return Err(SudokuSolveError::UnsolveableError);
+                                    };
+
+                                    self.cells = cells;
+                                    pri_queue = new_pri_queue;
+                                }
                                 pri_queue.change_priority(
                                     remove_index,
                                     Entropy(self.cells[*remove_index].available.len()),
@@ -322,7 +344,14 @@ impl Sudoku {
                             pri_queue.push(index, entropy);
 
                             for (value, index) in multi_remove_indecies {
-                                self.cells[*index].remove(*value)?;
+                                if let Err(_) = self.cells[*index].remove(*value) {
+                                    let Some((cells, new_pri_queue)) = branch_stack.pop() else {
+                                        return Err(SudokuSolveError::UnsolveableError);
+                                    };
+
+                                    self.cells = cells;
+                                    pri_queue = new_pri_queue;
+                                }
                                 pri_queue.change_priority(
                                     index,
                                     Entropy(self.cells[*index].available.len()),
@@ -360,7 +389,14 @@ impl Sudoku {
                         branch_stack.push((cloned_cells, cloned_queue));
                     }
 
-                    self.update_cell(n, index, &mut pri_queue, &mut ret_buffer)?;
+                    if let Err(_) = self.update_cell(n, index, &mut pri_queue, &mut ret_buffer) {
+                        let Some((cells, new_pri_queue)) = branch_stack.pop() else {
+                            return Err(SudokuSolveError::UnsolveableError);
+                        };
+
+                        self.cells = cells;
+                        pri_queue = new_pri_queue;
+                    }
                 }
             }
 
@@ -378,12 +414,11 @@ impl Sudoku {
             }
         }
 
-        let mut lock = ARENA_POOL.lock().unwrap();
-        lock.push(arena);
+        Self::free_arena(arena);
 
         if let Some(ctx) = ctx {
             ctx.solutions
-                .fetch_add(1, std::sync::atomic::Ordering::Relaxed);
+                .fetch_add(1, std::sync::atomic::Ordering::SeqCst);
         }
 
         Ok(())
@@ -394,12 +429,12 @@ impl Sudoku {
         rules: Vec<DynRule>,
         progess: Option<Box<dyn Fn(usize)>>,
         difficulty: Difficulty,
-    ) -> Result<Self, SudokuSolveError> {
+    ) -> Result<(Self, Self), SudokuSolveError> {
         let mut sudoku = Sudoku::new(size, rules);
 
         sudoku.solve(None, None)?;
-
         sudoku.reset_locked();
+        let solved = sudoku.clone();
 
         for rule in &mut sudoku.rules {
             rule.create_clue(&sudoku.cells, size);
@@ -429,18 +464,18 @@ impl Sudoku {
             }
 
             if available_to_remove.len() == 0 {
-                println!("nothing more to try");
+                println!("Removed everything");
                 break;
             }
             let removed_index =
                 available_to_remove.remove(random::<usize>() % available_to_remove.len());
 
-            let mut solved_clone = sudoku.clone();
+            let mut solving_clone = sudoku.clone();
 
-            solved_clone.cells[removed_index] = Cell::new_with_range(1..sudoku.size as u16 + 1);
+            solving_clone.cells[removed_index] = Cell::new_with_range(1..sudoku.size as u16 + 1);
 
             let ctx = AllSolutionsContext::new();
-            let _ = solved_clone.solve(Some(&ctx), None);
+            let _ = solving_clone.solve(Some(&ctx), None);
 
             let solutions = ctx.wait_for_solutions();
 
@@ -449,8 +484,6 @@ impl Sudoku {
                     break;
                 } else {
                     currents_left -= 1;
-                    #[cfg(debug_assertions)]
-                    println!("Attempts left: {currents_left}");
                     continue;
                 }
             }
@@ -464,11 +497,7 @@ impl Sudoku {
         #[cfg(debug_assertions)]
         println!("Removed {count} in {:?}", timer.elapsed());
 
-        for cell in &mut sudoku.cells {
-            cell.locked_in = false;
-        }
-
-        Ok(sudoku)
+        Ok((sudoku, solved))
     }
 }
 
@@ -597,7 +626,7 @@ impl Clone for Sudoku {
 //########################### TEST ###############################
 #[test]
 fn generate_sudoku_zipper() {
-    let sudoku = Sudoku::generate_with_size(
+    let (sudoku, _) = Sudoku::generate_with_size(
         4,
         vec![
             super::rules::square_rule::SquareRule::new(),
@@ -607,8 +636,6 @@ fn generate_sudoku_zipper() {
         Difficulty::Expert,
     )
     .unwrap();
-
-    println!("{sudoku:?}");
     println!("{sudoku}");
 }
 #[test]
@@ -656,7 +683,7 @@ fn generate_4x4_xdiagonal() {
         (10, 14),
         (11, 15), */
     ];
-    let mut sudoku = Sudoku::generate_with_size(
+    let (mut sudoku, _) = Sudoku::generate_with_size(
         4,
         vec![
             crate::rules::square_rule::SquareRule::new(),
@@ -667,12 +694,9 @@ fn generate_4x4_xdiagonal() {
         Difficulty::Expert,
     )
     .unwrap();
-    println!("{sudoku}");
 
     let cxt = AllSolutionsContext::new();
     sudoku.solve(Some(&cxt), None).unwrap();
-
-    println!("{sudoku} = {}", cxt.wait_for_solutions());
 }
 
 #[test]
@@ -810,7 +834,7 @@ fn find_all_solutions() {
 #[test]
 fn generate_sudoku() {
     let timer = std::time::Instant::now();
-    let sudoku = Sudoku::generate_with_size(
+    let (sudoku, _) = Sudoku::generate_with_size(
         9,
         vec![super::rules::square_rule::SquareRule::new()],
         None,
@@ -824,7 +848,7 @@ fn generate_sudoku() {
 #[test]
 fn generate_thermometer_sudoku() {
     let timer = std::time::Instant::now();
-    let sudoku = Sudoku::generate_with_size(
+    let (sudoku, _) = Sudoku::generate_with_size(
         9,
         vec![
             super::rules::square_rule::SquareRule::new(),
@@ -841,7 +865,7 @@ fn generate_thermometer_sudoku() {
 #[test]
 fn generate_sudoku_x() {
     let timer = std::time::Instant::now();
-    let sudoku = Sudoku::generate_with_size(
+    let (sudoku, _) = Sudoku::generate_with_size(
         4,
         vec![
             super::rules::square_rule::SquareRule::new(),
