@@ -3,6 +3,7 @@
 
 // ignore_for_file: unused_import, unused_element, unnecessary_import, duplicate_ignore, invalid_use_of_internal_member, annotate_overrides, non_constant_identifier_names, curly_braces_in_flow_control_structures, prefer_const_literals_to_create_immutables, unused_field
 
+import 'api/hint.dart';
 import 'api/simple.dart';
 import 'dart:async';
 import 'dart:convert';
@@ -34,6 +35,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   List<Uint16List> dco_decode_list_list_prim_u_16_strict(dynamic raw);
 
   @protected
+  List<int> dco_decode_list_prim_u_16_loose(dynamic raw);
+
+  @protected
   Uint16List dco_decode_list_prim_u_16_strict(dynamic raw);
 
   @protected
@@ -51,6 +55,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   int? dco_decode_opt_box_autoadd_usize(dynamic raw);
+
+  @protected
+  (int, int) dco_decode_record_u_16_usize(dynamic raw);
 
   @protected
   (int, List<(int, int)>) dco_decode_record_usize_list_record_usize_usize(
@@ -88,6 +95,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
       SseDeserializer deserializer);
 
   @protected
+  List<int> sse_decode_list_prim_u_16_loose(SseDeserializer deserializer);
+
+  @protected
   Uint16List sse_decode_list_prim_u_16_strict(SseDeserializer deserializer);
 
   @protected
@@ -107,6 +117,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   int? sse_decode_opt_box_autoadd_usize(SseDeserializer deserializer);
+
+  @protected
+  (int, int) sse_decode_record_u_16_usize(SseDeserializer deserializer);
 
   @protected
   (int, List<(int, int)>) sse_decode_record_usize_list_record_usize_usize(
@@ -147,6 +160,10 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
       List<Uint16List> self, SseSerializer serializer);
 
   @protected
+  void sse_encode_list_prim_u_16_loose(
+      List<int> self, SseSerializer serializer);
+
+  @protected
   void sse_encode_list_prim_u_16_strict(
       Uint16List self, SseSerializer serializer);
 
@@ -167,6 +184,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   void sse_encode_opt_box_autoadd_usize(int? self, SseSerializer serializer);
+
+  @protected
+  void sse_encode_record_u_16_usize((int, int) self, SseSerializer serializer);
 
   @protected
   void sse_encode_record_usize_list_record_usize_usize(

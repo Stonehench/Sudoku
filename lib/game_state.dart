@@ -1,8 +1,10 @@
+import 'dart:ffi';
 import 'dart:math';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:sudoku/api.dart';
+import 'package:sudoku/src/rust/api/hint.dart';
 import 'package:sudoku/src/rust/api/simple.dart';
 import 'package:http/http.dart' as http;
 
@@ -206,6 +208,22 @@ class GameState extends ChangeNotifier {
           return;
         }
     }
+  }
+
+  void getHint() async {
+    List<int> hints = [];
+    for (int i = 0; i < board.length; i++) {
+      if (board[i] == null) {
+        hints.add(i);
+      }
+    }
+    Future<(int, int)?> clues = hint(freeIndexes: hints);
+    var clue = await clues;
+    print(clue);
+    if (clue != null) {
+      board[clue.$2] = clue.$1;
+    }
+    notifyListeners();
   }
 
   bool drafting = false;
