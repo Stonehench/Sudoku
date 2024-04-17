@@ -1,6 +1,6 @@
 use super::{DynRule, Rule};
 use std::fmt::Debug;
-use crate::sudoku::{self, Sudoku};
+use crate::sudoku::Sudoku;
 
 #[derive(Debug, Clone)]
 pub struct ParityRule {
@@ -149,11 +149,10 @@ impl Rule for ParityRule {
 
 //########################### TEST ###############################
 
-#[test]
-fn parity_update_test() {}
 
 #[test]
 fn parity_multi_remove_test() {
+    use crate::sudoku::{self, Sudoku};
     let mut big_buffer = vec![];
     /* The test sudoku a 4 x 4
     =================
@@ -203,6 +202,7 @@ fn parity_multi_remove_test() {
 
 #[test]
 fn extended_parity_multi_remove_test() {
+    use crate::sudoku::Sudoku;
     let mut big_buffer = vec![];
     /* The test sudoku a 4 x 4
     =================
