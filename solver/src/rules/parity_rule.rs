@@ -1,6 +1,6 @@
+use rand::random;
 use super::{DynRule, Rule};
 use std::fmt::Debug;
-
 use crate::sudoku::Sudoku;
 
 #[derive(Debug, Clone)]
@@ -135,6 +135,43 @@ impl Rule for ParityRule {
         big_buffer
     }
 
+    fn create_clue(&mut self, cells: &Vec<crate::sudoku::Cell>, size: usize) {
+        for index in 0..cells.len() {
+            if let Some(current) = cells[index].available.get(0) {
+                if index + 1 >= cells.len() {
+                    continue;
+                }
+                if let Some(right) = cells[index + 1].available.get(0) {
+                    if ((current & 1) == 0 && (right & 1) != 0)
+                        || ((current & 1) != 0 && (right & 1) == 0)
+                    {
+                        // parity rule should have (current , right)
+                        self.parity_clue.push((index, index + 1));
+                    }
+                }
+                if index + size >= cells.len() {
+                    continue;
+                }
+                if let Some(below) = cells[index + size].available.get(0) {
+                    if (current & 1 == 0 && below & 1 != 0)
+                        || (current & 1 != 0 && below & 1 == 0)
+                    {
+                        // parity rule should have (index , below)
+                        self.parity_clue.push((index, index + size));
+                    }
+                }
+            }
+        }
+        let count = self.parity_clue.len();
+        if count > size * 2 {
+            for i in 0..count - size * 2 {
+                self
+                    .parity_clue
+                    .remove(random::<usize>() % (count - i));
+            }
+        }
+    }
+
     fn boxed_clone(&self) -> DynRule {
         DynRule(Box::new(self.clone()))
     }
@@ -150,11 +187,10 @@ impl Rule for ParityRule {
 
 //########################### TEST ###############################
 
-#[test]
-fn parity_update_test() {}
 
 #[test]
 fn parity_multi_remove_test() {
+    use crate::sudoku::{self, Sudoku};
     let mut big_buffer = vec![];
     /* The test sudoku a 4 x 4
     =================
@@ -204,6 +240,7 @@ fn parity_multi_remove_test() {
 
 #[test]
 fn extended_parity_multi_remove_test() {
+    use crate::sudoku::Sudoku;
     let mut big_buffer = vec![];
     /* The test sudoku a 4 x 4
     =================

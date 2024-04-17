@@ -1,5 +1,6 @@
 use super::{DynRule, Rule};
 use bumpalo::Bump;
+use rand::random;
 use std::fmt::Debug;
 
 use crate::sudoku::Sudoku;
@@ -93,6 +94,43 @@ impl Rule for XRule {
         }
 
         None
+    }
+
+    fn create_clue(&mut self, cells: &Vec<crate::sudoku::Cell>, size: usize) {
+        for index in 0..cells.len() {
+            if let Some(current) = cells[index].available.get(0) {
+                if index + 1 >= cells.len() {
+                    continue;
+                }
+                if let Some(left) = cells[index + 1].available.get(0) {
+                    if current + left == size as u16 + 1
+                        && (index + 1) % size != 0
+                    {
+                        // x rule should have (index , left)
+                        self.x_clue.push((index, index + 1));
+                    }
+                }
+                if index + size >= cells.len() {
+                    continue;
+                }
+                if let Some(below) = cells[index + size].available.get(0) {
+                    if current + below == size as u16 + 1
+                        && index + size < cells.len()
+                    {
+                        // x rule should have (index , below)
+                        self.x_clue.push((index, index + size));
+                    }
+                }
+            }
+        }
+        let count = self.x_clue.len();
+        if count > size * 2 {
+            for i in 0..count - (size * 3)/2 {
+                self
+                    .x_clue
+                    .remove(random::<usize>() % (count - i));
+            }
+    }
     }
 
     fn boxed_clone(&self) -> DynRule {
