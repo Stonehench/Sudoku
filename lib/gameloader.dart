@@ -51,18 +51,15 @@ class _GameLoaderState extends State<GameLoader> {
 
     progressSink = progress();
     progressSink.forEach((args) {
-      var (cProgress, target) = args;
       setState(() {
-        removed = cProgress;
-        targetRemoved = target;
+        removed = args;
       });
     });
   }
 
   late Stream<(int, int)> progressSink;
 
-  int removed = 0;
-  int? targetRemoved;
+  (int, int)? removed;
 
   @override
   Widget build(BuildContext context) {
@@ -74,9 +71,14 @@ class _GameLoaderState extends State<GameLoader> {
             SpinKitWave(
               color: Theme.of(context).highlightColor,
             ),
-            targetRemoved == null
-                ? Text("$removed")
-                : Text("$removed / $targetRemoved")
+            () {
+              if (removed != null) {
+                var (status, target) = removed!;
+                return Text("$status / $target");
+              } else {
+                return const Text("Me Thinkey");
+              }
+            }()
           ],
         ),
       ),
