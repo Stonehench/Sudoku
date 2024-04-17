@@ -4,7 +4,7 @@ use std::{
     num::ParseIntError,
     ops::{Deref, Range},
     str::FromStr,
-    sync::{atomic::AtomicUsize, mpsc, Arc, Mutex},
+    sync::{atomic::AtomicUsize, Arc, Mutex},
     time::Instant,
 };
 
@@ -19,6 +19,7 @@ use threadpool::ThreadPool;
 
 use crate::rules::{column_rule::ColumnRule, row_rule::RowRule, DynRule};
 
+#[derive(Debug, Clone, Copy)]
 pub enum Difficulty {
     Easy,
     Medium,
@@ -239,7 +240,11 @@ impl Sudoku {
         let mut arena = Self::get_arena();
 
         'main: while let Some((index, entropy)) = pri_queue.pop() {
-            assert_eq!(entropy.0, self.cells[index].available.len(), "which happend at {index}");
+            assert_eq!(
+                entropy.0,
+                self.cells[index].available.len(),
+                "which happend at {index}"
+            );
             match entropy.0 {
                 0 => {
                     //Der er ingen løsning på den nuværende branch. Derfor popper vi en branch og løser den i stedet
@@ -382,7 +387,7 @@ impl Sudoku {
     pub fn generate_with_size(
         size: usize,
         rules: Vec<DynRule>,
-        progess: Option<mpsc::Sender<usize>>,
+        progess: Option<Box<dyn Fn(usize)>>,
         difficulty: Difficulty,
     ) -> Result<Self, SudokuSolveError> {
         let mut sudoku = Sudoku::new(size, rules);
@@ -423,12 +428,11 @@ impl Sudoku {
             }
             let count = x_rule.x_clue.len();
             if count > sudoku.size * 2 {
-                for i in 0..count - (sudoku.size * 3)/2 {
-                    x_rule
-                        .x_clue
-                        .remove(random::<usize>() % (count - i));
+                for i in 0..count - (sudoku.size * 3) / 2 {
+                    x_rule.x_clue.remove(random::<usize>() % (count - i));
                 }
-        }}
+            }
+        }
 
         // if parity-rule is part of the rule-set insert some Paritys
         if let Some(parity_rule) = sudoku.rules.iter_mut().find_map(|r| r.to_parity_rule()) {
@@ -772,7 +776,7 @@ impl Sudoku {
                 break;
             }
             if let Some(progess) = &progess {
-                progess.send(count).unwrap();
+                progess(count);
             }
 
             if available_to_remove.len() == 0 {

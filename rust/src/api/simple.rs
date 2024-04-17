@@ -1,13 +1,15 @@
 use std::ops::Deref;
-use std::sync::mpsc::channel;
-use std::sync::{mpsc, Mutex};
-use std::time::Duration;
 
-use lazy_static::lazy_static;
 use solver::rules::DynRule;
 use solver::sudoku::{AllSolutionsContext, Difficulty, Sudoku};
 
 use crate::appstate::get_state;
+use crate::frb_generated::StreamSink;
+
+pub fn progress(sink: StreamSink<(usize, usize)>) {
+    let mut state = get_state();
+    state.progress_sink = Some(sink);
+}
 
 pub fn generate_with_size(
     size: usize,
@@ -21,12 +23,23 @@ pub fn generate_with_size(
         .collect::<Result<Vec<_>, _>>()
         .ok()?;
 
-    let sender = PROGRESS.lock().unwrap().0.clone();
-    let Ok(difficulty) = difficulty.parse() else {
-        println!("Failed to parse difficulty: \"{difficulty}\"");
+    let Ok(difficulty): Result<Difficulty, _> = difficulty.parse() else {
+        eprintln!("Failed to parse difficulty: \"{difficulty}\"");
         return None;
     };
-    let Ok(mut sudoku) = Sudoku::generate_with_size(size, rules, Some(sender), difficulty) else {
+
+    let progress = Box::new(move |progress| {
+        let state = get_state();
+        if let Some(sink) = &state.progress_sink {
+            if let Err(err) = sink.add((progress, difficulty.get_removes(size))) {
+                eprintln!("Failed writing to progress sink: {err}");
+            }
+        } else {
+            eprintln!("Progress sink missing at {progress}");
+        }
+    });
+
+    let Ok(mut sudoku) = Sudoku::generate_with_size(size, rules, Some(progress), difficulty) else {
         println!("Sudoku generation failed!");
         return None;
     };
@@ -123,31 +136,6 @@ pub fn get_zipper_positions() -> Vec<(usize, Vec<(usize, usize)>)> {
 
 pub fn get_thermometer_positions() -> Vec<Vec<u16>> {
     get_state().thermometer_positions.clone()
-}
-
-lazy_static! {
-    static ref PROGRESS: Mutex<(mpsc::Sender<usize>, Option<mpsc::Receiver<usize>>)> =
-        Mutex::new({
-            let (sx, rx) = channel();
-
-            (sx, Some(rx))
-        });
-}
-
-pub fn wait_for_progess() -> Option<usize> {
-    let rx = PROGRESS.lock().unwrap().1.take()?;
-
-    let mut res = None;
-    while let Ok(c_res) = rx.try_recv() {
-        res = Some(c_res);
-    }
-    if res.is_none() {
-        res = rx.recv_timeout(Duration::from_secs(5)).ok();
-    }
-
-    PROGRESS.lock().unwrap().1 = Some(rx);
-
-    res
 }
 
 pub fn check_legality(position: usize, value: u16) -> bool {
