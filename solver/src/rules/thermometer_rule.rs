@@ -1,7 +1,7 @@
 use super::{DynRule, Rule};
 use std::fmt::Debug;
 
-use crate::sudoku::{self, Sudoku};
+use crate::sudoku::Sudoku;
 
 #[derive(Debug, Clone)]
 pub struct ThermometerRule {
@@ -38,40 +38,52 @@ impl Rule for ThermometerRule {
         for themometer in &self.themometer_clue {
             for (enumeration, index) in themometer.iter().enumerate() {
                 // if the next element on the zipper is 2 this element must be 1
-                if !sudoku.cells[*index].locked_in && enumeration + 1 < themometer.len()
+                if !sudoku.cells[*index].locked_in
+                    && enumeration + 1 < themometer.len()
                     && index == &themometer[0]
                     && sudoku.cells[themometer[enumeration + 1]].locked_in
                     && sudoku.cells[themometer[enumeration + 1]].available[0] == 2
                     && sudoku.cells[*index].available.contains(&1)
                 {
                     return Some(((1), *index));
-                } 
-                
+                }
+
                 // if the previous element is one less than sudoku.size this element is sudoku.size
-                if !sudoku.cells[*index].locked_in && enumeration > 0
+                if !sudoku.cells[*index].locked_in
+                    && enumeration > 0
                     && index == themometer.last().unwrap()
                     && sudoku.cells[themometer[enumeration - 1]].locked_in
-                    && sudoku.cells[themometer[enumeration - 1]].available[0] == sudoku.size as u16 - 1
-                    && sudoku.cells[*index].available.contains(&(sudoku.size as u16))
+                    && sudoku.cells[themometer[enumeration - 1]].available[0]
+                        == sudoku.size as u16 - 1
+                    && sudoku.cells[*index]
+                        .available
+                        .contains(&(sudoku.size as u16))
                 {
                     return Some(((sudoku.size as u16), *index));
-                } 
-                
+                }
+
                 // if two indecies are surrounding one index are locked in with only one possible value left
                 // it is basically a naked single so yeah...
-                if !sudoku.cells[*index].locked_in 
+                if !sudoku.cells[*index].locked_in
                     && enumeration < themometer.len() - 1
-                    && enumeration > 0 
+                    && enumeration > 0
                 {
                     let prev_index = themometer[enumeration - 1];
                     let next_index = themometer[enumeration + 1];
-                    if sudoku.cells[next_index].locked_in && sudoku.cells[prev_index].locked_in
-                        && sudoku.cells[next_index].available[0] >= sudoku.cells[prev_index].available[0] 
-                        && sudoku.cells[next_index].available[0] - sudoku.cells[prev_index].available[0] == 2 
+                    if sudoku.cells[next_index].locked_in
+                        && sudoku.cells[prev_index].locked_in
+                        && sudoku.cells[next_index].available[0]
+                            >= sudoku.cells[prev_index].available[0]
+                        && sudoku.cells[next_index].available[0]
+                            - sudoku.cells[prev_index].available[0]
+                            == 2
                     {
-                        return Some(((sudoku.cells[themometer[enumeration - 1]].available[0] + 1), *index));
-                    }       
-                }    
+                        return Some((
+                            (sudoku.cells[themometer[enumeration - 1]].available[0] + 1),
+                            *index,
+                        ));
+                    }
+                }
             }
         }
         None
@@ -92,13 +104,15 @@ impl Rule for ThermometerRule {
         for themometer in &self.themometer_clue {
             for (enumeration, index) in themometer.into_iter().enumerate() {
                 if !sudoku.cells[*index].locked_in {
-                    for value in 1..(enumeration + 1) as u16{
+                    for value in 1..(enumeration + 1) as u16 {
                         if sudoku.cells[*index].available.contains(&value) {
                             big_buffer.push((value, *index));
                         }
                     }
 
-                    for value in (sudoku.size - (themometer.len() - enumeration) + 2) as u16..(sudoku.size + 1) as u16{
+                    for value in (sudoku.size - (themometer.len() - enumeration) + 2) as u16
+                        ..(sudoku.size + 1) as u16
+                    {
                         if sudoku.cells[*index].available.contains(&value) {
                             big_buffer.push((value, *index));
                         }
@@ -108,22 +122,26 @@ impl Rule for ThermometerRule {
                 if sudoku.cells[*index].locked_in {
                     if let Some(value) = sudoku.cells[*index].available.get(0) {
                         for (inner_enumeration, inner_index) in themometer.into_iter().enumerate() {
-                            if inner_enumeration > enumeration && !sudoku.cells[*inner_index].locked_in{
+                            if inner_enumeration > enumeration
+                                && !sudoku.cells[*inner_index].locked_in
+                            {
                                 for i in 1..*value + 1 {
-                                    if sudoku.cells[*inner_index].available.contains(&i){
+                                    if sudoku.cells[*inner_index].available.contains(&i) {
                                         big_buffer.push((i, *inner_index))
                                     }
                                 }
-                            } else if inner_enumeration < enumeration && !sudoku.cells[*inner_index].locked_in{
+                            } else if inner_enumeration < enumeration
+                                && !sudoku.cells[*inner_index].locked_in
+                            {
                                 for i in *value..=sudoku.size as u16 {
-                                    if sudoku.cells[*inner_index].available.contains(&i){
+                                    if sudoku.cells[*inner_index].available.contains(&i) {
                                         big_buffer.push((i, *inner_index))
                                     }
                                 }
                             }
                         }
                     }
-                } 
+                }
             }
         }
 
@@ -181,23 +199,28 @@ fn themometer_multi_remove_test() {
     assert_eq!(
         indexes,
         vec![
-            (7, 0), (8, 0), (9, 0), 
-            (1, 1), (8, 1), (9, 1), 
-            (1, 2), (2, 2), (9, 2), 
-            (1, 3), (2, 3), (3, 3)
+            (7, 0),
+            (8, 0),
+            (9, 0),
+            (1, 1),
+            (8, 1),
+            (9, 1),
+            (1, 2),
+            (2, 2),
+            (9, 2),
+            (1, 3),
+            (2, 3),
+            (3, 3)
         ]
     );
-    
+
     // set a cell on the thermometer
     sudoku.set_cell(3, 2).unwrap();
     indexes = themometer_rule.multi_remove(&sudoku, &mut big_buffer);
 
     assert_eq!(
         indexes,
-        vec![
-            (4, 0),(5, 0),(6, 0),
-            (4, 1),(5, 1),(6, 1),(7, 1),
-        ]
+        vec![(4, 0), (5, 0), (6, 0), (4, 1), (5, 1), (6, 1), (7, 1),]
     );
 
     sudoku = Sudoku::new(9, vec![]);
@@ -209,15 +232,28 @@ fn themometer_multi_remove_test() {
     };
 
     big_buffer.clear();
-    let  indexes = themometer_rule.multi_remove(&sudoku, &mut big_buffer);
+    let indexes = themometer_rule.multi_remove(&sudoku, &mut big_buffer);
     assert_eq!(
         indexes,
         vec![
-            (7, 3), (8, 3), (9, 3), (4, 3), (5, 3), (6, 3), (7, 3), (8, 3), (9, 3), 
-            (1, 1), (2, 1), 
-            (1, 0), (2, 0), 
-            (1, 1), (2, 1), (9, 1),
-            (1, 0), (2, 0)
+            (7, 3),
+            (8, 3),
+            (9, 3),
+            (4, 3),
+            (5, 3),
+            (6, 3),
+            (7, 3),
+            (8, 3),
+            (9, 3),
+            (1, 1),
+            (2, 1),
+            (1, 0),
+            (2, 0),
+            (1, 1),
+            (2, 1),
+            (9, 1),
+            (1, 0),
+            (2, 0)
         ]
     );
 }

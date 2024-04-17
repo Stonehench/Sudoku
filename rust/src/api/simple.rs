@@ -4,7 +4,7 @@ use std::sync::{mpsc, Mutex};
 use std::time::Duration;
 
 use lazy_static::lazy_static;
-use solver::rules::{thermometer_rule, DynRule};
+use solver::rules::DynRule;
 use solver::sudoku::{AllSolutionsContext, Difficulty, Sudoku};
 
 use crate::appstate::get_state;
@@ -52,12 +52,10 @@ pub fn generate_with_size(
 
     if let Some(x_rule) = sudoku.rules.iter_mut().find_map(|r| r.to_x_rule()) {
         state.x_positions = x_rule.x_clue.clone();
-        println!("{x_rule:?}");
     }
 
     if let Some(parity_rule) = sudoku.rules.iter_mut().find_map(|r| r.to_parity_rule()) {
         state.parity_positions = parity_rule.parity_clue.clone();
-        println!("{parity_rule:?}");
     }
 
     if let Some(consecutive_rule) = sudoku
@@ -66,26 +64,22 @@ pub fn generate_with_size(
         .find_map(|r| r.to_consecutive_rule())
     {
         state.consecutive_positions = consecutive_rule.consecutive_clue.clone();
-        println!("{consecutive_rule:?}");
     }
 
     if let Some(zipper_rule) = sudoku.rules.iter_mut().find_map(|r| r.to_zipper_rule()) {
         state.zipper_positions = zipper_rule.zipper_clue.clone();
-        println!("{zipper_rule:?}");
     }
 
-    if let Some(thermometer_rule) = sudoku.rules.iter_mut().find_map(|r| r.to_thermometer_rule()) {
-
-        let mut temp_thermometer_rule = vec![];
-        for thermo in thermometer_rule.themometer_clue.clone() {
-            let mut temp_thermometer = vec![];
-            for thermo_index in thermo {
-                temp_thermometer.push(thermo_index as u16);
-            }
-            temp_thermometer_rule.push(temp_thermometer);
-        }
-        state.thermometer_positions = temp_thermometer_rule;
-        println!("{thermometer_rule:?}");
+    if let Some(thermometer_rule) = sudoku
+        .rules
+        .iter_mut()
+        .find_map(|r| r.to_thermometer_rule())
+    {
+        state.thermometer_positions = thermometer_rule
+            .themometer_clue
+            .iter()
+            .map(|ls| ls.iter().map(|u| *u as u16).collect())
+            .collect();
     }
 
     let mut solved = sudoku.clone();
@@ -198,8 +192,16 @@ pub fn set_from_str(sudoku: String) {
         zippers = zipper_rule.zipper_clue.clone();
     }
 
-    if let Some(thermometer_rule) = solved.rules.iter_mut().find_map(|r| r.to_thermometer_rule()) {
-        thermometers = thermometer_rule.themometer_clue.clone().into_iter().map(|thermo| thermo.into_iter().map(|i| i as u16).collect()).collect();
+    if let Some(thermometer_rule) = solved
+        .rules
+        .iter_mut()
+        .find_map(|r| r.to_thermometer_rule())
+    {
+        thermometers = thermometer_rule
+            .themometer_clue
+            .iter()
+            .map(|thermo| thermo.iter().map(|i| *i as u16).collect())
+            .collect();
     }
 
     if let Some(x_rule) = solved.rules.iter_mut().find_map(|r| r.to_x_rule()) {
