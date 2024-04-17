@@ -1,6 +1,4 @@
 import 'dart:async';
-import 'dart:async';
-
 import 'package:flutter/material.dart';
 import 'package:flutter_spinkit/flutter_spinkit.dart';
 import 'package:sudoku/game_state.dart';

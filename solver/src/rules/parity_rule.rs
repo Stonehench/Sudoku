@@ -1,5 +1,4 @@
 use rand::random;
-
 use super::{DynRule, Rule};
 use std::fmt::Debug;
 use crate::sudoku::Sudoku;
@@ -9,7 +8,7 @@ pub struct ParityRule {
     pub parity_clue: Vec<(usize, usize)>,
 }
 
-impl ParityRule { 
+impl ParityRule {
     pub fn new(parity_clue: Vec<(usize, usize)>) -> DynRule {
         DynRule(Box::new(ParityRule { parity_clue }))
     }
@@ -216,8 +215,8 @@ fn parity_multi_remove_test() {
         ],
     );
 
-    sudoku.cells[1] = sudoku::Cell::single(1);
-    sudoku.cells[8] = sudoku::Cell::single(1);
+    sudoku.cells[1] = crate::sudoku::Cell::single(1);
+    sudoku.cells[8] = crate::sudoku::Cell::single(1);
     let res = parity_rule.multi_remove(&sudoku, &mut big_buffer);
 
     assert_eq!(res, vec![(1, 2), (3, 2), (1, 4), (3, 4)].as_slice());
