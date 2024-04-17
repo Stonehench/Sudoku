@@ -640,6 +640,23 @@ fn pde_ffi_dispatcher_primary_impl(
     rust_vec_len: i32,
     data_len: i32,
 ) {
+    // Codec=Pde (Serialization + dispatch), see doc to use other codecs
+    match func_id {
+        1 => wire_hint_impl(port, ptr, rust_vec_len, data_len),
+        9 => wire_check_legality_impl(port, ptr, rust_vec_len, data_len),
+        11 => wire_close_threads_impl(port, ptr, rust_vec_len, data_len),
+        12 => wire_difficulty_values_impl(port, ptr, rust_vec_len, data_len),
+        3 => wire_generate_with_size_impl(port, ptr, rust_vec_len, data_len),
+        5 => wire_get_consecutive_positions_impl(port, ptr, rust_vec_len, data_len),
+        6 => wire_get_parity_positions_impl(port, ptr, rust_vec_len, data_len),
+        8 => wire_get_thermometer_positions_impl(port, ptr, rust_vec_len, data_len),
+        4 => wire_get_x_positions_impl(port, ptr, rust_vec_len, data_len),
+        7 => wire_get_zipper_positions_impl(port, ptr, rust_vec_len, data_len),
+        10 => wire_init_app_impl(port, ptr, rust_vec_len, data_len),
+        2 => wire_progress_impl(port, ptr, rust_vec_len, data_len),
+        13 => wire_set_from_str_impl(port, ptr, rust_vec_len, data_len),
+        _ => unreachable!(),
+    }
 }
 
 fn pde_ffi_dispatcher_sync_impl(
