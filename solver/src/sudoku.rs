@@ -17,7 +17,7 @@ use regex_macro::regex;
 use smallvec::{smallvec, SmallVec};
 use threadpool::ThreadPool;
 
-use crate::rules::{column_rule::ColumnRule, row_rule::RowRule, DynRule, Rule};
+use crate::rules::{column_rule::ColumnRule, row_rule::RowRule, DynRule};
 
 #[derive(Debug, Clone, Copy)]
 pub enum Difficulty {
@@ -164,6 +164,11 @@ impl Sudoku {
                 .map(|_| Cell::new_with_range(1..(size as u16 + 1)))
                 .collect(),
             rules: rules.into(),
+        }
+    }
+    pub fn reset_locked(&mut self) {
+        for cell in &mut self.cells {
+            cell.locked_in = false;
         }
     }
 
@@ -394,54 +399,20 @@ impl Sudoku {
 
         sudoku.solve(None, None)?;
 
-        for cell in sudoku.cells.iter_mut() {
-            cell.locked_in = false;
-        }
+        sudoku.reset_locked();
 
-        // if x-rule is part of the rule set insert the X's
-        if let Some(x_rule) = sudoku.rules.iter_mut().find_map(|r| r.to_x_rule()) {
-            x_rule.create_clue(&sudoku.cells, size);
+        for rule in &mut sudoku.rules {
+            rule.create_clue(&sudoku.cells, size);
         }
-
-        // if parity-rule is part of the rule-set insert some Paritys
-        if let Some(parity_rule) = sudoku.rules.iter_mut().find_map(|r| r.to_parity_rule()) {
-            parity_rule.create_clue(&sudoku.cells, size);
-        }
-
-        // if consecutive-rule is part of the rule set insert the Dominos
-        if let Some(consecutive_rule) = sudoku
-            .rules
-            .iter_mut()
-            .find_map(|r| r.to_consecutive_rule())
-        {
-            consecutive_rule.create_clue(&sudoku.cells, sudoku.size);
-        }
-
-        // ThermometerRule
-        if let Some(thermometer_rule) = sudoku.rules.iter_mut().find_map(|r| r.to_thermometer_rule()) {
-            thermometer_rule.create_clue(&sudoku.cells, size);
-        }
-
-        // if zipper-rule is part of the rule-set insert some Zippers
-        // do some depth first kinda thing
-        if let Some(zipper_rule) = sudoku.rules.iter_mut().find_map(|r| r.to_zipper_rule()) {
-           zipper_rule.create_clue(&sudoku.cells, size);
-        }
-
-        #[cfg(debug_assertions)]
-        println!("Solved rules: {:#?}", sudoku.rules);
 
         let remove_limit = difficulty.get_removes(size);
 
         const ATTEMPT_COUNT: usize = 25;
 
-        //#[cfg(debug_assertions)]
         let timer = Instant::now();
 
         let mut count = 0;
-
         let mut currents_left = ATTEMPT_COUNT;
-
         let mut available_to_remove: Vec<_> = (0..sudoku.cells.len()).collect();
 
         loop {
@@ -855,7 +826,10 @@ fn generate_thermometer_sudoku() {
     let timer = std::time::Instant::now();
     let sudoku = Sudoku::generate_with_size(
         9,
-        vec![super::rules::square_rule::SquareRule::new(),crate::rules::thermometer_rule::ThermometerRule::new(vec![]),],
+        vec![
+            super::rules::square_rule::SquareRule::new(),
+            crate::rules::thermometer_rule::ThermometerRule::new(vec![]),
+        ],
         None,
         Difficulty::Expert,
     )
