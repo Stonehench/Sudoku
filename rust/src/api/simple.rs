@@ -1,4 +1,5 @@
 use std::ops::Deref;
+use std::time::Instant;
 
 use solver::rules::DynRule;
 use solver::sudoku::{AllSolutionsContext, Difficulty, Sudoku};
@@ -39,7 +40,11 @@ pub fn generate_with_size(
         }
     });
 
-    let Ok(mut sudoku) = Sudoku::generate_with_size(size, rules, Some(progress), difficulty) else {
+    progress(0);
+
+    let Ok((mut sudoku, solved)) =
+        Sudoku::generate_with_size(size, rules, Some(progress), difficulty)
+    else {
         println!("Sudoku generation failed!");
         return None;
     };
@@ -55,8 +60,10 @@ pub fn generate_with_size(
             println!("");
         }
     }
+    let timer = Instant::now();
 
     let mut state = get_state();
+    println!("Got state at {:?}", timer.elapsed());
     state.x_positions = vec![];
     state.parity_positions = vec![];
     state.zipper_positions = vec![];
@@ -95,12 +102,6 @@ pub fn generate_with_size(
             .collect();
     }
 
-    let mut solved = sudoku.clone();
-    if let Err(err) = solved.solve(None, None) {
-        println!("Failed to solve generated sudoku: {err}");
-        return None;
-    };
-
     let mut str_buffer = String::new();
 
     for cell in sudoku.cells.iter() {
@@ -111,10 +112,15 @@ pub fn generate_with_size(
         str_buffer.push(',');
     }
 
-    println!("Sending: {str_buffer}");
+    println!("Serialized solution {:?}", timer.elapsed());
+
+    //println!("Sending: {str_buffer}");
 
     state.current_sudoku = Some((sudoku, solved));
-
+    println!(
+        "Returning sudoku. (it is done wuuhuu!) {:?}",
+        timer.elapsed()
+    );
     Some(str_buffer)
 }
 
