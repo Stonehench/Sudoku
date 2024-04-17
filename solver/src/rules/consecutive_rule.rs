@@ -2,7 +2,7 @@ use super::{DynRule, Rule};
 use bumpalo::Bump;
 use std::fmt::Debug;
 
-use crate::sudoku::{self, Sudoku};
+use crate::sudoku::Sudoku;
 
 #[derive(Debug, Clone)]
 pub struct ConsecutiveRule {
@@ -30,58 +30,66 @@ impl Rule for ConsecutiveRule {
     }
 
     fn hidden_singles(&self, sudoku: &Sudoku) -> Option<(u16, usize)> {
-
         for (left_index, right_index) in &self.consecutive_clue {
             if sudoku.cells[*left_index].locked_in && !sudoku.cells[*right_index].locked_in {
                 // find the value of the locked candidate
                 if let Some(value) = sudoku.cells[*left_index].available.get(0) {
-                    if sudoku.cells[*right_index].available.contains( &(value + 1) ) && !(sudoku.cells[*right_index].available.contains(&(value - 1))){
+                    if sudoku.cells[*right_index].available.contains(&(value + 1))
+                        && !(sudoku.cells[*right_index].available.contains(&(value - 1)))
+                    {
                         return Some(((value + 1), *right_index));
                     }
-                    if !(sudoku.cells[*right_index].available.contains( &(value + 1) )) && sudoku.cells[*right_index].available.contains(&(value - 1)){
+                    if !(sudoku.cells[*right_index].available.contains(&(value + 1)))
+                        && sudoku.cells[*right_index].available.contains(&(value - 1))
+                    {
                         return Some(((value - 1), *right_index));
                     }
-                   
                 }
             }
             if sudoku.cells[*right_index].locked_in && !sudoku.cells[*left_index].locked_in {
                 // find the value of the locked candidate
                 if let Some(value) = sudoku.cells[*right_index].available.get(0) {
-                    if sudoku.cells[*left_index].available.contains(&(value + 1) ) && !(sudoku.cells[*left_index].available.contains(&(value - 1))){
+                    if sudoku.cells[*left_index].available.contains(&(value + 1))
+                        && !(sudoku.cells[*left_index].available.contains(&(value - 1)))
+                    {
                         return Some(((value + 1), *left_index));
                     }
-                    if !(sudoku.cells[*left_index].available.contains(&(value + 1) )) && sudoku.cells[*left_index].available.contains(&(value - 1)){
+                    if !(sudoku.cells[*left_index].available.contains(&(value + 1)))
+                        && sudoku.cells[*left_index].available.contains(&(value - 1))
+                    {
                         return Some(((value - 1), *left_index));
                     }
-                   
                 }
             }
-
-
         }
 
         None
     }
 
     fn locked_candidate<'buf>(
-            &self,
-            sudoku: &Sudoku,
-            buffer: &'buf mut Vec<usize>,
-            _arena: &mut Bump,
-        ) -> Option<(u16, &'buf [usize])> {
-        
+        &self,
+        sudoku: &Sudoku,
+        buffer: &'buf mut Vec<usize>,
+        _arena: &mut Bump,
+    ) -> Option<(u16, &'buf [usize])> {
         buffer.clear();
-        
-        for value in 1..(sudoku.size +1) as u16{        
+
+        for value in 1..(sudoku.size + 1) as u16 {
             for (left, right) in &self.consecutive_clue {
-                if !sudoku.cells[*left].locked_in && sudoku.cells[*left].available.contains(&value) 
-                    && !(sudoku.cells[*right].available.contains(&(value + 1)) || sudoku.cells[*right].available.contains(&(value - 1))){
-                        buffer.push(*left);
+                if !sudoku.cells[*left].locked_in
+                    && sudoku.cells[*left].available.contains(&value)
+                    && !(sudoku.cells[*right].available.contains(&(value + 1))
+                        || sudoku.cells[*right].available.contains(&(value - 1)))
+                {
+                    buffer.push(*left);
                 }
 
-                if !sudoku.cells[*right].locked_in && sudoku.cells[*right].available.contains(&value) 
-                    && !(sudoku.cells[*left].available.contains(&(value + 1)) || sudoku.cells[*left].available.contains(&(value - 1))){
-                        buffer.push(*right);
+                if !sudoku.cells[*right].locked_in
+                    && sudoku.cells[*right].available.contains(&value)
+                    && !(sudoku.cells[*left].available.contains(&(value + 1))
+                        || sudoku.cells[*left].available.contains(&(value - 1)))
+                {
+                    buffer.push(*right);
                 }
             }
 
@@ -91,25 +99,30 @@ impl Rule for ConsecutiveRule {
         }
 
         None
-
     }
     fn multi_remove<'buf>(
-            &self,
-            sudoku: &Sudoku,
-            big_buffer: &'buf mut Vec<(u16, usize)>,
-        ) ->  &'buf [(u16, usize)] {
-            big_buffer.clear();
-        
-        for value in 1..(sudoku.size +1) as u16{        
+        &self,
+        sudoku: &Sudoku,
+        big_buffer: &'buf mut Vec<(u16, usize)>,
+    ) -> &'buf [(u16, usize)] {
+        big_buffer.clear();
+
+        for value in 1..(sudoku.size + 1) as u16 {
             for (left, right) in &self.consecutive_clue {
-                if !sudoku.cells[*left].locked_in && sudoku.cells[*left].available.contains(&value) 
-                    && !(sudoku.cells[*right].available.contains(&(value + 1)) || sudoku.cells[*right].available.contains(&(value - 1))){
-                        big_buffer.push((value, *left));
+                if !sudoku.cells[*left].locked_in
+                    && sudoku.cells[*left].available.contains(&value)
+                    && !(sudoku.cells[*right].available.contains(&(value + 1))
+                        || sudoku.cells[*right].available.contains(&(value - 1)))
+                {
+                    big_buffer.push((value, *left));
                 }
 
-                if !sudoku.cells[*right].locked_in && sudoku.cells[*right].available.contains(&value) 
-                    && !(sudoku.cells[*left].available.contains(&(value + 1)) || sudoku.cells[*left].available.contains(&(value - 1))){
-                        big_buffer.push((value, *right));
+                if !sudoku.cells[*right].locked_in
+                    && sudoku.cells[*right].available.contains(&value)
+                    && !(sudoku.cells[*left].available.contains(&(value + 1))
+                        || sudoku.cells[*left].available.contains(&(value - 1)))
+                {
+                    big_buffer.push((value, *right));
                 }
             }
         }
@@ -125,71 +138,78 @@ impl Rule for ConsecutiveRule {
         "ConsecutiveRule"
     }
 
-    fn to_consecutive_rule (&mut self) -> Option<&mut ConsecutiveRule> {
+    fn to_consecutive_rule(&mut self) -> Option<&mut ConsecutiveRule> {
         Some(self)
     }
 }
 
 //########################### TEST ###############################
 
-
 #[test]
 fn consecutive_update_test() {}
 
 #[test]
 fn consecutive_hidden() {
-        let consecutive_rule = ConsecutiveRule {
-            consecutive_clue: vec![(1 as usize, 2 as usize)],
-        };
-        let mut sudoku = Sudoku::new(
-            4,
-            vec![super::square_rule::SquareRule::new(), consecutive_rule.boxed_clone()],
-        );
+    let consecutive_rule = ConsecutiveRule {
+        consecutive_clue: vec![(1 as usize, 2 as usize)],
+    };
+    let mut sudoku = Sudoku::new(
+        4,
+        vec![
+            super::square_rule::SquareRule::new(),
+            consecutive_rule.boxed_clone(),
+        ],
+    );
 
-        sudoku.set_cell(1, 1).unwrap();
+    sudoku.set_cell(1, 1).unwrap();
 
-        println!("{sudoku}");
-        let res = consecutive_rule.hidden_singles(&sudoku);
-        
-        assert_eq!(res, Some((2, 2)));
+    println!("{sudoku}");
+    let res = consecutive_rule.hidden_singles(&sudoku);
 
+    assert_eq!(res, Some((2, 2)));
 
-        let mut sudoku = Sudoku::new(
-            4,
-            vec![super::square_rule::SquareRule::new(), consecutive_rule.boxed_clone()],
-        );
-        
-        sudoku.set_cell(3, 1).unwrap();
-        sudoku.set_cell(4, 3).unwrap();
+    let mut sudoku = Sudoku::new(
+        4,
+        vec![
+            super::square_rule::SquareRule::new(),
+            consecutive_rule.boxed_clone(),
+        ],
+    );
 
-        println!("{sudoku}");
+    sudoku.set_cell(3, 1).unwrap();
+    sudoku.set_cell(4, 3).unwrap();
 
-        let res = consecutive_rule.hidden_singles(&sudoku);
-        assert_eq!(res, Some((2, 2)))
+    println!("{sudoku}");
+
+    let res = consecutive_rule.hidden_singles(&sudoku);
+    assert_eq!(res, Some((2, 2)))
 }
 
 #[test]
 fn locked_consecutive_candidate() {
     let mut buffer = vec![];
     let mut arena = Bump::new();
-/* The test sudoku a 4 x 4
-=================
-‖   | 1 O   |   ‖
------------------
-‖   |   ‖   |   ‖
-==O==============
-‖ 1 |   ‖   |   ‖
------------------
-‖   |   ‖   |   ‖
-=================
-*/
+    /* The test sudoku a 4 x 4
+    =================
+    ‖   | 1 O   |   ‖
+    -----------------
+    ‖   |   ‖   |   ‖
+    ==O==============
+    ‖ 1 |   ‖   |   ‖
+    -----------------
+    ‖   |   ‖   |   ‖
+    =================
+    */
 
     let consecutive_rule = ConsecutiveRule {
-        consecutive_clue: vec![(1 as usize, 2 as usize),(4 as usize, 8 as usize)],
+        consecutive_clue: vec![(1 as usize, 2 as usize), (4 as usize, 8 as usize)],
     };
     let mut sudoku = Sudoku::new(
         4,
-        vec![super::square_rule::SquareRule::new(), consecutive_rule.boxed_clone()],
+        vec![
+            super::square_rule::SquareRule::new(),
+            consecutive_rule.boxed_clone(),
+        ],
     );
 
     sudoku.set_cell(1, 1).unwrap();
@@ -200,17 +220,17 @@ fn locked_consecutive_candidate() {
     // because 3 is not consecutive with 1
     assert_eq!(res, Some((3, (vec![2 as usize, 4 as usize].as_slice()))));
 
-/* The test sudoku a 4 x 4
-=================
-‖   | 1 O   |   ‖
------------------
-‖   |   ‖ 3 |   ‖
-==O==============
-‖ 1 |   ‖   |   ‖
------------------
-‖   |   ‖   |   ‖
-=================
-*/
+    /* The test sudoku a 4 x 4
+    =================
+    ‖   | 1 O   |   ‖
+    -----------------
+    ‖   |   ‖ 3 |   ‖
+    ==O==============
+    ‖ 1 |   ‖   |   ‖
+    -----------------
+    ‖   |   ‖   |   ‖
+    =================
+    */
     sudoku.set_cell(3, 6).unwrap();
     let res = consecutive_rule.locked_candidate(&sudoku, &mut buffer, &mut arena);
 
@@ -219,38 +239,41 @@ fn locked_consecutive_candidate() {
     assert_eq!(res, Some((4, (vec![2 as usize, 4 as usize].as_slice()))));
 }
 
-
 #[test]
 fn consecutive_multi() {
-        let consecutive_rule = ConsecutiveRule {
-            consecutive_clue: vec![(1 as usize, 2 as usize)],
-        };
-        let mut sudoku = Sudoku::new(
-            4,
-            vec![super::square_rule::SquareRule::new(), consecutive_rule.boxed_clone()],
-        );
+    let consecutive_rule = ConsecutiveRule {
+        consecutive_clue: vec![(1 as usize, 2 as usize)],
+    };
+    let mut sudoku = Sudoku::new(
+        4,
+        vec![
+            super::square_rule::SquareRule::new(),
+            consecutive_rule.boxed_clone(),
+        ],
+    );
 
-        sudoku.set_cell(1, 1).unwrap();
-        let mut big_buffer: Vec<(u16, usize)> = vec![];
+    sudoku.set_cell(1, 1).unwrap();
+    let mut big_buffer: Vec<(u16, usize)> = vec![];
 
-        println!("{sudoku}");
-        let res = consecutive_rule.multi_remove(&sudoku, &mut big_buffer);
-        
+    println!("{sudoku}");
+    let res = consecutive_rule.multi_remove(&sudoku, &mut big_buffer);
 
-        println!("{res:?}");
-        //assert_eq!(res, Some((2, 2)));
+    println!("{res:?}");
+    //assert_eq!(res, Some((2, 2)));
 
+    let mut sudoku = Sudoku::new(
+        4,
+        vec![
+            super::square_rule::SquareRule::new(),
+            consecutive_rule.boxed_clone(),
+        ],
+    );
 
-        let mut sudoku = Sudoku::new(
-            4,
-            vec![super::square_rule::SquareRule::new(), consecutive_rule.boxed_clone()],
-        );
-        
-        sudoku.set_cell(3, 1).unwrap();
-        sudoku.set_cell(4, 3).unwrap();
+    sudoku.set_cell(3, 1).unwrap();
+    sudoku.set_cell(4, 3).unwrap();
 
-        println!("{sudoku}");
+    println!("{sudoku}");
 
-        let res = consecutive_rule.multi_remove(&sudoku, &mut big_buffer);
-        println!("{res:?}");
+    let res = consecutive_rule.multi_remove(&sudoku, &mut big_buffer);
+    println!("{res:?}");
 }

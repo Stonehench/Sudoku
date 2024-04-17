@@ -521,7 +521,7 @@ impl Sudoku {
             let tries = sudoku.size * 3;
             let mut seen = vec![];
 
-            'themometers: for i in 0..tries {
+            'themometers: for _ in 0..tries {
                 let mut random_index = random::<usize>() % (sudoku.size * sudoku.size);
                 while seen.contains(&random_index) && seen.len() < (sudoku.size * sudoku.size) {
                     random_index = random::<usize>() % (sudoku.size * sudoku.size);
@@ -609,7 +609,7 @@ impl Sudoku {
             let tries = sudoku.size * 3;
             let mut seen = vec![];
 
-            'zippers: for i in 0..tries {
+            'zippers: for _ in 0..tries {
                 let mut random_index = random::<usize>() % (sudoku.size * sudoku.size);
                 while seen.contains(&random_index) && seen.len() < (sudoku.size * sudoku.size) {
                     //println!("Atemting to create zipper at an occupiued index while at zipper {i}");
