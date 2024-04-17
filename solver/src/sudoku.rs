@@ -17,7 +17,7 @@ use regex_macro::regex;
 use smallvec::{smallvec, SmallVec};
 use threadpool::ThreadPool;
 
-use crate::rules::{column_rule::ColumnRule, row_rule::RowRule, DynRule};
+use crate::rules::{column_rule::ColumnRule, row_rule::RowRule, DynRule, Rule};
 
 #[derive(Debug, Clone, Copy)]
 pub enum Difficulty {
@@ -400,354 +400,32 @@ impl Sudoku {
 
         // if x-rule is part of the rule set insert the X's
         if let Some(x_rule) = sudoku.rules.iter_mut().find_map(|r| r.to_x_rule()) {
-            for index in 0..sudoku.cells.len() {
-                if let Some(current) = sudoku.cells[index].available.get(0) {
-                    if index + 1 >= sudoku.cells.len() {
-                        continue;
-                    }
-                    if let Some(left) = sudoku.cells[index + 1].available.get(0) {
-                        if current + left == sudoku.size as u16 + 1
-                            && (index + 1) % sudoku.size != 0
-                        {
-                            // x rule should have (index , left)
-                            x_rule.x_clue.push((index, index + 1));
-                        }
-                    }
-                    if index + sudoku.size >= sudoku.cells.len() {
-                        continue;
-                    }
-                    if let Some(below) = sudoku.cells[index + sudoku.size].available.get(0) {
-                        if current + below == sudoku.size as u16 + 1
-                            && index + sudoku.size < sudoku.cells.len()
-                        {
-                            // x rule should have (index , below)
-                            x_rule.x_clue.push((index, index + sudoku.size));
-                        }
-                    }
-                }
-            }
-            let count = x_rule.x_clue.len();
-            if count > sudoku.size * 2 {
-                for i in 0..count - (sudoku.size * 3) / 2 {
-                    x_rule.x_clue.remove(random::<usize>() % (count - i));
-                }
-            }
+            x_rule.create_clue(&sudoku.cells, size);
         }
 
         // if parity-rule is part of the rule-set insert some Paritys
         if let Some(parity_rule) = sudoku.rules.iter_mut().find_map(|r| r.to_parity_rule()) {
-            for index in 0..sudoku.cells.len() {
-                if let Some(current) = sudoku.cells[index].available.get(0) {
-                    if index + 1 >= sudoku.cells.len() {
-                        continue;
-                    }
-                    if let Some(right) = sudoku.cells[index + 1].available.get(0) {
-                        if ((current & 1) == 0 && (right & 1) != 0)
-                            || ((current & 1) != 0 && (right & 1) == 0)
-                        {
-                            // parity rule should have (current , right)
-                            parity_rule.parity_clue.push((index, index + 1));
-                        }
-                    }
-                    if index + sudoku.size >= sudoku.cells.len() {
-                        continue;
-                    }
-                    if let Some(below) = sudoku.cells[index + sudoku.size].available.get(0) {
-                        if (current & 1 == 0 && below & 1 != 0)
-                            || (current & 1 != 0 && below & 1 == 0)
-                        {
-                            // parity rule should have (index , below)
-                            parity_rule.parity_clue.push((index, index + sudoku.size));
-                        }
-                    }
-                }
-            }
-            let count = parity_rule.parity_clue.len();
-            if count > sudoku.size * 2 {
-                for i in 0..count - sudoku.size * 2 {
-                    parity_rule
-                        .parity_clue
-                        .remove(random::<usize>() % (count - i));
-                }
-            }
+            parity_rule.create_clue(&sudoku.cells, size);
         }
 
-        // if consecutive-rule is part of the rule set insert the X's
+        // if consecutive-rule is part of the rule set insert the Dominos
         if let Some(consecutive_rule) = sudoku
             .rules
             .iter_mut()
             .find_map(|r| r.to_consecutive_rule())
         {
-            for index in 0..sudoku.cells.len() {
-                if let Some(current) = sudoku.cells[index].available.get(0) {
-                    if index + 1 >= sudoku.cells.len() {
-                        continue;
-                    }
-                    if let Some(left) = sudoku.cells[index + 1].available.get(0) {
-                        if current + 1 == *left
-                            || *current == left + 1 && (index + 1) % sudoku.size != 0
-                        {
-                            consecutive_rule.consecutive_clue.push((index, index + 1));
-                        }
-                    }
-                    if index + sudoku.size >= sudoku.cells.len() {
-                        continue;
-                    }
-                    if let Some(below) = sudoku.cells[index + sudoku.size].available.get(0) {
-                        if current + 1 == *below
-                            || *current == below + 1 && index + sudoku.size < sudoku.cells.len()
-                        {
-                            // x rule should have (index , below)
-                            consecutive_rule
-                                .consecutive_clue
-                                .push((index, index + sudoku.size));
-                        }
-                    }
-                }
-            }
-            // remove some of the generated consecutive pairs
-            let count = consecutive_rule.consecutive_clue.len();
-            if count > sudoku.size * 2 {
-                for i in 0..count - sudoku.size * 2 {
-                    consecutive_rule
-                        .consecutive_clue
-                        .remove(random::<usize>() % (count - i));
-                }
-            }
+            consecutive_rule.create_clue(&sudoku.cells, sudoku.size);
         }
 
         // ThermometerRule
         if let Some(thermometer_rule) = sudoku.rules.iter_mut().find_map(|r| r.to_thermometer_rule()) {
-            let tries = sudoku.size * 3;
-            let mut seen = vec![];
-
-            'themometers: for i in 0..tries {
-                let mut random_index = random::<usize>() % (sudoku.size * sudoku.size);
-                while seen.contains(&random_index) && seen.len() < (sudoku.size * sudoku.size) {
-                    random_index = random::<usize>() % (sudoku.size * sudoku.size);
-                }
-
-                let mut current_themometer: Vec<usize> = vec![];
-                let mut searching = true;
-                let mut surrounding: Vec<usize> = vec![];
-                let mut current_index: usize = random_index;
-                let mut current_value = sudoku.cells[random_index].available[0];
-                current_themometer.push(current_index);
-
-                if current_value == sudoku.size as u16 {
-                    // The value at the bottom of a themometer can not be the highest value
-                    continue 'themometers;
-                }
-
-                'searching: while searching {
-                    surrounding.clear();
-
-                    if current_index >= sudoku.size {
-                        //above
-                        surrounding.push(current_index - sudoku.size);
-                    }
-                    if !(current_index % sudoku.size == 0) {
-                        //left
-                        surrounding.push(current_index - 1);
-                    }
-                    if current_index % sudoku.size != (sudoku.size - 1) {
-                        //right
-                        surrounding.push(current_index + 1);
-                    }
-                    if current_index < sudoku.size * sudoku.size - sudoku.size {
-                        //below
-                        surrounding.push(current_index + sudoku.size);
-                    }
-                    if current_index >= sudoku.size && current_index % sudoku.size != (sudoku.size - 1) {
-                        //above right
-                        surrounding.push(current_index - sudoku.size + 1);
-                    }
-                    if current_index < sudoku.size * sudoku.size - sudoku.size && !(current_index % sudoku.size == 0) {
-                        //below left
-                        surrounding.push(current_index + sudoku.size - 1);
-                    }
-                    if current_index >= sudoku.size && !(current_index % sudoku.size == 0) {
-                        //above left
-                        surrounding.push(current_index - sudoku.size - 1);
-                    }
-                    if current_index < sudoku.size * sudoku.size - sudoku.size
-                        && current_index % sudoku.size != (sudoku.size - 1)
-                    {
-                        //below right
-                        surrounding.push(current_index + sudoku.size + 1);
-                    }
-
-                    surrounding.retain(|e| sudoku.cells[*e].available[0] > current_value);
-                    surrounding.sort_by(|a , b| sudoku.cells[*a].available[0].cmp(&sudoku.cells[*b].available[0]));
-                    
-                    if !surrounding.is_empty() && !seen.contains(&surrounding[0])
-                        && sudoku.cells[surrounding[0]].available[0] > current_value
-                    {
-                        
-                        seen.push(surrounding[0]);
-                        current_themometer.push(surrounding[0]);
-                        current_index = surrounding[0];
-                        current_value = sudoku.cells[surrounding[0]].available[0];
-
-                        continue 'searching; 
-                    } 
-
-                    searching = false;
-
-                }
-                if current_themometer.len() > 1 {
-                    seen.push(random_index);
-                    thermometer_rule.themometer_clue.push(current_themometer);
-                }
-            }
+            thermometer_rule.create_clue(&sudoku.cells, size);
         }
 
         // if zipper-rule is part of the rule-set insert some Zippers
         // do some depth first kinda thing
         if let Some(zipper_rule) = sudoku.rules.iter_mut().find_map(|r| r.to_zipper_rule()) {
-            //println!("Creating Zippers");
-            let tries = sudoku.size * 3;
-            let mut seen = vec![];
-
-            'zippers: for i in 0..tries {
-                let mut random_index = random::<usize>() % (sudoku.size * sudoku.size);
-                while seen.contains(&random_index) && seen.len() < (sudoku.size * sudoku.size) {
-                    //println!("Atemting to create zipper at an occupiued index while at zipper {i}");
-                    random_index = random::<usize>() % (sudoku.size * sudoku.size);
-                }
-
-                // get the value at the random selected cell
-                let center_cell_value = &sudoku.cells[random_index].available[0];
-                if *center_cell_value == 1 {
-                    // the value at the center of a zipper can never be 1
-                    continue 'zippers;
-                }
-                let mut zipper_arms: Vec<(usize, usize)> = vec![];
-
-                let mut searching = true;
-                let mut left_index: usize = random_index;
-                let mut right_index: usize = random_index;
-                let mut left_surrounding: Vec<usize> = vec![];
-                let mut right_surrounding: Vec<usize> = vec![];
-
-                'searching: while searching {
-                    left_surrounding.clear();
-                    right_surrounding.clear();
-
-                    // get the surronding digits to the left arm
-                    for k in vec![left_index, right_index] {
-                        if k >= sudoku.size {
-                            //above
-                            if k == left_index {
-                                left_surrounding.push(k - sudoku.size);
-                            }
-                            if k == right_index {
-                                right_surrounding.push(k - sudoku.size);
-                            }
-                        }
-                        if !(k % sudoku.size == 0) {
-                            //left
-                            if k == left_index {
-                                left_surrounding.push(k - 1);
-                            }
-                            if k == right_index {
-                                right_surrounding.push(k - 1);
-                            }
-                        }
-                        if k % sudoku.size != (sudoku.size - 1) {
-                            //right
-                            if k == left_index {
-                                left_surrounding.push(k + 1);
-                            }
-                            if k == right_index {
-                                right_surrounding.push(k + 1);
-                            }
-                        }
-                        if k < sudoku.size * sudoku.size - sudoku.size {
-                            //below
-                            if k == left_index {
-                                left_surrounding.push(k + sudoku.size);
-                            }
-                            if k == right_index {
-                                right_surrounding.push(k + sudoku.size);
-                            }
-                        }
-                        if k >= sudoku.size && k % sudoku.size != (sudoku.size - 1) {
-                            //above right
-                            if k == left_index {
-                                left_surrounding.push(k - sudoku.size + 1);
-                            }
-                            if k == right_index {
-                                right_surrounding.push(k - sudoku.size + 1);
-                            }
-                        }
-                        if k < sudoku.size * sudoku.size - sudoku.size && !(k % sudoku.size == 0) {
-                            //below left
-                            if k == left_index {
-                                left_surrounding.push(k + sudoku.size - 1);
-                            }
-                            if k == right_index {
-                                right_surrounding.push(k + sudoku.size - 1);
-                            }
-                        }
-                        if k >= sudoku.size && !(k % sudoku.size == 0) {
-                            //above left
-                            if k == left_index {
-                                left_surrounding.push(k - sudoku.size - 1);
-                            }
-                            if k == right_index {
-                                right_surrounding.push(k - sudoku.size - 1);
-                            }
-                        }
-                        if k < sudoku.size * sudoku.size - sudoku.size
-                            && k % sudoku.size != (sudoku.size - 1)
-                        {
-                            //below right
-                            if k == left_index {
-                                left_surrounding.push(k + sudoku.size + 1);
-                            }
-                            if k == right_index {
-                                right_surrounding.push(k + sudoku.size + 1);
-                            }
-                        }
-                        //println!("{left_surrounding:?} {right_surrounding:?} {k}");
-                        if left_index == right_index {
-                            break;
-                        }
-                    }
-
-                    // for all indecies surronding left
-                    for i_in_l in &left_surrounding {
-                        // and all indecies surronding right
-                        for i_in_r in &right_surrounding {
-                            // if the inxed is not in any other zipper (including this one)
-                            // and the values of the incecies add to the center value
-                            // these should be added as a pair
-
-                            if i_in_l != i_in_r
-                                && !seen.contains(i_in_l)
-                                && !seen.contains(i_in_r)
-                                && sudoku.cells[*i_in_l].available[0]
-                                    + sudoku.cells[*i_in_r].available[0]
-                                    == *center_cell_value
-                            {
-                                seen.push(*i_in_l);
-                                seen.push(*i_in_r);
-                                zipper_arms.push((*i_in_l, *i_in_r));
-                                right_index = *i_in_r;
-                                left_index = *i_in_l;
-
-                                continue 'searching;
-                            }
-                        }
-                    }
-                    searching = false;
-                }
-                if !zipper_arms.is_empty() {
-                    seen.push(random_index);
-                    zipper_rule.zipper_clue.push((random_index, zipper_arms));
-                }
-            }
+           zipper_rule.create_clue(&sudoku.cells, size);
         }
 
         #[cfg(debug_assertions)]
