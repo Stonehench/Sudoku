@@ -1,4 +1,3 @@
-import 'dart:math';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/widgets.dart';
@@ -12,7 +11,7 @@ class Thermometer extends StatefulWidget {
 }
 
 class _ThermometerState extends State<Thermometer> {
-  Color lineColor = Color.fromARGB(255, 70, 112, 167);
+  Color lineColor = const Color.fromARGB(255, 70, 112, 167);
 
   @override
   Widget build(BuildContext context) {

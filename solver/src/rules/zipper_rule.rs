@@ -1,5 +1,6 @@
 use super::{DynRule, Rule};
 use integer_sqrt::IntegerSquareRoot;
+use rand::random;
 use std::fmt::Debug;
 
 use crate::sudoku::Sudoku;
@@ -251,6 +252,150 @@ impl Rule for ZipperRule {
         big_buffer
     }
 
+    fn create_clue(&mut self, cells: &Vec<crate::sudoku::Cell>, size: usize) {
+        let tries = size * 3;
+        let mut seen = vec![];
+
+        for _ in 0..tries {
+            let mut random_index = random::<usize>() % (size * size);
+            // if the randomly chosen zipper-center is already a seen index, find a new one
+            while seen.contains(&random_index) && seen.len() < (size * size) {
+                random_index = random::<usize>() % (size * size);
+            }
+
+            // get the value at the random selected cell
+            let center_cell_value = &cells[random_index].available[0];
+            if *center_cell_value == 1 {
+                // the value at the center of a zipper can never be 1
+                continue
+            }
+            let mut zipper_arms: Vec<(usize, usize)> = vec![];
+
+            let mut searching = true;
+            let mut left_index: usize = random_index;
+            let mut right_index: usize = random_index;
+            let mut left_surrounding: Vec<usize> = vec![];
+            let mut right_surrounding: Vec<usize> = vec![];
+
+            'searching: while searching {
+                left_surrounding.clear();
+                right_surrounding.clear();
+
+                // get the surronding digits to the left arm
+                for k in vec![left_index, right_index] {
+                    if k >= size {
+                        //above
+                        if k == left_index {
+                            left_surrounding.push(k - size);
+                        }
+                        if k == right_index {
+                            right_surrounding.push(k - size);
+                        }
+                    }
+                    if !(k % size == 0) {
+                        //left
+                        if k == left_index {
+                            left_surrounding.push(k - 1);
+                        }
+                        if k == right_index {
+                            right_surrounding.push(k - 1);
+                        }
+                    }
+                    if k % size != (size - 1) {
+                        //right
+                        if k == left_index {
+                            left_surrounding.push(k + 1);
+                        }
+                        if k == right_index {
+                            right_surrounding.push(k + 1);
+                        }
+                    }
+                    if k < size * size - size {
+                        //below
+                        if k == left_index {
+                            left_surrounding.push(k + size);
+                        }
+                        if k == right_index {
+                            right_surrounding.push(k + size);
+                        }
+                    }
+                    if k >= size && k % size != (size - 1) {
+                        //above right
+                        if k == left_index {
+                            left_surrounding.push(k - size + 1);
+                        }
+                        if k == right_index {
+                            right_surrounding.push(k - size + 1);
+                        }
+                    }
+                    if k < size * size - size && !(k % size == 0) {
+                        //below left
+                        if k == left_index {
+                            left_surrounding.push(k + size - 1);
+                        }
+                        if k == right_index {
+                            right_surrounding.push(k + size - 1);
+                        }
+                    }
+                    if k >= size && !(k % size == 0) {
+                        //above left
+                        if k == left_index {
+                            left_surrounding.push(k - size - 1);
+                        }
+                        if k == right_index {
+                            right_surrounding.push(k - size - 1);
+                        }
+                    }
+                    if k < size * size - size
+                        && k % size != (size - 1)
+                    {
+                        //below right
+                        if k == left_index {
+                            left_surrounding.push(k + size + 1);
+                        }
+                        if k == right_index {
+                            right_surrounding.push(k + size + 1);
+                        }
+                    }
+                    //println!("{left_surrounding:?} {right_surrounding:?} {k}");
+                    if left_index == right_index {
+                        break;
+                    }
+                }
+
+                // for all indecies surronding left
+                for i_in_l in &left_surrounding {
+                    // and all indecies surronding right
+                    for i_in_r in &right_surrounding {
+                        // if the inxed is not in any other zipper (including this one)
+                        // and the values of the incecies add to the center value
+                        // these should be added as a pair
+
+                        if i_in_l != i_in_r
+                            && !seen.contains(i_in_l)
+                            && !seen.contains(i_in_r)
+                            && cells[*i_in_l].available[0]
+                                + cells[*i_in_r].available[0]
+                                == *center_cell_value
+                        {
+                            seen.push(*i_in_l);
+                            seen.push(*i_in_r);
+                            zipper_arms.push((*i_in_l, *i_in_r));
+                            right_index = *i_in_r;
+                            left_index = *i_in_l;
+
+                            continue 'searching;
+                        }
+                    }
+                }
+                searching = false;
+            }
+            if !zipper_arms.is_empty() {
+                seen.push(random_index);
+                self.zipper_clue.push((random_index, zipper_arms));
+            }
+        }
+    }
     fn boxed_clone(&self) -> DynRule {
         DynRule(Box::new(self.clone()))
     }

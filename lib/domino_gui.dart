@@ -1,13 +1,11 @@
-import 'dart:math';
-
 import 'package:flutter/material.dart';
 import 'package:sudoku/game_state.dart';
 
 class Domino extends StatefulWidget {
-  String symbol;
-  List<(int, int)> positions;
-  Color color;
-  Domino(this.symbol, this.positions, this.color, {super.key});
+  final String symbol;
+  final List<(int, int)> positions;
+  final Color color;
+  const Domino(this.symbol, this.positions, this.color, {super.key});
 
   @override
   State<StatefulWidget> createState() => _DominoState();

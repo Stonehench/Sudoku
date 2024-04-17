@@ -1,4 +1,4 @@
-use crate::rules::diagonal_rule::DiagonalRule;
+use crate::{rules::diagonal_rule::DiagonalRule, sudoku::Cell};
 use crate::rules::knight_rule::KnightRule;
 use crate::rules::square_rule::SquareRule;
 use crate::rules::x_rule::XRule;
@@ -89,6 +89,8 @@ pub trait Rule: Debug {
     fn priority(&self) -> ExecutionPriority {
         ExecutionPriority::Medium
     }
+
+    fn create_clue(&mut self, _cells: &Vec<Cell>, _size: usize) {}
 
     fn multi_remove<'buf>(
         &self,

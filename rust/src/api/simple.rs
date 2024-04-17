@@ -1,13 +1,16 @@
 use std::ops::Deref;
-use std::sync::mpsc::channel;
-use std::sync::{mpsc, Mutex};
-use std::time::Duration;
+use std::time::Instant;
 
-use lazy_static::lazy_static;
 use solver::rules::DynRule;
 use solver::sudoku::{AllSolutionsContext, Difficulty, Sudoku};
 
 use crate::appstate::get_state;
+use crate::frb_generated::StreamSink;
+
+pub fn progress(sink: StreamSink<(usize, usize)>) {
+    let mut state = get_state();
+    state.progress_sink = Some(sink);
+}
 
 pub fn generate_with_size(
     size: usize,
@@ -21,12 +24,27 @@ pub fn generate_with_size(
         .collect::<Result<Vec<_>, _>>()
         .ok()?;
 
-    let sender = PROGRESS.lock().unwrap().0.clone();
-    let Ok(difficulty) = difficulty.parse() else {
-        println!("Failed to parse difficulty: \"{difficulty}\"");
+    let Ok(difficulty): Result<Difficulty, _> = difficulty.parse() else {
+        eprintln!("Failed to parse difficulty: \"{difficulty}\"");
         return None;
     };
-    let Ok(mut sudoku) = Sudoku::generate_with_size(size, rules, Some(sender), difficulty) else {
+
+    let progress = Box::new(move |progress| {
+        let state = get_state();
+        if let Some(sink) = &state.progress_sink {
+            if let Err(err) = sink.add((progress, difficulty.get_removes(size))) {
+                eprintln!("Failed writing to progress sink: {err}");
+            }
+        } else {
+            eprintln!("Progress sink missing at {progress}");
+        }
+    });
+
+    progress(0);
+
+    let Ok((mut sudoku, solved)) =
+        Sudoku::generate_with_size(size, rules, Some(progress), difficulty)
+    else {
         println!("Sudoku generation failed!");
         return None;
     };
@@ -42,8 +60,10 @@ pub fn generate_with_size(
             println!("");
         }
     }
+    let timer = Instant::now();
 
     let mut state = get_state();
+    println!("Got state at {:?}", timer.elapsed());
     state.x_positions = vec![];
     state.parity_positions = vec![];
     state.zipper_positions = vec![];
@@ -82,12 +102,6 @@ pub fn generate_with_size(
             .collect();
     }
 
-    let mut solved = sudoku.clone();
-    if let Err(err) = solved.solve(None, None) {
-        println!("Failed to solve generated sudoku: {err}");
-        return None;
-    };
-
     let mut str_buffer = String::new();
 
     for cell in sudoku.cells.iter() {
@@ -98,10 +112,15 @@ pub fn generate_with_size(
         str_buffer.push(',');
     }
 
-    println!("Sending: {str_buffer}");
+    println!("Serialized solution {:?}", timer.elapsed());
+
+    //println!("Sending: {str_buffer}");
 
     state.current_sudoku = Some((sudoku, solved));
-
+    println!(
+        "Returning sudoku. (it is done wuuhuu!) {:?}",
+        timer.elapsed()
+    );
     Some(str_buffer)
 }
 
@@ -123,31 +142,6 @@ pub fn get_zipper_positions() -> Vec<(usize, Vec<(usize, usize)>)> {
 
 pub fn get_thermometer_positions() -> Vec<Vec<u16>> {
     get_state().thermometer_positions.clone()
-}
-
-lazy_static! {
-    static ref PROGRESS: Mutex<(mpsc::Sender<usize>, Option<mpsc::Receiver<usize>>)> =
-        Mutex::new({
-            let (sx, rx) = channel();
-
-            (sx, Some(rx))
-        });
-}
-
-pub fn wait_for_progess() -> Option<usize> {
-    let rx = PROGRESS.lock().unwrap().1.take()?;
-
-    let mut res = None;
-    while let Ok(c_res) = rx.try_recv() {
-        res = Some(c_res);
-    }
-    if res.is_none() {
-        res = rx.recv_timeout(Duration::from_secs(5)).ok();
-    }
-
-    PROGRESS.lock().unwrap().1 = Some(rx);
-
-    res
 }
 
 pub fn check_legality(position: usize, value: u16) -> bool {

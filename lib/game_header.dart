@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'rule_display.dart';
+import 'package:sudoku/game_state.dart';
 
 class GameHeader extends StatelessWidget {
   final Set<String> rules;
@@ -56,9 +57,25 @@ class GameHeader extends StatelessWidget {
               ),
             ],
           ),
-          const Text("Standard Sudoku", style: TextStyle(fontSize: 30)),
+          const Text("Standard Sudoku", style: TextStyle(fontSize: 24)),
+          ListenableBuilder(
+              listenable: GameState.getInstance(),
+              builder: (context, child) {
+                return Row(children: generateLives());
+              })
         ],
       ),
     );
   }
+}
+
+List<Widget> generateLives() {
+  List<Widget> hearts = [];
+  for (int i = 3; i > GameState.getInstance().lives; i--) {
+    hearts.add(const Icon(Icons.favorite_border, color: Colors.black));
+  }
+  for (int i = 0; i < GameState.getInstance().lives; i++) {
+    hearts.add(const Icon(Icons.favorite, color: Colors.red));
+  }
+  return hearts;
 }
