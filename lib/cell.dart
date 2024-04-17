@@ -28,7 +28,6 @@ class _CellState extends State<Cell> {
   void setErr() {
     setState(() {
       isCurrentlyError = true;
-      GameState.getInstance().loseLife();
     });
     Timer(const Duration(seconds: 1), () {
       if (mounted) {

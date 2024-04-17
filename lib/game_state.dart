@@ -69,6 +69,7 @@ class GameState extends ChangeNotifier {
       notifyListeners();
       return true;
     }
+    loseLife();
     return false;
   }
 
