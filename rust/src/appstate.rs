@@ -12,6 +12,7 @@ pub struct AppState {
     pub consecutive_positions: Vec<(usize, usize)>,
     pub zipper_positions: Vec<(usize, Vec<(usize, usize)>)>,
     pub progress_sink: Option<StreamSink<(usize, usize)>>,
+    pub thermometer_positions: Vec<Vec<u16>>,
 }
 
 lazy_static! {
@@ -22,6 +23,7 @@ lazy_static! {
         consecutive_positions: vec![],
         zipper_positions: vec![],
         progress_sink: None,
+        thermometer_positions: vec![],
     });
 }
 

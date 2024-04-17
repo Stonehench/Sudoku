@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:sudoku/cell.dart';
 import 'package:sudoku/game_state.dart';
 import 'package:sudoku/domino_gui.dart';
+import 'package:sudoku/thermometer_rule_gui.dart';
 import 'package:sudoku/zipper_rule_gui.dart';
 
 class Board extends StatefulWidget {
@@ -69,6 +70,7 @@ class _BoardState extends State<Board> {
               ),
               Domino("■", dominoPositions, cellColor),
               const Zipper(),
+              const Thermometer(),
               Domino("⨯", state.xPositions, symbolColor),
               Domino("◦", state.parityPositions, symbolColor),
               Domino("•", state.consecutivePositions, symbolColor),

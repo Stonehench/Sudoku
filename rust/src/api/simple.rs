@@ -61,15 +61,14 @@ pub fn generate_with_size(
     state.parity_positions = vec![];
     state.zipper_positions = vec![];
     state.consecutive_positions = vec![];
+    state.thermometer_positions = vec![];
 
     if let Some(x_rule) = sudoku.rules.iter_mut().find_map(|r| r.to_x_rule()) {
         state.x_positions = x_rule.x_clue.clone();
-        println!("{x_rule:?}");
     }
 
     if let Some(parity_rule) = sudoku.rules.iter_mut().find_map(|r| r.to_parity_rule()) {
         state.parity_positions = parity_rule.parity_clue.clone();
-        println!("{parity_rule:?}");
     }
 
     if let Some(consecutive_rule) = sudoku
@@ -78,12 +77,22 @@ pub fn generate_with_size(
         .find_map(|r| r.to_consecutive_rule())
     {
         state.consecutive_positions = consecutive_rule.consecutive_clue.clone();
-        println!("{consecutive_rule:?}");
     }
 
     if let Some(zipper_rule) = sudoku.rules.iter_mut().find_map(|r| r.to_zipper_rule()) {
         state.zipper_positions = zipper_rule.zipper_clue.clone();
-        println!("{zipper_rule:?}");
+    }
+
+    if let Some(thermometer_rule) = sudoku
+        .rules
+        .iter_mut()
+        .find_map(|r| r.to_thermometer_rule())
+    {
+        state.thermometer_positions = thermometer_rule
+            .themometer_clue
+            .iter()
+            .map(|ls| ls.iter().map(|u| *u as u16).collect())
+            .collect();
     }
 
     let mut solved = sudoku.clone();
@@ -125,6 +134,10 @@ pub fn get_zipper_positions() -> Vec<(usize, Vec<(usize, usize)>)> {
     get_state().zipper_positions.clone()
 }
 
+pub fn get_thermometer_positions() -> Vec<Vec<u16>> {
+    get_state().thermometer_positions.clone()
+}
+
 pub fn check_legality(position: usize, value: u16) -> bool {
     let state = get_state();
     let (_, sudoku) = state.current_sudoku.as_ref().unwrap();
@@ -157,6 +170,7 @@ pub fn set_from_str(sudoku: String) {
     let mut zippers = vec![];
     let mut x = vec![];
     let mut consecutive = vec![];
+    let mut thermometers = vec![];
 
     if let Some(parity_rule) = solved.rules.iter_mut().find_map(|r| r.to_parity_rule()) {
         parity = parity_rule.parity_clue.clone();
@@ -164,6 +178,18 @@ pub fn set_from_str(sudoku: String) {
 
     if let Some(zipper_rule) = solved.rules.iter_mut().find_map(|r| r.to_zipper_rule()) {
         zippers = zipper_rule.zipper_clue.clone();
+    }
+
+    if let Some(thermometer_rule) = solved
+        .rules
+        .iter_mut()
+        .find_map(|r| r.to_thermometer_rule())
+    {
+        thermometers = thermometer_rule
+            .themometer_clue
+            .iter()
+            .map(|thermo| thermo.iter().map(|i| *i as u16).collect())
+            .collect();
     }
 
     if let Some(x_rule) = solved.rules.iter_mut().find_map(|r| r.to_x_rule()) {
@@ -184,4 +210,5 @@ pub fn set_from_str(sudoku: String) {
     state_lock.parity_positions = parity;
     state_lock.x_positions = x;
     state_lock.consecutive_positions = consecutive;
+    state_lock.thermometer_positions = thermometers;
 }
