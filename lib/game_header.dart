@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'rule_display.dart';
 import 'package:sudoku/game_state.dart';
 
 class GameHeader extends StatelessWidget {
@@ -27,10 +28,22 @@ class GameHeader extends StatelessWidget {
                     showDialog(
                       context: context,
                       builder: (context) => AlertDialog(
-                        title: const Text("Rules"),
+                        title: const Align(
+                          alignment: Alignment.center,
+                          child: Text("Rules"),
+                        ),
                         content: IntrinsicHeight(
-                          child: Column(
-                            children: rules.map((e) => Text(e)).toList(),
+                          child: SizedBox(
+                            height: 300,
+                            child: RawScrollbar(
+                              thumbVisibility: true,
+                              thumbColor: Color.fromARGB(99, 152, 152, 227),
+                              child: SingleChildScrollView(
+                                child: Column(
+                                  children: getRules(rules),
+                                ),
+                              ),
+                            ),
                           ),
                         ),
                       ),
@@ -45,9 +58,11 @@ class GameHeader extends StatelessWidget {
             ],
           ),
           const Text("Standard Sudoku", style: TextStyle(fontSize: 24)),
-          ListenableBuilder(listenable: GameState.getInstance(), builder: (context, child) {
-            return Row(children: generateLives());
-          })
+          ListenableBuilder(
+              listenable: GameState.getInstance(),
+              builder: (context, child) {
+                return Row(children: generateLives());
+              })
         ],
       ),
     );
@@ -55,12 +70,12 @@ class GameHeader extends StatelessWidget {
 }
 
 List<Widget> generateLives() {
-    List<Widget> hearts = [];
-    for (int i = 3; i > GameState.getInstance().lives; i--) {
-      hearts.add(const Icon(Icons.favorite_border, color: Colors.black));
-    }
-    for (int i = 0; i < GameState.getInstance().lives; i++) {
-      hearts.add(const Icon(Icons.favorite, color: Colors.red));
-    }
-    return hearts;
+  List<Widget> hearts = [];
+  for (int i = 3; i > GameState.getInstance().lives; i--) {
+    hearts.add(const Icon(Icons.favorite_border, color: Colors.black));
   }
+  for (int i = 0; i < GameState.getInstance().lives; i++) {
+    hearts.add(const Icon(Icons.favorite, color: Colors.red));
+  }
+  return hearts;
+}
