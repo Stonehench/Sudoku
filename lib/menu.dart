@@ -59,6 +59,7 @@ class _MenuState extends State<Menu> {
     ("Parity Domino", "ParityRule", false),
     ("Consecutive", "ConsecutiveRule", false),
     ("Zippers", "ZipperRule", false),
+    ("Thermometers", "ThermometerRule", false)
   ];
 
   bool initialized = false;
@@ -304,12 +305,15 @@ class _MenuState extends State<Menu> {
                         var zipperPositions = await getZipperPositions();
                         var consecutivePositions =
                             await getConsecutivePositions();
+                        var thermometerPositions =
+                            await getThermometerPositions();
                         GameState.setInstance(GameState(
                             dailyPuzzle!.split("\n\n")[1],
                             xPositions,
                             parityPositions,
                             consecutivePositions,
                             zipperPositions,
+                            thermometerPositions,
                             daily: dailyDate!));
 
                         setState(() {

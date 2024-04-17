@@ -3,7 +3,9 @@ use crate::rules::knight_rule::KnightRule;
 use crate::rules::square_rule::SquareRule;
 use crate::rules::x_rule::XRule;
 use crate::rules::parity_rule::ParityRule;
+use crate::rules::thermometer_rule::ThermometerRule;
 use crate::rules::consecutive_rule::ConsecutiveRule;
+use crate::rules::zipper_rule::ZipperRule;
 use bumpalo::Bump;
 use std::{
     fmt::Debug,
@@ -13,7 +15,7 @@ use std::{
 
 use crate::sudoku::Sudoku;
 
-use self::zipper_rule::ZipperRule;
+//use self::zipper_rule::ZipperRule;
 
 pub mod column_rule;
 pub mod diagonal_rule;
@@ -24,7 +26,7 @@ pub mod x_rule;
 pub mod zipper_rule;
 pub mod consecutive_rule;
 pub mod parity_rule;
-
+pub mod thermometer_rule;
 
 pub trait Rule: Debug {
     fn updates<'buf>(
@@ -72,6 +74,10 @@ pub trait Rule: Debug {
         None
     }
 
+    fn to_thermometer_rule(&mut self) -> Option<&mut ThermometerRule> {
+        None
+    }
+    
     fn to_consecutive_rule (&mut self) -> Option<&mut ConsecutiveRule> {
         None
     }
@@ -149,6 +155,10 @@ impl FromStr for DynRule {
                             })
                             .collect::<Result<_, _>>()?,
                     }))),
+                    Some("ThermometerRule") =>{ 
+                        Ok(DynRule(Box::new(ThermometerRule {
+                        themometer_clue: vec![] // TODO!!!
+                    })))},
                     Some("ZipperRule") =>{ 
                         Ok(DynRule(Box::new(ZipperRule {
                         zipper_clue: rule_params
