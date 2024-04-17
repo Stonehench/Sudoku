@@ -1,6 +1,7 @@
 import 'dart:math';
 
 import 'package:flutter/foundation.dart';
+import 'package:flutter/material.dart';
 import 'package:sudoku/api.dart';
 import 'package:sudoku/src/rust/api/simple.dart';
 import 'package:http/http.dart' as http;
@@ -45,6 +46,7 @@ class GameState extends ChangeNotifier {
   late final int size;
 
   int selectedDigit = 1;
+  int lives = 3;
   late List<int?> board;
   List<int> initialClues = [];
   List<List<int>> drafts = [];
@@ -67,6 +69,15 @@ class GameState extends ChangeNotifier {
       return true;
     }
     return false;
+  }
+
+
+  void loseLife() {
+    lives--;
+    if (lives == 0) {
+      print("Game over"); // handle loss of lives
+    }
+    notifyListeners();
   }
 
   void changeDraft(int position) {
