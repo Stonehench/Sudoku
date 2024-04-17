@@ -40,12 +40,20 @@ impl Rule for XRule {
         for (left_index, right_index) in &self.x_clue {
             if sudoku.cells[*left_index].locked_in && !sudoku.cells[*right_index].locked_in {
                 if let Some(value) = sudoku.cells[*left_index].available.get(0) {
-                    return Some((((sudoku.size + 1) as u16 - value), *right_index));
+                    //TODO: this is a try to fix the rules
+                    if sudoku.cells[*right_index].available.contains(&((sudoku.size + 1) as u16 - value)){
+                       return Some((((sudoku.size + 1) as u16 - value), *right_index)); 
+                    }
+                    
                 }
             }
             if sudoku.cells[*right_index].locked_in && !sudoku.cells[*left_index].locked_in {
                 if let Some(value) = sudoku.cells[*right_index].available.get(0) {
-                    return Some((((sudoku.size + 1) as u16 - value), *left_index));
+                    
+                    //TODO: this is a try to fix the rules
+                    if sudoku.cells[*left_index].available.contains(&((sudoku.size + 1) as u16 - value)){
+                        return Some((((sudoku.size + 1) as u16 - value), *left_index)); 
+                    }
                 }
             }
         }
