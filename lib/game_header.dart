@@ -6,25 +6,46 @@ class GameHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      children: [
-        TextButton(
-            onPressed: () {
-              showDialog(
-                context: context,
-                builder: (context) => AlertDialog(
-                  title: const Text("Rules"),
-                  content: IntrinsicHeight(
-                    child: Column(
-                      children: rules.map((e) => Text(e)).toList(),
-                    ),
+    return SizedBox(
+      height: 100,
+      width: 340,
+      child: Column(
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              const BackButton(),
+              const SizedBox(
+                width: 240,
+              ),
+              SizedBox(
+                // Use width to change distance from the edge
+                width: 40,
+                child: InkWell(
+                  onTap: () {
+                    showDialog(
+                      context: context,
+                      builder: (context) => AlertDialog(
+                        title: const Text("Rules"),
+                        content: IntrinsicHeight(
+                          child: Column(
+                            children: rules.map((e) => Text(e)).toList(),
+                          ),
+                        ),
+                      ),
+                    );
+                  },
+                  child: const Align(
+                    alignment: Alignment.centerLeft,
+                    child: Icon(Icons.info),
                   ),
                 ),
-              );
-            },
-            child: const Text("Rules")),
-        const Text("Standard Sudoku", style: TextStyle(fontSize: 24)),
-      ],
+              ),
+            ],
+          ),
+          const Text("Standard Sudoku", style: TextStyle(fontSize: 24)),
+        ],
+      ),
     );
   }
 }
