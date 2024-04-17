@@ -1,7 +1,7 @@
-use rand::random;
 use super::{DynRule, Rule};
-use std::fmt::Debug;
 use crate::sudoku::Sudoku;
+use rand::random;
+use std::fmt::Debug;
 
 #[derive(Debug, Clone)]
 pub struct ParityRule {
@@ -153,8 +153,7 @@ impl Rule for ParityRule {
                     continue;
                 }
                 if let Some(below) = cells[index + size].available.get(0) {
-                    if (current & 1 == 0 && below & 1 != 0)
-                        || (current & 1 != 0 && below & 1 == 0)
+                    if (current & 1 == 0 && below & 1 != 0) || (current & 1 != 0 && below & 1 == 0)
                     {
                         // parity rule should have (index , below)
                         self.parity_clue.push((index, index + size));
@@ -165,9 +164,7 @@ impl Rule for ParityRule {
         let count = self.parity_clue.len();
         if count > size * 2 {
             for i in 0..count - size * 2 {
-                self
-                    .parity_clue
-                    .remove(random::<usize>() % (count - i));
+                self.parity_clue.remove(random::<usize>() % (count - i));
             }
         }
     }
@@ -187,10 +184,9 @@ impl Rule for ParityRule {
 
 //########################### TEST ###############################
 
-
 #[test]
 fn parity_multi_remove_test() {
-    use crate::sudoku::{self, Sudoku};
+    use crate::sudoku::Sudoku;
     let mut big_buffer = vec![];
     /* The test sudoku a 4 x 4
     =================
