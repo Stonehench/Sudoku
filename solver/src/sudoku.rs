@@ -120,7 +120,7 @@ impl AllSolutionsContext {
 
     fn wait_for_solutions(self) -> usize {
         self.pool.join();
-        let solutions = self.solutions.load(std::sync::atomic::Ordering::Relaxed);
+        let solutions = self.solutions.load(std::sync::atomic::Ordering::SeqCst);
         self.return_pool();
         solutions
     }
@@ -181,7 +181,9 @@ impl Sudoku {
                 .into_iter()
                 .filter(|i| **i != index)
             {
-                self.cells[*inner_index].remove(n)?;
+                if let Err(err) = self.cells[*inner_index].remove(n) {
+                    panic!("{err} at {}", rule.get_name());
+                }
             }
         }
         Ok(())
@@ -202,7 +204,9 @@ impl Sudoku {
                 .filter(|i| **i != index)
             {
                 let cell = &mut self.cells[*inner_index];
-                cell.remove(n)?;
+                if let Err(err) = cell.remove(n) {
+                    panic!("{err} at {}", rule.get_name());
+                }
                 queue.change_priority(&inner_index, Entropy(cell.available.len()));
             }
         }
@@ -299,7 +303,9 @@ impl Sudoku {
                             pri_queue.push(index, entropy);
 
                             for remove_index in removable_indexes {
-                                self.cells[*remove_index].remove(n)?;
+                                if let Err(err) = self.cells[*remove_index].remove(n) {
+                                    panic!("{err} at {}", rule.get_name());
+                                }
                                 pri_queue.change_priority(
                                     remove_index,
                                     Entropy(self.cells[*remove_index].available.len()),
@@ -322,7 +328,9 @@ impl Sudoku {
                             pri_queue.push(index, entropy);
 
                             for (value, index) in multi_remove_indecies {
-                                self.cells[*index].remove(*value)?;
+                                if let Err(err) = self.cells[*index].remove(*value) {
+                                    panic!("{err} at {}", rule.get_name());
+                                }
                                 pri_queue.change_priority(
                                     index,
                                     Entropy(self.cells[*index].available.len()),
@@ -383,7 +391,7 @@ impl Sudoku {
 
         if let Some(ctx) = ctx {
             ctx.solutions
-                .fetch_add(1, std::sync::atomic::Ordering::Relaxed);
+                .fetch_add(1, std::sync::atomic::Ordering::SeqCst);
         }
 
         Ok(())
@@ -429,18 +437,18 @@ impl Sudoku {
             }
 
             if available_to_remove.len() == 0 {
-                println!("nothing more to try");
+                println!("Removed everything");
                 break;
             }
             let removed_index =
                 available_to_remove.remove(random::<usize>() % available_to_remove.len());
 
-            let mut solved_clone = sudoku.clone();
+            let mut solving_clone = sudoku.clone();
 
-            solved_clone.cells[removed_index] = Cell::new_with_range(1..sudoku.size as u16 + 1);
+            solving_clone.cells[removed_index] = Cell::new_with_range(1..sudoku.size as u16 + 1);
 
             let ctx = AllSolutionsContext::new();
-            let _ = solved_clone.solve(Some(&ctx), None);
+            let _ = solving_clone.solve(Some(&ctx), None);
 
             let solutions = ctx.wait_for_solutions();
 
@@ -463,10 +471,6 @@ impl Sudoku {
 
         #[cfg(debug_assertions)]
         println!("Removed {count} in {:?}", timer.elapsed());
-
-        for cell in &mut sudoku.cells {
-            cell.locked_in = false;
-        }
 
         Ok(sudoku)
     }
