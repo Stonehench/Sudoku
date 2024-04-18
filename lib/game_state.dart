@@ -48,6 +48,7 @@ class GameState extends ChangeNotifier {
 
   int selectedDigit = 1;
   int lives = 3;
+  late int numberOfHint = sqrt(size).toInt();
   late List<int?> board;
   List<int> initialClues = [];
   List<List<int>> drafts = [];
@@ -72,7 +73,6 @@ class GameState extends ChangeNotifier {
     loseLife();
     return false;
   }
-
 
   void loseLife() {
     lives--;
@@ -211,6 +211,9 @@ class GameState extends ChangeNotifier {
   }
 
   void getHint() async {
+    if (numberOfHint <= 0) {
+      return;
+    }
     List<int> hints = [];
     for (int i = 0; i < board.length; i++) {
       if (board[i] == null) {
@@ -223,6 +226,7 @@ class GameState extends ChangeNotifier {
     if (clue != null) {
       board[clue.$2] = clue.$1;
     }
+    numberOfHint -= 1;
     notifyListeners();
   }
 

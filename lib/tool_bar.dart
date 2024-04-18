@@ -60,10 +60,12 @@ class _ToolBarState extends State<ToolBar> {
                   child: const Text("Draft"),
                 ),
                 TextButton(
-                  onPressed: inGame
-                      ? () {
-                          GameState.getInstance().getHint();
-                        }
+                  onPressed: GameState.getInstance().numberOfHint > 0
+                      ? inGame
+                          ? () {
+                              GameState.getInstance().getHint();
+                            }
+                          : null
                       : null,
                   style: TextButton.styleFrom(
                     backgroundColor: Theme.of(ctx).scaffoldBackgroundColor,

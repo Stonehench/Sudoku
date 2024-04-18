@@ -58,11 +58,33 @@ class GameHeader extends StatelessWidget {
             ],
           ),
           const Text("Standard Sudoku", style: TextStyle(fontSize: 24)),
-          ListenableBuilder(
-              listenable: GameState.getInstance(),
-              builder: (context, child) {
-                return Row(children: generateLives());
-              })
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              ListenableBuilder(
+                  listenable: GameState.getInstance(),
+                  builder: (context, child) {
+                    return Row(
+                        mainAxisAlignment: MainAxisAlignment.start,
+                        children: generateLives());
+                  }),
+              const SizedBox(
+                width: 100,
+                height: 10,
+              ),
+              ListenableBuilder(
+                  listenable: GameState.getInstance(),
+                  builder: (context, child) {
+                    return Row(
+                        mainAxisAlignment: MainAxisAlignment.end,
+                        children: [
+                          const Text("Hints: "),
+                          Text(GameState.getInstance().numberOfHint.toString())
+                        ]);
+                  }),
+            ],
+          ),
         ],
       ),
     );
