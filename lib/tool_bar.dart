@@ -66,9 +66,7 @@ class _ToolBarState extends State<ToolBar> {
                         }
                       : null,
                   style: TextButton.styleFrom(
-                    backgroundColor: GameState.getInstance().drafting
-                        ? Theme.of(ctx).secondaryHeaderColor
-                        : Theme.of(ctx).scaffoldBackgroundColor,
+                    backgroundColor: Theme.of(ctx).scaffoldBackgroundColor,
                   ),
                   child: const Text("Hint"),
                 ),
