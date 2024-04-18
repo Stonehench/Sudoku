@@ -37,6 +37,8 @@ class GameView extends StatelessWidget {
             builder: (context, _) {
               if (state.scoreStatus() != ScoreSubmissionStatus.gameNotDone) {
                 return victoryWidget(context, state);
+              } else if (state.lives <= 0) {
+                return defeatWidget(context, state);
               } else {
                 return const SizedBox.shrink();
               }
@@ -99,6 +101,42 @@ class GameView extends StatelessWidget {
                       child: const Text("Login"))
                 ],
             },
+            const Spacer(),
+            OutlinedButton(
+                style: buttonStyle,
+                onPressed: () {
+                  Navigator.of(context).pop();
+                },
+                child: const Text("Home")),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget defeatWidget(BuildContext context, GameState state) {
+    var buttonStyle = OutlinedButton.styleFrom(
+      shape: const RoundedRectangleBorder(
+          borderRadius: BorderRadius.all(Radius.circular(5))),
+    );
+
+    return Center(
+      child: Container(
+        decoration: BoxDecoration(
+          backgroundBlendMode: BlendMode.darken,
+          borderRadius: const BorderRadius.all(Radius.circular(20)),
+          border: Border.all(color: Colors.white),
+          color: Theme.of(context).dialogBackgroundColor,
+        ),
+        padding: const EdgeInsets.all(20),
+        width: MediaQuery.of(context).size.width * 0.8,
+        height: MediaQuery.of(context).size.height * 0.5,
+        child: Column(
+          children: [
+            const Text(
+              "You lose!",
+              style: TextStyle(fontSize: 35),
+            ),
             const Spacer(),
             OutlinedButton(
                 style: buttonStyle,

@@ -23,7 +23,8 @@ class _ToolBarState extends State<ToolBar> {
           builder: (ctx, _) {
             GameState state = GameState.getInstance();
             ScoreSubmissionStatus status = state.scoreStatus();
-            bool inGame = status == ScoreSubmissionStatus.gameNotDone;
+            bool inGame = status == ScoreSubmissionStatus.gameNotDone &&
+                !(state.lives <= 0);
             return ButtonBar(
               alignment: MainAxisAlignment.center,
               children: [
