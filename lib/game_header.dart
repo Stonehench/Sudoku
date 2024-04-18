@@ -1,3 +1,5 @@
+import 'dart:math';
+
 import 'package:flutter/material.dart';
 import 'rule_display.dart';
 import 'package:sudoku/game_state.dart';
@@ -87,7 +89,7 @@ class GameHeader extends StatelessWidget {
                             Icons.search,
                             Icons.search_outlined,
                             Colors.lightBlue,
-                            3,
+                            sqrt(GameState.getInstance().size).toInt(),
                             GameState.getInstance().numberOfHint));
                   }),
             ],

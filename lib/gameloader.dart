@@ -51,6 +51,7 @@ class _GameLoaderState extends State<GameLoader> {
 
     progressSink = progress();
     progressSink.forEach((args) {
+      // TODO: this thorws an exception
       setState(() {
         removed = args;
       });
