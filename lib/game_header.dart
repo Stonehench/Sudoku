@@ -67,7 +67,12 @@ class GameHeader extends StatelessWidget {
                   builder: (context, child) {
                     return Row(
                         mainAxisAlignment: MainAxisAlignment.start,
-                        children: generateLives());
+                        children: generateIcons(
+                            Icons.favorite,
+                            Icons.favorite_border,
+                            Colors.red,
+                            3,
+                            GameState.getInstance().lives));
                   }),
               const SizedBox(
                 width: 100,
@@ -78,10 +83,12 @@ class GameHeader extends StatelessWidget {
                   builder: (context, child) {
                     return Row(
                         mainAxisAlignment: MainAxisAlignment.end,
-                        children: [
-                          const Text("Hints: "),
-                          Text(GameState.getInstance().numberOfHint.toString())
-                        ]);
+                        children: generateIcons(
+                            Icons.search,
+                            Icons.search_outlined,
+                            Colors.lightBlue,
+                            3,
+                            GameState.getInstance().numberOfHint));
                   }),
             ],
           ),
@@ -91,13 +98,14 @@ class GameHeader extends StatelessWidget {
   }
 }
 
-List<Widget> generateLives() {
+List<Widget> generateIcons(IconData primaryIcon, IconData secondaryIcon,
+    Color color, int numberOfIcons, int numberLeft) {
   List<Widget> hearts = [];
-  for (int i = 3; i > GameState.getInstance().lives; i--) {
-    hearts.add(const Icon(Icons.favorite_border, color: Colors.black));
+  for (int i = numberOfIcons; i > numberLeft; i--) {
+    hearts.add(Icon(secondaryIcon, color: Colors.black));
   }
-  for (int i = 0; i < GameState.getInstance().lives; i++) {
-    hearts.add(const Icon(Icons.favorite, color: Colors.red));
+  for (int i = 0; i < numberLeft; i++) {
+    hearts.add(Icon(primaryIcon, color: color));
   }
   return hearts;
 }
