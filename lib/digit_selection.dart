@@ -13,11 +13,7 @@ class _DigitSelectState extends State<DigitSelect> {
   GameState state = GameState.getInstance();
   @override
   Widget build(BuildContext context) {
-    double fontSize = widget.size! as int <= 9
-        ? 30.0
-        : widget.size as int <= 16
-            ? 15.0
-            : 6.0;
+    double fontSize = 30;
     return SizedBox(
       height: 50,
       width: 340,
@@ -49,7 +45,9 @@ class _DigitSelectState extends State<DigitSelect> {
                     (index + 1).toString(),
                     style: TextStyle(
                       fontSize: fontSize,
-                      color: state.digitDone(index+1)? Colors.green  : Colors.white,
+                      color: state.digitDone(index + 1)
+                          ? Colors.green
+                          : Colors.white,
                     ),
                   ),
                 ),

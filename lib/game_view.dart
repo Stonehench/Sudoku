@@ -17,7 +17,6 @@ class GameView extends StatelessWidget {
     var size = GameState.getInstance().size;
 
     GameState state = GameState.getInstance();
-
     return Scaffold(
       body: Stack(
         children: [
@@ -26,7 +25,7 @@ class GameView extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
               GameHeader(rules),
-              const Board(),
+              Board((rules.contains("SquareRule"))),
               const SizedBox(height: 10),
               DigitSelect(size),
               const ToolBar(),

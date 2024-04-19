@@ -1,6 +1,7 @@
 import 'dart:math';
 
 import 'package:flutter/material.dart';
+import 'package:sudoku/name_header.dart';
 import 'rule_display.dart';
 import 'package:sudoku/game_state.dart';
 
@@ -11,9 +12,10 @@ class GameHeader extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return SizedBox(
-      height: 100,
+      height: 130,
       width: 340,
       child: Column(
+        mainAxisAlignment: MainAxisAlignment.end,
         children: [
           Row(
             mainAxisAlignment: MainAxisAlignment.center,
@@ -59,9 +61,11 @@ class GameHeader extends StatelessWidget {
               ),
             ],
           ),
-          const Text("Standard Sudoku", style: TextStyle(fontSize: 24)),
+          const Spacer(),
+          NameHeader(rules),
+          const Spacer(),
           Row(
-            mainAxisAlignment: MainAxisAlignment.center,
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
               ListenableBuilder(
@@ -76,10 +80,6 @@ class GameHeader extends StatelessWidget {
                             3,
                             GameState.getInstance().lives));
                   }),
-              const SizedBox(
-                width: 100,
-                height: 10,
-              ),
               ListenableBuilder(
                   listenable: GameState.getInstance(),
                   builder: (context, child) {
@@ -94,6 +94,10 @@ class GameHeader extends StatelessWidget {
                   }),
             ],
           ),
+          const SizedBox(
+            height: 5,
+            width: 10,
+          )
         ],
       ),
     );

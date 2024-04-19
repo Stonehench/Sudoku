@@ -8,7 +8,8 @@ import 'package:sudoku/thermometer_rule_gui.dart';
 import 'package:sudoku/zipper_rule_gui.dart';
 
 class Board extends StatefulWidget {
-  const Board({super.key});
+  final bool hasSquare;
+  const Board(this.hasSquare, {super.key});
 
   @override
   State<StatefulWidget> createState() => _BoardState();
@@ -36,7 +37,10 @@ class _BoardState extends State<Board> {
           child: Stack(
             alignment: Alignment.center,
             children: [
-              Container(color: const Color.fromARGB(255, 19, 22, 54)),
+              Container(
+                  color: widget.hasSquare
+                      ? const Color.fromARGB(255, 19, 22, 54)
+                      : const Color.fromARGB(255, 127, 132, 177)),
               GridView.builder(
                 padding: EdgeInsets.zero,
                 itemCount: state.board.length,
