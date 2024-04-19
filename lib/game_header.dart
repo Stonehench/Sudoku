@@ -1,6 +1,7 @@
 import 'dart:math';
 
 import 'package:flutter/material.dart';
+import 'package:sudoku/name_header.dart';
 import 'rule_display.dart';
 import 'package:sudoku/game_state.dart';
 
@@ -59,7 +60,7 @@ class GameHeader extends StatelessWidget {
               ),
             ],
           ),
-          const Text("Standard Sudoku", style: TextStyle(fontSize: 24)),
+          NameHeader(rules),
           Row(
             mainAxisAlignment: MainAxisAlignment.center,
             crossAxisAlignment: CrossAxisAlignment.center,
