@@ -13,9 +13,6 @@ class _NameHeaderState extends State<NameHeader> {
   @override
   Widget build(BuildContext context) {
     String name = "";
-
-    print(widget.rules);
-
     // is it a domino sudoku
     widget.rules.contains("ParityRule") ||
             widget.rules.contains("ConsecutiveRule") ||
