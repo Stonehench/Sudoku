@@ -76,7 +76,7 @@ getRules(Set<String> rules) {
                                             style: TextStyle(fontSize: 20),
                                           ),
                                           Text(
-                                              "Zippers appears as pink lines with a circle in the center."
+                                              "Zippers appears as pink lines with a circle in the center.\n"
                                               "The two cells on the line with equal distance from the center, must add to the center\n")
                                         ],
                                       )
@@ -88,8 +88,8 @@ getRules(Set<String> rules) {
                                                 style: TextStyle(fontSize: 20),
                                               ),
                                               Text(
-                                                  "Thermometers appears as blue lines with a circle in one end."
-                                                  "Cells starting at the dot must be in rising order\n")
+                                                  "Thermometers appears as blue lines with a circle in one end.\n"
+                                                  "Cells, starting at the dot, must be in rising order\n")
                                             ],
                                           )
                                         : Text(e),
