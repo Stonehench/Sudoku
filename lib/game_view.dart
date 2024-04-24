@@ -178,7 +178,7 @@ String getLoseText() {
     "You're on top of the bell curve",
     "Do you have bad luck when it comes to thinking?",
     "You're as sharp as a marble!",
-    "You would get second pleace in a worst failure competition!",
+    "You would get second place in a worst failure competition!",
     "Next time's the charm",
     "Admire the way you try so hard",
     "A village somewhere is missing it's idiot",
@@ -186,7 +186,7 @@ String getLoseText() {
     "That was on purpose, right?"
   ];
 
-  int index = Random().nextInt(loseText.length * 3);
+  int index = Random().nextInt(loseText.length * 2);
 
   if (index > loseText.length) {
     return "You Lose!";
