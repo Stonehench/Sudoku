@@ -32,7 +32,7 @@ pub fn generate_with_size(
     let progress = Box::new(move |progress| {
         let state = get_state();
         if let Some(sink) = &state.progress_sink {
-            if let Err(err) = sink.add((progress, difficulty.get_removes(size))) {
+            if let Err(err) = sink.add((progress, difficulty.get_removes(size, 0))) {
                 eprintln!("Failed writing to progress sink: {err}");
             }
         } else {
@@ -164,7 +164,7 @@ pub fn close_threads() {
 pub fn difficulty_values(size: usize, difficulty: String) -> Option<usize> {
     let difficulty: Difficulty = difficulty.parse().ok()?;
 
-    Some(difficulty.get_removes(size))
+    Some(difficulty.get_removes(size, 0))
 }
 
 pub fn set_from_str(sudoku: String) {

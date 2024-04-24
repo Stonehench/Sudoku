@@ -416,6 +416,10 @@ impl Rule for ZipperRule {
             })
         })
     }
+
+    fn no_of_clues(&self) -> usize {
+        return self.zipper_clue.len();
+    }
 }
 
 //########################### TEST ###############################

@@ -180,6 +180,10 @@ impl Rule for ParityRule {
     fn to_parity_rule(&mut self) -> Option<&mut ParityRule> {
         Some(self)
     }
+
+    fn no_of_clues(&self) -> usize {
+        return self.parity_clue.len();
+    }
 }
 
 //########################### TEST ###############################
