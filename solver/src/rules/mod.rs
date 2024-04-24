@@ -62,6 +62,10 @@ pub trait Rule: Debug {
     fn boxed_clone(&self) -> DynRule;
     fn get_name(&self) -> &'static str;
 
+    fn no_of_clues(&self) -> usize {
+        return 0;
+    }
+
     fn to_x_rule(&mut self) -> Option<&mut XRule> {
         None
     }

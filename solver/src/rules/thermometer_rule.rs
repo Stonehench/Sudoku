@@ -245,6 +245,10 @@ impl Rule for ThermometerRule {
     fn to_thermometer_rule(&mut self) -> Option<&mut ThermometerRule> {
         Some(self)
     }
+
+    fn no_of_clues(&self) -> usize {
+        return self.themometer_clue.len();
+    }
 }
 
 //########################### TEST ###############################

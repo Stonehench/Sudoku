@@ -44,12 +44,12 @@ impl FromStr for Difficulty {
 }
 
 impl Difficulty {
-    pub fn get_removes(&self, size: usize) -> usize {
+    pub fn get_removes(&self, size: usize, clues: usize) -> usize {
         match self {
-            Difficulty::Easy => size * size / 2,
-            Difficulty::Medium => (size * size * 2) / 3,
-            Difficulty::Hard => (size * size * 3) / 4,
-            Difficulty::Expert => size * size,
+            Difficulty::Easy => (size * size + clues) / 2,
+            Difficulty::Medium => (size * size * 2 + clues) / 3,
+            Difficulty::Hard => (size * size * 3 + clues) / 4,
+            Difficulty::Expert => size * size + clues,
         }
     }
 }
@@ -435,12 +435,15 @@ impl Sudoku {
         sudoku.solve(None, None)?;
         sudoku.reset_locked();
         let solved = sudoku.clone();
+        let mut extra_clues = 0;
 
         for rule in &mut sudoku.rules {
             rule.create_clue(&sudoku.cells, size);
+            extra_clues += rule.no_of_clues();
         }
 
-        let remove_limit = difficulty.get_removes(size);
+        println!("{extra_clues}");
+        let remove_limit = difficulty.get_removes(size, extra_clues);
 
         const ATTEMPT_COUNT: usize = 25;
 

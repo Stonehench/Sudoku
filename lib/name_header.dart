@@ -11,42 +11,60 @@ class NameHeader extends StatefulWidget {
 class _NameHeaderState extends State<NameHeader> {
   @override
   Widget build(BuildContext context) {
-    String name = "";
+    List<String> name = List.empty(growable: true);
     // is it a domino sudoku
-    widget.rules.contains("ParityRule") ||
-            widget.rules.contains("ConsecutiveRule") ||
-            widget.rules.contains("XRule")
-        ? name = "Domino"
-        : name = name;
-
     widget.rules.containsAll({"ParityRule", "XRule"}) &&
             !widget.rules.contains("ConsecutiveRule")
-        ? name = "Tic Tac Toe"
-        : name = name;
+        ? name.add("Tic Tac Toe")
+        : widget.rules.containsAll({"ParityRule", "ConsecutiveRule"}) &&
+                !widget.rules.contains("XRule")
+            ? name.add("Dots")
+            : widget.rules.contains("ParityRule") ||
+                    widget.rules.contains("ConsecutiveRule") ||
+                    widget.rules.contains("XRule")
+                ? name.add("Domino")
+                : name = name;
 
-    widget.rules.containsAll({"ParityRule", "ConsecutiveRule"}) &&
-            !widget.rules.contains("XRule")
-        ? name = "Dots"
-        : name = name;
-    widget.rules.contains("KnightsMove")
-        ? name.isEmpty
-            ? name = "Knights Move"
-            : name = "Knights Move $name"
-        : name = name;
-    widget.rules.contains("ZipperRule") ? name = "Zipper$name" : name = name;
+    widget.rules.contains("KnightsMove") ? name.add("Knightly") : name = name;
+
+    widget.rules.contains("ZipperRule") &&
+            widget.rules.contains("ThermometerRule")
+        ? name.add("String Theory")
+        : widget.rules.contains("ZipperRule")
+            ? name.add("Zipper")
+            : widget.rules.contains("ThermometerRule")
+                ? name.add("Thermometer")
+                : name = name;
 
     // Just a regular sudou
     widget.rules.length == 1 && widget.rules.contains("SquareRule")
-        ? name = "Classic"
+        ? name.add("Classic")
         : name = name;
 
-    widget.rules.length == 8 ? name = "Chaos" : name = name;
-    widget.rules.isEmpty
-        ? name = "Bare Minimum"
-        : name == "Tic Tac Toe"
-            ? name = name
-            : name = "$name Sudoku";
-    return Text(name,
-        style: const TextStyle(fontSize: 20, color: Colors.white));
+    widget.rules.length == 8
+        ? {name.clear(), name.add("Chaos")}
+        : widget.rules.isEmpty
+            ? name.add("Bare Minimum")
+            : name == name;
+
+    List<Text> text = List.empty(growable: true);
+    for (var i = 0; i < name.length; i++) {
+      text.add(Text(
+        "${name[i]} ",
+        style: const TextStyle(fontSize: 20),
+      ));
+    }
+
+    widget.rules.contains("SquareRule")
+        ? text.add(const Text(
+            "Sudoku",
+            style: TextStyle(fontSize: 20),
+          ))
+        : text.add(const Text(
+            "Puzzle",
+            style: TextStyle(fontSize: 20),
+          ));
+
+    return Wrap(alignment: WrapAlignment.center, children: text);
   }
 }

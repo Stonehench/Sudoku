@@ -152,6 +152,10 @@ impl Rule for XRule {
     fn to_x_rule(&mut self) -> Option<&mut XRule> {
         Some(self)
     }
+
+    fn no_of_clues(&self) -> usize {
+        return self.x_clue.len();
+    }
 }
 
 //########################### TEST ###############################

@@ -176,6 +176,10 @@ impl Rule for ConsecutiveRule {
     fn to_consecutive_rule(&mut self) -> Option<&mut ConsecutiveRule> {
         Some(self)
     }
+
+    fn no_of_clues(&self) -> usize {
+        return self.consecutive_clue.len();
+    }
 }
 
 //########################### TEST ###############################
