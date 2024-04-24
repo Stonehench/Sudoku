@@ -1,6 +1,7 @@
 import 'dart:convert';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/widgets.dart';
 import 'dart:math';
 import 'package:http/http.dart' as http;
 import 'package:flutter/services.dart';
@@ -106,6 +107,61 @@ class _MenuState extends State<Menu> {
     return list;
   }
 
+  bool showSizeBox = false;
+
+  List<bool> sizeValueStates = <bool>[
+    false,
+    true,
+    false,
+    false,
+  ];
+
+  List<int> sizeValues = [
+    4,
+    9,
+    16,
+    0,
+  ];
+
+  Widget sudokuSizeWidget() {
+    return ToggleButtons(
+      direction: Axis.horizontal,
+      onPressed: (int index) {
+        setState(() {
+          if (index == 3) {
+            showSizeBox = true;
+            for (int i = 0; i < sizeValueStates.length; i++) {
+              sizeValueStates[i] = i == index;
+              if (i == index) {
+                size = sizeValues[index];
+                onTextChange(pow((index + 2), 2).toString());
+              }
+            }
+          } else {
+            showSizeBox = false;
+            for (int i = 0; i < sizeValueStates.length; i++) {
+              sizeValueStates[i] = i == index;
+              if (i == index) {
+                size = sizeValues[index];
+                onTextChange(pow((index + 2), 2).toString());
+              }
+            }
+          }
+        });
+      },
+      borderRadius: const BorderRadius.all(Radius.circular(8)),
+      borderColor: Colors.transparent,
+      constraints: const BoxConstraints(
+        minHeight: 40.0,
+        minWidth: 80.0,
+      ),
+      isSelected: sizeValueStates,
+      children: sizeValues
+          .map((e) => e == 0 ? Icon(Icons.add) : Text(e.toString()))
+          .toList(),
+    );
+  }
+
   String gameDifficulty = "Medium";
 
   List<bool> difficulitiesValues = <bool>[
@@ -208,23 +264,34 @@ class _MenuState extends State<Menu> {
                 );
               },
             ),
-            SizedBox(
-              width: 250,
-              child: TextField(
-                onChanged: onTextChange,
-                controller: inputTextController,
-                keyboardType: TextInputType.number,
-                inputFormatters: <TextInputFormatter>[
-                  FilteringTextInputFormatter.digitsOnly
-                ],
-                decoration: const InputDecoration(
-                  border: OutlineInputBorder(),
-                  labelText: 'Sudoku size',
-                ),
-              ),
-            ),
             Text(sizeText),
             const SizedBox(height: 10),
+            sudokuSizeWidget(),
+            const SizedBox(height: 10),
+            Visibility(
+              //TODO set true to a variable
+              visible: showSizeBox,
+              child: Column(
+                children: [
+                  SizedBox(
+                    width: 250,
+                    child: TextField(
+                      onChanged: onTextChange,
+                      controller: inputTextController,
+                      keyboardType: TextInputType.number,
+                      inputFormatters: <TextInputFormatter>[
+                        FilteringTextInputFormatter.digitsOnly
+                      ],
+                      decoration: const InputDecoration(
+                        border: OutlineInputBorder(),
+                        labelText: 'Sudoku size',
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 10),
+                ],
+              ),
+            ),
             difficulitiesWidgets(),
             const SizedBox(height: 10),
             SizedBox(
