@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:sudoku/game_state.dart';
 
 class NameHeader extends StatefulWidget {
   final Set<String> rules;
