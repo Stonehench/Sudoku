@@ -173,7 +173,7 @@ String getLoseText() {
     "You're like the handle on a sirup bottle",
     "Do you want a participation trophy?",
     "Do you suffer delusions of adequacy?",
-    "you're as usefull as the \"ueue\" in \"queue\"", 
+    "you're as usefull as the \"ueue\" in \"queue\"",
     "Smoothbrained",
     "You're on top of the bell curve",
     "Do you have bad luck when it comes to thinking?",
@@ -182,10 +182,15 @@ String getLoseText() {
     "Next time's the charm",
     "Admire the way you try so hard",
     "A village somewhere is missing it's idiot",
+    "Are you just playing stupid?",
+    "That was on purpose, right?"
   ];
 
-  int index = Random().nextInt(loseText.length);
+  int index = Random().nextInt(loseText.length * 3);
+
+  if (index > loseText.length) {
+    return "You Lose!";
+  }
 
   return loseText[index];
-  //return "You Lose!";
 }
