@@ -1,3 +1,5 @@
+import 'dart:math';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_spinkit/flutter_spinkit.dart';
 import 'package:sudoku/account.dart';
@@ -132,9 +134,10 @@ class GameView extends StatelessWidget {
         height: MediaQuery.of(context).size.height * 0.5,
         child: Column(
           children: [
-            const Text(
-              "You lose!",
-              style: TextStyle(fontSize: 35),
+            Text(
+              getLoseText(),
+              style: const TextStyle(fontSize: 35),
+              textAlign: TextAlign.center,
             ),
             const Spacer(),
             OutlinedButton(
@@ -148,4 +151,29 @@ class GameView extends StatelessWidget {
       ),
     );
   }
+}
+
+String getLoseText() {
+  List<String> loseText = [
+    "You suck!",
+    "Loser!",
+    "Give up!",
+    "Really?",
+    "...?",
+    "???",
+    "Your mom!",
+    "Did your dog play?",
+    "IQ = 5",
+    "Are you dumb?",
+    "Congrats!\n Your the first to fail such a simple sudoku!",
+    "Maybe try a 1x1?",
+    "Delete the app!",
+    "kys!",
+    "Go commit die!"
+  ];
+
+  int index = Random().nextInt(loseText.length);
+
+  return loseText[index];
+  //return "You Lose!";
 }
