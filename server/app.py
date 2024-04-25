@@ -64,8 +64,6 @@ def streak():
 
     startdate = datetime.date(2000, 1, 1)
 
-    
-
     data = []
     for stamp in cursor:
         datearr = [int(x) for x in str(stamp[0]).split()[0].split("-")]
@@ -233,8 +231,13 @@ def change_passw():
 @app.route("/rebuild")
 def rebuild():
     missing = 20 - len(pool._connections_free)
-    for _ in range(missing):
-        pool.add_connection()
+    added = 0
+    try:
+        while added < missing:
+            pool.add_connection()
+            added += 1
+    except:
+        pass
 
     print("added", missing, "connections")
     return "ok"
