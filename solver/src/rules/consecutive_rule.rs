@@ -68,6 +68,7 @@ impl Rule for ConsecutiveRule {
         None
     }
 
+    
     fn locked_candidate<'buf>(
         &self,
         sudoku: &Sudoku,

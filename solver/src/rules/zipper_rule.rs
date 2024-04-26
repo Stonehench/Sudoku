@@ -1,4 +1,4 @@
-use super::{DynRule, Rule};
+use super::{square_rule, DynRule, Rule};
 use integer_sqrt::IntegerSquareRoot;
 use rand::random;
 use std::fmt::Debug;
@@ -105,10 +105,6 @@ impl Rule for ZipperRule {
         None
     }
 
-    fn needs_square_for_locked(&self) -> bool {
-        true
-    }
-
     fn multi_remove<'buf>(
         &self,
         sudoku: &Sudoku,
@@ -177,7 +173,8 @@ impl Rule for ZipperRule {
                     })
                     .sum();
                 // THIS NEEDS SQUARE RULE, BUT NO PRIOR CALCULATIONS NEEDED SQUARE RULE
-                let same_square: u16 = rest
+                if sudoku.hasSquare {
+                    let same_square: u16 = rest
                     .into_iter()
                     .map(|(l, r)| {
                         let mut val = 0;
@@ -195,16 +192,17 @@ impl Rule for ZipperRule {
                     })
                     .sum();
 
-                if !sudoku.cells[*center].locked_in
-                    && sudoku.cells[*center].available.contains(&value)
-                    && (value == 1
-                        || rest.into_iter().any(|(left, right)| {
-                            sudoku.cells[*left].available[0] + sudoku.cells[*right].available[0]
-                                > value
-                        })
-                        || (value <= same_row || value <= same_column || value <= same_square))
-                {
-                    big_buffer.push((value, *center));
+                    if !sudoku.cells[*center].locked_in
+                        && sudoku.cells[*center].available.contains(&value)
+                        && (value == 1
+                            || rest.into_iter().any(|(left, right)| {
+                                sudoku.cells[*left].available[0] + sudoku.cells[*right].available[0]
+                                    > value
+                            })
+                            || (value <= same_row || value <= same_column || value <= same_square))
+                    {
+                        big_buffer.push((value, *center));
+                }
                 }
             }
         }
@@ -228,23 +226,26 @@ impl Rule for ZipperRule {
                             big_buffer.push((value, *right));
                         }
                     }
+                        
                     // THIS NEEDS SQUARE RULE
-                    let sub_s = sudoku.size.integer_sqrt();
-                    if left % sudoku.size / sub_s == right % sudoku.size / sub_s
-                        && left / sudoku.size / sub_s == right / sudoku.size / sub_s
-                    {
-                        //in same square
-                        if sudoku.cells[*left].available.contains(&value)
-                            && !sudoku.cells[*left].locked_in
+                    if sudoku.hasSquare {
+                        let sub_s = sudoku.size.integer_sqrt();
+                        if left % sudoku.size / sub_s == right % sudoku.size / sub_s
+                            && left / sudoku.size / sub_s == right / sudoku.size / sub_s
                         {
-                            big_buffer.push((value, *left));
+                            //in same square
+                            if sudoku.cells[*left].available.contains(&value)
+                                && !sudoku.cells[*left].locked_in
+                            {
+                                big_buffer.push((value, *left));
+                            }
+                            if sudoku.cells[*right].available.contains(&value)
+                                && !sudoku.cells[*left].locked_in
+                            {
+                                big_buffer.push((value, *right));
+                            }
                         }
-                        if sudoku.cells[*right].available.contains(&value)
-                            && !sudoku.cells[*left].locked_in
-                        {
-                            big_buffer.push((value, *right));
-                        }
-                    }
+                    }   
                 }
             }
         }
