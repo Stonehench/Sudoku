@@ -1,4 +1,4 @@
-use super::{square_rule, DynRule, Rule};
+use super::{DynRule, Rule};
 use integer_sqrt::IntegerSquareRoot;
 use rand::random;
 use std::fmt::Debug;
@@ -173,7 +173,7 @@ impl Rule for ZipperRule {
                     })
                     .sum();
                 // THIS NEEDS SQUARE RULE, BUT NO PRIOR CALCULATIONS NEEDED SQUARE RULE
-                if sudoku.hasSquare {
+                if sudoku.has_square {
                     let same_square: u16 = rest
                     .into_iter()
                     .map(|(l, r)| {
@@ -228,7 +228,7 @@ impl Rule for ZipperRule {
                     }
                         
                     // THIS NEEDS SQUARE RULE
-                    if sudoku.hasSquare {
+                    if sudoku.has_square {
                         let sub_s = sudoku.size.integer_sqrt();
                         if left % sudoku.size / sub_s == right % sudoku.size / sub_s
                             && left / sudoku.size / sub_s == right / sudoku.size / sub_s

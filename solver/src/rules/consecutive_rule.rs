@@ -1,5 +1,4 @@
 use super::{DynRule, Rule};
-use bumpalo::Bump;
 use rand::random;
 use std::fmt::Debug;
 
@@ -191,6 +190,7 @@ fn consecutive_hidden() {
 
 #[test]
 fn locked_consecutive_candidate() {
+    use bumpalo::Bump;
     let mut buffer = vec![];
     let mut arena = Bump::new();
     /* The test sudoku a 4 x 4
