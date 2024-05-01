@@ -44,8 +44,30 @@ class GameHeader extends StatelessWidget {
                               thumbColor: Color.fromARGB(99, 152, 152, 227),
                               child: SingleChildScrollView(
                                 child: Column(
-                                  children: getRules(rules),
-                                ),
+                                    children: List.from(
+                                  [
+                                    const Column(
+                                      children: [
+                                        Text(
+                                          "Row Rule",
+                                          style: TextStyle(fontSize: 20),
+                                        ),
+                                        Text(
+                                            "For a regular shaped sudoku, any digit must appear exactly once in any row\n")
+                                      ],
+                                    ),
+                                    const Column(
+                                      children: [
+                                        Text(
+                                          "Column Rule",
+                                          style: TextStyle(fontSize: 20),
+                                        ),
+                                        Text(
+                                            "For a regular shaped sudoku, any digit must appear exactly once in any column\n")
+                                      ],
+                                    ),
+                                  ],
+                                )..addAll(getRules(rules))),
                               ),
                             ),
                           ),
