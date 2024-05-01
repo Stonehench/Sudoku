@@ -59,6 +59,7 @@ pub struct Sudoku {
     pub size: usize,
     pub cells: Vec<Cell>,
     pub rules: SmallVec<[DynRule; 8]>,
+    pub has_square: bool,
 }
 
 //Det her er ret fucked, men siden vi skal have den laveste entropy ud af vores priority queue skal den sammenligne omvendt
@@ -159,6 +160,7 @@ impl Sudoku {
         }
 
         rules.sort_by_key(|a| a.priority());
+        let temp: bool = rules.iter().any(|rule| rule.get_name() == SquareRule.get_name());
 
         Self {
             size,
@@ -166,6 +168,7 @@ impl Sudoku {
                 .map(|_| Cell::new_with_range(1..(size as u16 + 1)))
                 .collect(),
             rules: rules.into(),
+            has_square: temp,
         }
     }
     pub fn reset_locked(&mut self) {
@@ -622,6 +625,7 @@ impl Clone for Sudoku {
             size: self.size.clone(),
             cells: self.cells.clone(),
             rules: self.rules.iter().map(|r| r.boxed_clone()).collect(),
+            has_square: self.has_square,
         }
     }
 }
