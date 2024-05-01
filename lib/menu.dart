@@ -34,6 +34,11 @@ class _MenuState extends State<Menu> {
         setState(() {
           sizeText = "Cannot create size 0";
         });
+      } else if (newSize < 4) {
+        size = 4;
+        setState(() {
+          sizeText = "4x4 (Size too small rounding up)";
+        });
       } else {
         int sqrtSize = sqrt(newSize).toInt();
         String rounding;
