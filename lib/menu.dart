@@ -123,6 +123,14 @@ class _MenuState extends State<Menu> {
     0,
   ];
 
+  getSizeFromText() {
+    if (inputTextController.text == "") {
+      return 4;
+    } else {
+      return int.parse(inputTextController.text);
+    }
+  }
+
   Widget sudokuSizeWidget() {
     return ToggleButtons(
       direction: Axis.horizontal,
@@ -132,11 +140,9 @@ class _MenuState extends State<Menu> {
             showSizeBox = true;
             for (int i = 0; i < sizeValueStates.length; i++) {
               sizeValueStates[i] = i == index;
-              if (i == index) {
-                size = sizeValues[index];
-                onTextChange(pow((index + 2), 2).toString());
-              }
             }
+            size = 4;
+            onTextChange(getSizeFromText().toString());
           } else {
             showSizeBox = false;
             for (int i = 0; i < sizeValueStates.length; i++) {
