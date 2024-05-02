@@ -1,6 +1,7 @@
 use std::{
     cmp::Ordering,
     fmt::{Display, Write},
+    mem::size_of,
     num::ParseIntError,
     ops::{Deref, Range},
     str::FromStr,
@@ -625,8 +626,6 @@ impl Clone for Sudoku {
         }
     }
 }
-
-
 
 //########################### TEST ###############################
 #[test]
