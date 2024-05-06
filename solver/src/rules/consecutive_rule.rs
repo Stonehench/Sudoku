@@ -1,5 +1,4 @@
 use super::{DynRule, Rule};
-use bumpalo::Bump;
 use rand::random;
 use std::fmt::Debug;
 
@@ -68,40 +67,6 @@ impl Rule for ConsecutiveRule {
         None
     }
 
-    fn locked_candidate<'buf>(
-        &self,
-        sudoku: &Sudoku,
-        buffer: &'buf mut Vec<usize>,
-        _arena: &mut Bump,
-    ) -> Option<(u16, &'buf [usize])> {
-        buffer.clear();
-
-        for value in 1..(sudoku.size + 1) as u16 {
-            for (left, right) in &self.consecutive_clue {
-                if !sudoku.cells[*left].locked_in
-                    && sudoku.cells[*left].available.contains(&value)
-                    && !(sudoku.cells[*right].available.contains(&(value + 1))
-                        || sudoku.cells[*right].available.contains(&(value - 1)))
-                {
-                    buffer.push(*left);
-                }
-
-                if !sudoku.cells[*right].locked_in
-                    && sudoku.cells[*right].available.contains(&value)
-                    && !(sudoku.cells[*left].available.contains(&(value + 1))
-                        || sudoku.cells[*left].available.contains(&(value - 1)))
-                {
-                    buffer.push(*right);
-                }
-            }
-
-            if !buffer.is_empty() {
-                return Some((value, buffer));
-            }
-        }
-
-        None
-    }
     fn multi_remove<'buf>(
         &self,
         sudoku: &Sudoku,
@@ -128,7 +93,6 @@ impl Rule for ConsecutiveRule {
                 }
             }
         }
-
         big_buffer
     }
 
@@ -226,6 +190,7 @@ fn consecutive_hidden() {
 
 #[test]
 fn locked_consecutive_candidate() {
+    use bumpalo::Bump;
     let mut buffer = vec![];
     let mut arena = Bump::new();
     /* The test sudoku a 4 x 4
