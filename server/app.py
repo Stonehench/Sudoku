@@ -12,8 +12,8 @@ try:
     pool = mariadb.ConnectionPool(
         host="jensogkarsten.site",
         port=3306,
-        user="02170",
-        password="123kage",
+        user="dtu",
+        password="kage123",
         database="Scoreboard",
         pool_name="scoreboard-pool",
         pool_size=20,
