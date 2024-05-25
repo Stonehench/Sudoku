@@ -19,16 +19,6 @@ try:
         pool_size=20,
         pool_validation_interval=250,
     )
-
-    # conn = mariadb.connect(
-    #     user="02170",
-    #     password="123kage",
-    #     host="jensogkarsten.site",
-    #     port=3306,
-    #     database="Scoreboard",
-    # )
-    # conn.autocommit = True
-    # conn.auto_reconnect = True
 except mariadb.Error as e:
     print(f"Error connecting to MariaDB Platform: {e}")
     sys.exit(1)

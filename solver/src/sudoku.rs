@@ -1,7 +1,6 @@
 use std::{
     cmp::Ordering,
     fmt::{Display, Write},
-    mem::size_of,
     num::ParseIntError,
     ops::{Deref, Range},
     str::FromStr,
@@ -161,7 +160,9 @@ impl Sudoku {
         }
 
         rules.sort_by_key(|a| a.priority());
-        let temp: bool = rules.iter().any(|rule| rule.get_name() == SquareRule.get_name());
+        let temp: bool = rules
+            .iter()
+            .any(|rule| rule.get_name() == SquareRule.get_name());
 
         Self {
             size,
@@ -445,7 +446,7 @@ impl Sudoku {
             rule.create_clue(&sudoku.cells, size);
             extra_clues += rule.no_of_clues();
         }
-
+        #[cfg(debug_assertions)]
         println!("{extra_clues}");
         let remove_limit = difficulty.get_removes(size, extra_clues);
 

@@ -448,6 +448,9 @@ Future<(String, bool?, String)?> getDaily() async {
     bool? dailySolved = jsonBody["solved"];
     String puzzle = jsonBody["puzzle"];
     String dato = jsonBody["dato"];
+
+    print("Puzzle is: {$puzzle}");
+
     return (puzzle, dailySolved, dato);
   } catch (e) {
     return null;
