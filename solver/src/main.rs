@@ -30,7 +30,7 @@ fn main() {
             Difficulty::Medium
         };
 
-        let (sudoku,_) =
+        let (sudoku, _) =
             Sudoku::generate_with_size(9, vec![SquareRule::new()], None, difficulty).unwrap();
 
         println!("SquareRule\n");

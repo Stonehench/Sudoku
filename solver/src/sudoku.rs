@@ -273,7 +273,7 @@ impl Sudoku {
                     self.cells = cells;
                     pri_queue = new_pri_queue;
                 }
-                1 => self.update_cell(
+                1 => self.update_cell( //naked singles
                     self.cells[index].available[0],
                     index,
                     &mut pri_queue,
