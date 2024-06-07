@@ -472,7 +472,7 @@ impl Sudoku {
             }
 
             if available_to_remove.len() == 0 {
-                println!("Removed everything");
+                //println!("Removed everything");
                 break;
             }
             let removed_index =

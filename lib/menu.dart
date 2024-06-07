@@ -297,6 +297,9 @@ class _MenuState extends State<Menu> {
                       onChanged: onTextChange,
                       controller: inputTextController,
                       keyboardType: TextInputType.number,
+                      onTapOutside: (event) {
+                        FocusManager.instance.primaryFocus?.unfocus();
+                      },
                       inputFormatters: <TextInputFormatter>[
                         FilteringTextInputFormatter.digitsOnly
                       ],
