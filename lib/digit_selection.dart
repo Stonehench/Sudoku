@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:sudoku/game_state.dart';
+import 'dart:math';
 
 class DigitSelect extends StatefulWidget {
   final Object? size;
@@ -7,6 +8,10 @@ class DigitSelect extends StatefulWidget {
 
   @override
   State<DigitSelect> createState() => _DigitSelectState();
+}
+
+spaceBetween(int number) {
+  return 38.0 + 12 * (log(number) / ln10).floor();
 }
 
 class _DigitSelectState extends State<DigitSelect> {
@@ -19,8 +24,6 @@ class _DigitSelectState extends State<DigitSelect> {
       width: 340,
       child: Container(
         alignment: Alignment.center,
-        //color: const Color.fromARGB(255, 178, 195, 233),
-
         child: ListenableBuilder(
           listenable: GameState.getInstance(),
           builder: (cxt, _) => ListView.builder(
@@ -40,7 +43,7 @@ class _DigitSelectState extends State<DigitSelect> {
                       : Colors.transparent,
                   alignment: Alignment.center,
                   height: 38,
-                  width: 38,
+                  width: spaceBetween(index + 1),
                   child: Text(
                     (index + 1).toString(),
                     style: TextStyle(
