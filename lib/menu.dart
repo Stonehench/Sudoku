@@ -247,6 +247,13 @@ class _MenuState extends State<Menu> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
+            Text(
+              "Sudoku",
+              style: TextStyle(
+                  fontSize: 50,
+                  color: Theme.of(context).buttonTheme.colorScheme!.primary),
+            ),
+            const SizedBox(height: 10),
             ListenableBuilder(
               listenable: accState,
               builder: (context, _) {
