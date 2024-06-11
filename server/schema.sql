@@ -2,7 +2,7 @@ create table users(
     user_id char(36) primary key,
     username varchar(20) unique,
     password varchar(32),
-    passsalt varchar(32) default md5(uuid())
+    passsalt varchar(32)
 )
 
 create table scores(
