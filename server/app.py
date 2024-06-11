@@ -5,6 +5,7 @@ import sys
 import uuid
 import subprocess
 import datetime
+import hashlib
 from datetime import date
 
 # Connect to MariaDB Platform
@@ -150,7 +151,7 @@ def login():
     conn.auto_reconnect = True
     cursor = conn.cursor()
     cursor.execute(
-        "select user_id from users where username = ? and password = ?",
+        "select user_id from users where username = ? and password = md5(concat(passsalt,?))",
         [username, password],
     )
 
@@ -165,13 +166,17 @@ def login():
 @app.route("/register", methods=["POST"])
 def register():
     user_id = str(uuid.uuid4())
+    salt_prehash = str(uuid.uuid4())
     username = request.form["username"]
     password = request.form["password"]
 
     conn = pool.get_connection()
     conn.auto_reconnect = True
     cursor = conn.cursor()
-    cursor.execute("insert into users values (?,?,?)", [user_id, username, password])
+    cursor.execute(
+        "insert into users values (?,?,md5(concat(md5(?),?)),md5(?))",
+        [user_id, username, salt_prehash, password, salt_prehash],
+    )
 
     conn.commit()
     conn.close()
@@ -211,7 +216,8 @@ def change_passw():
     conn.auto_reconnect = True
     cursor = conn.cursor()
     cursor.execute(
-        "update users set password = ? where user_id = ?", [new_passwd, user_id]
+        "update users set password = md5(concat(passsalt,?)) where user_id = ?",
+        [new_passwd, user_id],
     )
     conn.commit()
     conn.close()
