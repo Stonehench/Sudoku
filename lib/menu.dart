@@ -1,7 +1,6 @@
 import 'dart:convert';
 
 import 'package:flutter/material.dart';
-import 'package:flutter/widgets.dart';
 import 'dart:math';
 import 'package:http/http.dart' as http;
 import 'package:flutter/services.dart';
@@ -168,7 +167,7 @@ class _MenuState extends State<Menu> {
       ),
       isSelected: sizeValueStates,
       children: sizeValues
-          .map((e) => e == 0 ? Icon(Icons.add) : Text(e.toString()))
+          .map((e) => e == 0 ? const Icon(Icons.add) : Text(e.toString()))
           .toList(),
     );
   }

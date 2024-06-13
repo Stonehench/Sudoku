@@ -41,7 +41,7 @@ class GameHeader extends StatelessWidget {
                             height: 300,
                             child: RawScrollbar(
                               thumbVisibility: true,
-                              thumbColor: Color.fromARGB(99, 152, 152, 227),
+                              thumbColor: const Color.fromARGB(99, 152, 152, 227),
                               child: SingleChildScrollView(
                                 child: Column(
                                     children: List.from(

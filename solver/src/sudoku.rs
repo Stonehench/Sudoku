@@ -634,20 +634,6 @@ impl Clone for Sudoku {
 
 //########################### TEST ###############################
 #[test]
-fn generate_sudoku_zipper() {
-    let (sudoku, _) = Sudoku::generate_with_size(
-        4,
-        vec![
-            super::rules::square_rule::SquareRule::new(),
-            crate::rules::zipper_rule::ZipperRule::new(vec![]),
-        ],
-        None,
-        Difficulty::Expert,
-    )
-    .unwrap();
-    println!("{sudoku}");
-}
-#[test]
 fn read_file_test() {
     let file_str = std::fs::read_to_string("./sudokuBenchmark").unwrap();
     let sudoku: Sudoku = file_str.parse().unwrap();
@@ -849,7 +835,7 @@ fn generate_sudoku() {
         None,
         Difficulty::Expert,
     )
-    .unwrap();
+    .expect("Failed to generate sudoku");
 
     println!("{sudoku} at {:?}", timer.elapsed());
 }
@@ -866,7 +852,7 @@ fn generate_thermometer_sudoku() {
         None,
         Difficulty::Expert,
     )
-    .unwrap();
+    .expect("Failed to generate sudoku");
 
     println!("{sudoku} at {:?}", timer.elapsed());
 }
@@ -884,7 +870,58 @@ fn generate_sudoku_x() {
         None,
         Difficulty::Expert,
     )
-    .unwrap();
+    .expect("Failed to generate sudoku");
+
+    println!("{sudoku} at {:?}", timer.elapsed());
+}
+
+#[test]
+fn generate_sudoku_zipper() {
+    let (sudoku, _) = Sudoku::generate_with_size(
+        4,
+        vec![
+            super::rules::square_rule::SquareRule::new(),
+            crate::rules::zipper_rule::ZipperRule::new(vec![]),
+        ],
+        None,
+        Difficulty::Expert,
+    )
+    .expect("Failed to generate sudoku");
+    println!("{sudoku}");
+}
+
+#[test]
+fn generate_sudoku_parity() {
+    let timer = std::time::Instant::now();
+    let (sudoku, _) = Sudoku::generate_with_size(
+        4,
+        vec![
+            super::rules::square_rule::SquareRule::new(),
+            crate::rules::knight_rule::KnightRule::new(),
+            crate::rules::parity_rule::ParityRule::new(vec![(0, 1), (4, 5), (4, 8), (8, 9)]),
+        ],
+        None,
+        Difficulty::Expert,
+    )
+    .expect("Failed to generate sudoku");
+
+    println!("{sudoku} at {:?}", timer.elapsed());
+}
+
+#[test]
+fn generate_sudoku_consecutive() {
+    let timer = std::time::Instant::now();
+    let (sudoku, _) = Sudoku::generate_with_size(
+        4,
+        vec![
+            super::rules::square_rule::SquareRule::new(),
+            crate::rules::knight_rule::KnightRule::new(),
+            crate::rules::consecutive_rule::ConsecutiveRule::new(vec![(0, 1), (4, 5), (4, 8), (8, 9)]),
+        ],
+        None,
+        Difficulty::Expert,
+    )
+    .expect("Failed to generate sudoku");
 
     println!("{sudoku} at {:?}", timer.elapsed());
 }
@@ -898,3 +935,4 @@ fn knights_xsudoku() {
 
     println!("{sudoku}");
 }
+
