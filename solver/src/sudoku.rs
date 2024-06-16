@@ -567,11 +567,11 @@ impl Sudoku {
         loop {
             let pretimer = Instant::now();
             let shared_caches = Arc::new((good_cache.clone(), bad_cache.clone()));
-            /*
+            
             if timer.elapsed().as_secs() > 20 {
                 println!("OUT OF GEN TIME!!");
                 break;
-            } */
+            }
 
             if count >= remove_limit {
                 break;

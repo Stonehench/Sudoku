@@ -170,7 +170,7 @@ pub fn difficulty_values(size: usize, difficulty: String) -> Option<usize> {
 pub fn set_from_str(sudoku: String) {
     let sudoku: Sudoku = sudoku.parse().unwrap();
     let mut solved = sudoku.clone();
-    solved.solve(None, None).unwrap();
+    solved.solve(None, None, None).unwrap();
 
     let mut parity = vec![];
     let mut zippers = vec![];
