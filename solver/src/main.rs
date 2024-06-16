@@ -1,5 +1,7 @@
 use std::{
-    env::{self, args}, fs, time::Instant
+    env::{self, args},
+    fs,
+    time::Instant,
 };
 
 use rules::square_rule::SquareRule;
@@ -63,13 +65,20 @@ fn main() {
         }
     };
 
+    const N: u32 = 50;
+
     let post_parse = pre_parse.elapsed();
 
     let pre_solve = Instant::now();
 
+    for _ in 0..N {
+        let mut sud = sudoku.clone();
+        sud.solve(None, None,None).unwrap();
+    }
+
     sudoku.solve(None, None,None).unwrap();
 
-    let solve_time = pre_solve.elapsed();
+    let solve_time = pre_solve.elapsed() / (N + 1);
 
     println!("Solution:{sudoku}\n");
     println!("Read file in {post_read:?}");
