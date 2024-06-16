@@ -5,7 +5,6 @@ import sys
 import uuid
 import subprocess
 import datetime
-import hashlib
 from datetime import date
 
 # Connect to MariaDB Platform
