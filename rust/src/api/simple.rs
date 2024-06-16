@@ -40,7 +40,7 @@ pub fn generate_with_size(
         }
     });
 
-    progress(0);
+    let timer = Instant::now();
 
     let Ok((mut sudoku, solved)) =
         Sudoku::generate_with_size(size, rules, Some(progress), difficulty)
@@ -49,21 +49,10 @@ pub fn generate_with_size(
         return None;
     };
 
-    for (index, cell) in sudoku.cells.iter().enumerate() {
-        if cell.available.len() == 1 {
-            print!("{}", cell.available[0]);
-        } else {
-            print!("0");
-        }
-        print!(",");
-        if index % sudoku.size == 0 {
-            println!("");
-        }
-    }
-    let timer = Instant::now();
+    println!("Generated in {:?}", timer.elapsed());
 
     let mut state = get_state();
-    println!("Got state at {:?}", timer.elapsed());
+
     state.x_positions = vec![];
     state.parity_positions = vec![];
     state.zipper_positions = vec![];
@@ -112,9 +101,30 @@ pub fn generate_with_size(
         str_buffer.push(',');
     }
 
-    println!("Serialized solution {:?}", timer.elapsed());
+    println!("");
+    for (index, rule) in sudoku.rules.iter().enumerate() {
+        if rule.print_self() {
+            if index != sudoku.rules.len() - 1 {
+                print!(" | ");
+            }
+        }
+    }
 
-    //println!("Sending: {str_buffer}");
+    println!("\n");
+    for (index, cell) in sudoku.cells.iter().enumerate() {
+        if index % sudoku.size == 0 && index != 0 {
+            println!("");
+        }
+        if cell.available.len() == 1 {
+            print!("{}", cell.available[0]);
+        } else {
+            print!("0");
+        }
+        if index != sudoku.cells.len() - 1 {
+            print!(",");
+        }
+    }
+    println!("");
 
     state.current_sudoku = Some((sudoku, solved));
     println!(
@@ -170,7 +180,7 @@ pub fn difficulty_values(size: usize, difficulty: String) -> Option<usize> {
 pub fn set_from_str(sudoku: String) {
     let sudoku: Sudoku = sudoku.parse().unwrap();
     let mut solved = sudoku.clone();
-    solved.solve(None, None).unwrap();
+    solved.solve(None, None, None).unwrap();
 
     let mut parity = vec![];
     let mut zippers = vec![];

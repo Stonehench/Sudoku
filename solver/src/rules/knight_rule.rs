@@ -82,6 +82,10 @@ impl Rule for KnightRule {
     fn get_name(&self) -> &'static str {
         "KnightRule"
     }
+    fn print_self(&self) -> bool {
+        print!("KnightsMove");
+        true
+    }
 }
 
 //########################### TEST ###############################

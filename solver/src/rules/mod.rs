@@ -1,12 +1,13 @@
-use crate::{rules::diagonal_rule::DiagonalRule, sudoku::Cell};
-use crate::rules::knight_rule::KnightRule;
-use crate::rules::square_rule::SquareRule;
-use crate::rules::x_rule::XRule;
-use crate::rules::parity_rule::ParityRule;
-use crate::rules::thermometer_rule::ThermometerRule;
 use crate::rules::consecutive_rule::ConsecutiveRule;
+use crate::rules::knight_rule::KnightRule;
+use crate::rules::parity_rule::ParityRule;
+use crate::rules::square_rule::SquareRule;
+use crate::rules::thermometer_rule::ThermometerRule;
+use crate::rules::x_rule::XRule;
 use crate::rules::zipper_rule::ZipperRule;
+use crate::{rules::diagonal_rule::DiagonalRule, sudoku::Cell};
 use bumpalo::Bump;
+use std::hash::Hash;
 use std::{
     fmt::Debug,
     ops::{Deref, DerefMut},
@@ -18,15 +19,15 @@ use crate::sudoku::Sudoku;
 //use self::zipper_rule::ZipperRule;
 
 pub mod column_rule;
+pub mod consecutive_rule;
 pub mod diagonal_rule;
 pub mod knight_rule;
+pub mod parity_rule;
 pub mod row_rule;
 pub mod square_rule;
+pub mod thermometer_rule;
 pub mod x_rule;
 pub mod zipper_rule;
-pub mod consecutive_rule;
-pub mod parity_rule;
-pub mod thermometer_rule;
 
 pub trait Rule: Debug {
     fn updates<'buf>(
@@ -81,8 +82,8 @@ pub trait Rule: Debug {
     fn to_thermometer_rule(&mut self) -> Option<&mut ThermometerRule> {
         None
     }
-    
-    fn to_consecutive_rule (&mut self) -> Option<&mut ConsecutiveRule> {
+
+    fn to_consecutive_rule(&mut self) -> Option<&mut ConsecutiveRule> {
         None
     }
 
@@ -100,7 +101,7 @@ pub trait Rule: Debug {
         &self,
         _sudoku: &Sudoku,
         big_buffer: &'buf mut Vec<(u16, usize)>,
-    ) ->  &'buf [(u16, usize)] {
+    ) -> &'buf [(u16, usize)] {
         big_buffer.clear();
         return big_buffer;
     }
@@ -108,15 +109,26 @@ pub trait Rule: Debug {
     fn finished_legal(&self, _sudoku: &Sudoku) -> bool {
         true
     }
+
+    fn print_self(&self) -> bool {
+        false
+    }
 }
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
 pub enum ExecutionPriority {
     High = 0,
-    Medium = 1,Low = 2,
+    Medium = 1,
+    Low = 2,
 }
 
 #[derive(Debug)]
 pub struct DynRule(Box<dyn Rule + Send>);
+
+impl Hash for DynRule {
+    fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
+        self.get_name().hash(state);
+    }
+}
 
 impl Clone for DynRule {
     fn clone(&self) -> Self {
@@ -161,12 +173,16 @@ impl FromStr for DynRule {
                             })
                             .collect::<Result<_, _>>()?,
                     }))),
-                    Some("ThermometerRule") =>{ 
-                        Ok(DynRule(Box::new(ThermometerRule {
-                        themometer_clue: vec![] // TODO!!!
-                    })))},
-                    Some("ZipperRule") =>{ 
-                        Ok(DynRule(Box::new(ZipperRule {
+                    Some("ThermometerRule") => Ok(DynRule(Box::new(ThermometerRule {
+                        themometer_clue: rule_params
+                            .map(|ther| {
+                                ther.split(',')
+                                    .map(|index| index.parse().map_err(|e| format!("{e:?}")))
+                                    .collect::<Result<Vec<_>, _>>()
+                            })
+                            .collect::<Result<Vec<Vec<usize>>, _>>()?,
+                    }))),
+                    Some("ZipperRule") => Ok(DynRule(Box::new(ZipperRule {
                         zipper_clue: rule_params
                             .map(|s| {
                                 let Some((center, rest)) = s.split_once(',') else {
@@ -174,23 +190,24 @@ impl FromStr for DynRule {
                                 };
 
                                 let center = center.parse().map_err(|e| format!("{e:?}"))?;
-                                let indecies = rest.split(',').map(str::trim); 
+                                let indecies = rest.split(',').map(str::trim);
 
-                                let rest_resolved = indecies.map(|s| {
-                                    let Some((l, r)) = s.split_once('+') else {
-                                        return Err(format!("Failed to split {s} on +"));
-                                    };
-                                    let l = l.parse().map_err(|e| format!("{e:?}"))?;
-                                    let r = r.parse().map_err(|e| format!("{e:?}"))?;
+                                let rest_resolved = indecies
+                                    .map(|s| {
+                                        let Some((l, r)) = s.split_once('+') else {
+                                            return Err(format!("Failed to split {s} on +"));
+                                        };
+                                        let l = l.parse().map_err(|e| format!("{e:?}"))?;
+                                        let r = r.parse().map_err(|e| format!("{e:?}"))?;
 
-                                    Ok((l, r))
-                                })
-                                .collect::<Result<_, _>>()?;
+                                        Ok((l, r))
+                                    })
+                                    .collect::<Result<_, _>>()?;
 
                                 Ok((center, rest_resolved))
                             })
                             .collect::<Result<_, _>>()?,
-                    })))},
+                    }))),
                     Some("ParityRule") => Ok(DynRule(Box::new(ParityRule {
                         parity_clue: rule_params
                             .map(|s| {
@@ -203,7 +220,7 @@ impl FromStr for DynRule {
                                 Ok((l, r))
                             })
                             .collect::<Result<_, _>>()?,
-                    }))), 
+                    }))),
                     Some("ConsecutiveRule") => Ok(DynRule(Box::new(ConsecutiveRule {
                         consecutive_clue: rule_params
                             .map(|s| {

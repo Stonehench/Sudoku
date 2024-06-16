@@ -175,22 +175,22 @@ impl Rule for ZipperRule {
                 // THIS NEEDS SQUARE RULE, BUT NO PRIOR CALCULATIONS NEEDED SQUARE RULE
                 if sudoku.has_square {
                     let same_square: u16 = rest
-                    .into_iter()
-                    .map(|(l, r)| {
-                        let mut val = 0;
-                        if l / sudoku.size / sub_s == center / sudoku.size / sub_s
-                            && l % sudoku.size / sub_s == center % sudoku.size / sub_s
-                        {
-                            val = val + 1;
-                        }
-                        if r / sudoku.size / sub_s == center / sudoku.size / sub_s
-                            && r % sudoku.size / sub_s == center % sudoku.size / sub_s
-                        {
-                            val = val + 1;
-                        }
-                        val
-                    })
-                    .sum();
+                        .into_iter()
+                        .map(|(l, r)| {
+                            let mut val = 0;
+                            if l / sudoku.size / sub_s == center / sudoku.size / sub_s
+                                && l % sudoku.size / sub_s == center % sudoku.size / sub_s
+                            {
+                                val = val + 1;
+                            }
+                            if r / sudoku.size / sub_s == center / sudoku.size / sub_s
+                                && r % sudoku.size / sub_s == center % sudoku.size / sub_s
+                            {
+                                val = val + 1;
+                            }
+                            val
+                        })
+                        .sum();
 
                     if !sudoku.cells[*center].locked_in
                         && sudoku.cells[*center].available.contains(&value)
@@ -202,7 +202,7 @@ impl Rule for ZipperRule {
                             || (value <= same_row || value <= same_column || value <= same_square))
                     {
                         big_buffer.push((value, *center));
-                }
+                    }
                 }
             }
         }
@@ -226,7 +226,7 @@ impl Rule for ZipperRule {
                             big_buffer.push((value, *right));
                         }
                     }
-                        
+
                     // THIS NEEDS SQUARE RULE
                     if sudoku.has_square {
                         let sub_s = sudoku.size.integer_sqrt();
@@ -245,7 +245,7 @@ impl Rule for ZipperRule {
                                 big_buffer.push((value, *right));
                             }
                         }
-                    }   
+                    }
                 }
             }
         }
@@ -268,7 +268,7 @@ impl Rule for ZipperRule {
             let center_cell_value = &cells[random_index].available[0];
             if *center_cell_value == 1 {
                 // the value at the center of a zipper can never be 1
-                continue
+                continue;
             }
             let mut zipper_arms: Vec<(usize, usize)> = vec![];
 
@@ -347,9 +347,7 @@ impl Rule for ZipperRule {
                             right_surrounding.push(k - size - 1);
                         }
                     }
-                    if k < size * size - size
-                        && k % size != (size - 1)
-                    {
+                    if k < size * size - size && k % size != (size - 1) {
                         //below right
                         if k == left_index {
                             left_surrounding.push(k + size + 1);
@@ -375,8 +373,7 @@ impl Rule for ZipperRule {
                         if i_in_l != i_in_r
                             && !seen.contains(i_in_l)
                             && !seen.contains(i_in_r)
-                            && cells[*i_in_l].available[0]
-                                + cells[*i_in_r].available[0]
+                            && cells[*i_in_l].available[0] + cells[*i_in_r].available[0]
                                 == *center_cell_value
                         {
                             seen.push(*i_in_l);
@@ -420,6 +417,21 @@ impl Rule for ZipperRule {
 
     fn no_of_clues(&self) -> usize {
         return self.zipper_clue.len();
+    }
+
+    fn print_self(&self) -> bool {
+        print!("ZipperRule");
+        for (center, pairlist) in &self.zipper_clue {
+            print!(" ;{center},");
+
+            for (index, (left, right)) in pairlist.iter().enumerate() {
+                print!("{left}+{right}");
+                if index != pairlist.len() - 1 {
+                    print!(",");
+                }
+            }
+        }
+        true
     }
 }
 

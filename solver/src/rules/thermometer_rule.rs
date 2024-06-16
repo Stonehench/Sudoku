@@ -152,87 +152,84 @@ impl Rule for ThermometerRule {
 
     fn create_clue(&mut self, cells: &Vec<crate::sudoku::Cell>, size: usize) {
         let tries = size * 3;
-            let mut seen = vec![];
+        let mut seen = vec![];
 
-            'themometers: for _ in 0..tries {
-                let mut random_index = random::<usize>() % (size * size);
-                while seen.contains(&random_index) && seen.len() < (size * size) {
-                    random_index = random::<usize>() % (size * size);
-                }
-
-                let mut current_themometer: Vec<usize> = vec![];
-                let mut searching = true;
-                let mut surrounding: Vec<usize> = vec![];
-                let mut current_index: usize = random_index;
-                let mut current_value = cells[random_index].available[0];
-                current_themometer.push(current_index);
-
-                if current_value == size as u16 {
-                    // The value at the bottom of a themometer can not be the highest value
-                    continue 'themometers;
-                }
-
-                'searching: while searching {
-                    surrounding.clear();
-
-                    if current_index >= size {
-                        //above
-                        surrounding.push(current_index - size);
-                    }
-                    if !(current_index % size == 0) {
-                        //left
-                        surrounding.push(current_index - 1);
-                    }
-                    if current_index % size != (size - 1) {
-                        //right
-                        surrounding.push(current_index + 1);
-                    }
-                    if current_index < size * size - size {
-                        //below
-                        surrounding.push(current_index + size);
-                    }
-                    if current_index >= size && current_index % size != (size - 1) {
-                        //above right
-                        surrounding.push(current_index - size + 1);
-                    }
-                    if current_index < size * size - size && !(current_index % size == 0) {
-                        //below left
-                        surrounding.push(current_index + size - 1);
-                    }
-                    if current_index >= size && !(current_index % size == 0) {
-                        //above left
-                        surrounding.push(current_index - size - 1);
-                    }
-                    if current_index < size * size - size
-                        && current_index % size != (size - 1)
-                    {
-                        //below right
-                        surrounding.push(current_index + size + 1);
-                    }
-
-                    surrounding.retain(|e| cells[*e].available[0] > current_value);
-                    surrounding.sort_by(|a , b| cells[*a].available[0].cmp(&cells[*b].available[0]));
-                    
-                    if !surrounding.is_empty() && !seen.contains(&surrounding[0])
-                        && cells[surrounding[0]].available[0] > current_value
-                    {
-                        
-                        seen.push(surrounding[0]);
-                        current_themometer.push(surrounding[0]);
-                        current_index = surrounding[0];
-                        current_value = cells[surrounding[0]].available[0];
-
-                        continue 'searching; 
-                    } 
-
-                    searching = false;
-
-                }
-                if current_themometer.len() > 1 {
-                    seen.push(random_index);
-                    self.themometer_clue.push(current_themometer);
-                }
+        'themometers: for _ in 0..tries {
+            let mut random_index = random::<usize>() % (size * size);
+            while seen.contains(&random_index) && seen.len() < (size * size) {
+                random_index = random::<usize>() % (size * size);
             }
+
+            let mut current_themometer: Vec<usize> = vec![];
+            let mut searching = true;
+            let mut surrounding: Vec<usize> = vec![];
+            let mut current_index: usize = random_index;
+            let mut current_value = cells[random_index].available[0];
+            current_themometer.push(current_index);
+
+            if current_value == size as u16 {
+                // The value at the bottom of a themometer can not be the highest value
+                continue 'themometers;
+            }
+
+            'searching: while searching {
+                surrounding.clear();
+
+                if current_index >= size {
+                    //above
+                    surrounding.push(current_index - size);
+                }
+                if !(current_index % size == 0) {
+                    //left
+                    surrounding.push(current_index - 1);
+                }
+                if current_index % size != (size - 1) {
+                    //right
+                    surrounding.push(current_index + 1);
+                }
+                if current_index < size * size - size {
+                    //below
+                    surrounding.push(current_index + size);
+                }
+                if current_index >= size && current_index % size != (size - 1) {
+                    //above right
+                    surrounding.push(current_index - size + 1);
+                }
+                if current_index < size * size - size && !(current_index % size == 0) {
+                    //below left
+                    surrounding.push(current_index + size - 1);
+                }
+                if current_index >= size && !(current_index % size == 0) {
+                    //above left
+                    surrounding.push(current_index - size - 1);
+                }
+                if current_index < size * size - size && current_index % size != (size - 1) {
+                    //below right
+                    surrounding.push(current_index + size + 1);
+                }
+
+                surrounding.retain(|e| cells[*e].available[0] > current_value);
+                surrounding.sort_by(|a, b| cells[*a].available[0].cmp(&cells[*b].available[0]));
+
+                if !surrounding.is_empty()
+                    && !seen.contains(&surrounding[0])
+                    && cells[surrounding[0]].available[0] > current_value
+                {
+                    seen.push(surrounding[0]);
+                    current_themometer.push(surrounding[0]);
+                    current_index = surrounding[0];
+                    current_value = cells[surrounding[0]].available[0];
+
+                    continue 'searching;
+                }
+
+                searching = false;
+            }
+            if current_themometer.len() > 1 {
+                seen.push(random_index);
+                self.themometer_clue.push(current_themometer);
+            }
+        }
     }
     fn boxed_clone(&self) -> DynRule {
         DynRule(Box::new(self.clone()))
@@ -248,6 +245,19 @@ impl Rule for ThermometerRule {
 
     fn no_of_clues(&self) -> usize {
         return self.themometer_clue.len();
+    }
+    fn print_self(&self) -> bool {
+        print!("ThermometerRule");
+        for ther in &self.themometer_clue {
+            print!(" ;");
+            for (l_index, index) in ther.iter().enumerate() {
+                print!("{index}");
+                if l_index != ther.len() - 1 {
+                    print!(",");
+                }
+            }
+        }
+        true
     }
 }
 

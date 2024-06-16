@@ -37,10 +37,6 @@ Future<bool> checkLegality(
     RustLib.instance.api
         .checkLegality(position: position, value: value, hint: hint);
 
-/// frb_marker: #[frb(init)]
-Future<void> initApp({dynamic hint}) =>
-    RustLib.instance.api.initApp(hint: hint);
-
 Future<void> closeThreads({dynamic hint}) =>
     RustLib.instance.api.closeThreads(hint: hint);
 

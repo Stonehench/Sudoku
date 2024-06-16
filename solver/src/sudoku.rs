@@ -1,6 +1,8 @@
 use std::{
     cmp::Ordering,
+    collections::HashSet,
     fmt::{Display, Write},
+    hash::{DefaultHasher, Hash, Hasher},
     num::ParseIntError,
     ops::{Deref, Range},
     ptr::copy_nonoverlapping,
@@ -96,6 +98,8 @@ lazy_static! {
 pub struct AllSolutionsContext {
     solutions: Arc<AtomicUsize>,
     pool: ThreadPool,
+    cache: Option<Arc<(HashSet<u64>, HashSet<u64>)>>,
+    write_cache: Arc<Mutex<(HashSet<u64>, HashSet<u64>)>>,
 }
 
 impl AllSolutionsContext {
@@ -110,7 +114,13 @@ impl AllSolutionsContext {
         *GLOBAL_POOL.lock().unwrap() = Some(self.pool);
     }
 
-    fn add_branch(&self, old: &Sudoku, cells: Vec<Cell>, new_queue: PriorityQueue<usize, Entropy>) {
+    fn add_branch(
+        &self,
+        old: &Sudoku,
+        cells: Vec<Cell>,
+        new_queue: PriorityQueue<usize, Entropy>,
+        states: HashSet<u64>,
+    ) {
         let mut new_sudoku = Sudoku {
             cells,
             ..old.clone()
@@ -118,21 +128,37 @@ impl AllSolutionsContext {
         let self_clone = self.clone();
 
         self.pool.execute(move || {
-            let _res = new_sudoku.solve(Some(&self_clone), Some(new_queue));
+            let _res = new_sudoku.solve(Some(&self_clone), Some(new_queue), Some(states));
         });
     }
 
-    fn wait_for_solutions(self) -> usize {
+    fn wait_for_solutions(self) -> (usize, HashSet<u64>, HashSet<u64>) {
         self.pool.join();
         let solutions = self.solutions.load(std::sync::atomic::Ordering::SeqCst);
+        let cache_lock = self.write_cache.lock().unwrap();
+        let (good, bad) = cache_lock.clone();
+
+        drop(cache_lock);
         self.return_pool();
-        solutions
+        (solutions, good, bad)
     }
 
+    fn new_with_cache(cache: Arc<(HashSet<u64>, HashSet<u64>)>) -> Self {
+        Self {
+            solutions: Arc::new(0.into()),
+            pool: Self::get_pool(),
+            cache: Some(cache),
+            write_cache: Arc::new(Mutex::new((HashSet::new(), HashSet::new()))),
+        }
+    }
+
+    #[allow(unused)]
     fn new() -> Self {
         Self {
             solutions: Arc::new(0.into()),
             pool: Self::get_pool(),
+            cache: None,
+            write_cache: Arc::new(Mutex::new((HashSet::new(), HashSet::new()))),
         }
     }
 }
@@ -235,6 +261,7 @@ impl Sudoku {
         &mut self,
         ctx: Option<&AllSolutionsContext>,
         pri_queue: Option<PriorityQueue<usize, Entropy>>,
+        new_states: Option<HashSet<u64>>,
     ) -> Result<(), SudokuSolveError> {
         let has_square = self
             .rules
@@ -257,6 +284,21 @@ impl Sudoku {
         let mut ret_buffer = vec![];
         let mut big_buffer = vec![];
         let mut arena = Self::get_arena();
+        let mut state_buffer = Vec::with_capacity(self.cells.len());
+
+        let mut new_states = if let Some(new_states) = new_states {
+            new_states
+        } else {
+            HashSet::new()
+        };
+
+        /*
+        if let Some(ctx) = ctx {
+            if let Some((good, bad)) = ctx.cache.as_deref() {
+                println!("Good: {}, Bad: {}", good.len(), bad.len());
+            }
+        }
+         */
 
         'main: while let Some((index, entropy)) = pri_queue.pop() {
             assert_eq!(
@@ -268,6 +310,14 @@ impl Sudoku {
                 0 => {
                     //Der er ingen løsning på den nuværende branch. Derfor popper vi en branch og løser den i stedet
                     let Some((cells, new_pri_queue)) = branch_stack.pop() else {
+                        if let Some(ctx) = ctx {
+                            let mut lock = ctx.write_cache.lock().unwrap();
+
+                            for state in new_states {
+                                lock.1.insert(state);
+                            }
+                        }
+                        Self::free_arena(arena);
                         return Err(SudokuSolveError::UnsolveableError);
                     };
 
@@ -369,6 +419,37 @@ impl Sudoku {
                         }
                     }
 
+                    //Check if current state is in cache, and exit if it is
+                    if let Some(ctx) = ctx {
+                        if let Some((good, bad)) = ctx.cache.as_deref() {
+                            let hash = self.state_hash(&mut state_buffer);
+
+                            if good.contains(&hash) {
+                                ctx.solutions
+                                    .fetch_add(1, std::sync::atomic::Ordering::SeqCst);
+
+                                let mut lock = ctx.write_cache.lock().unwrap();
+                                lock.0 = new_states;
+
+                                //println!("Hit good solve cache");
+                                Self::free_arena(arena);
+                                return Ok(());
+                            } else if bad.contains(&hash) {
+                                let mut lock = ctx.write_cache.lock().unwrap();
+
+                                for state in new_states {
+                                    lock.1.insert(state);
+                                }
+
+                                //println!("Hit bad solve cache");
+                                Self::free_arena(arena);
+                                return Err(SudokuSolveError::UnsolveableError);
+                            } else {
+                                new_states.insert(hash);
+                            }
+                        }
+                    }
+
                     //Der er flere muligheder for hvad der kan vælges. Derfor pushes state på branch stacken og der vælges en mulighed
                     //Vælg random
 
@@ -387,18 +468,26 @@ impl Sudoku {
                     cloned_queue.push(index, Entropy(entropy.0 - 1));
 
                     if let Some(ctx) = ctx {
-                        //#[cfg(not(debug_assertions))]
                         if ctx.solutions.load(std::sync::atomic::Ordering::Relaxed) >= 2 {
                             return Err(SudokuSolveError::AlreadyManySolutions);
                         }
 
-                        ctx.add_branch(self, cloned_cells, cloned_queue);
+                        ctx.add_branch(self, cloned_cells, cloned_queue, new_states.clone());
                     } else {
                         branch_stack.push((cloned_cells, cloned_queue));
                     }
 
                     if let Err(_) = self.update_cell(n, index, &mut pri_queue, &mut ret_buffer) {
                         let Some((cells, new_pri_queue)) = branch_stack.pop() else {
+                            if let Some(ctx) = ctx {
+                                let mut lock = ctx.write_cache.lock().unwrap();
+
+                                for state in new_states {
+                                    lock.1.insert(state);
+                                }
+                            }
+
+                            Self::free_arena(arena);
                             return Err(SudokuSolveError::UnsolveableError);
                         };
 
@@ -413,6 +502,15 @@ impl Sudoku {
                 if !self.rules.iter().all(|r| r.finished_legal(&self)) {
                     //Der er ingen løsning på den nuværende branch. Derfor popper vi en branch og løser den i stedet
                     let Some((cells, new_pri_queue)) = branch_stack.pop() else {
+                        if let Some(ctx) = ctx {
+                            let mut lock = ctx.write_cache.lock().unwrap();
+
+                            for state in new_states {
+                                lock.1.insert(state);
+                            }
+                        }
+
+                        Self::free_arena(arena);
                         return Err(SudokuSolveError::UnsolveableError);
                     };
 
@@ -425,6 +523,9 @@ impl Sudoku {
         Self::free_arena(arena);
 
         if let Some(ctx) = ctx {
+            let mut lock = ctx.write_cache.lock().unwrap();
+            lock.0 = new_states;
+
             ctx.solutions
                 .fetch_add(1, std::sync::atomic::Ordering::SeqCst);
         }
@@ -440,7 +541,7 @@ impl Sudoku {
     ) -> Result<(Self, Self), SudokuSolveError> {
         let mut sudoku = Sudoku::new(size, rules);
 
-        sudoku.solve(None, None)?;
+        sudoku.solve(None, None, None)?;
         sudoku.reset_locked();
         let solved = sudoku.clone();
         let mut extra_clues = 0;
@@ -449,7 +550,7 @@ impl Sudoku {
             rule.create_clue(&sudoku.cells, size);
             extra_clues += rule.no_of_clues();
         }
-        
+
         let remove_limit = difficulty.get_removes(size, extra_clues);
 
         const ATTEMPT_COUNT: usize = 25;
@@ -460,8 +561,13 @@ impl Sudoku {
         let mut currents_left = ATTEMPT_COUNT;
         let mut available_to_remove: Vec<_> = (0..sudoku.cells.len()).collect();
 
+        let mut good_cache = HashSet::<u64>::new();
+        let mut bad_cache = HashSet::<u64>::new();
+
         loop {
-            if timer.elapsed().as_secs() > 20 {
+            let shared_caches = Arc::new((good_cache.clone(), bad_cache.clone()));
+            
+            if timer.elapsed().as_secs() > 30 {
                 println!("OUT OF GEN TIME!!");
                 break;
             }
@@ -484,10 +590,15 @@ impl Sudoku {
 
             solving_clone.cells[removed_index] = Cell::new_with_range(1..sudoku.size as u16 + 1);
 
-            let ctx = AllSolutionsContext::new();
-            let _ = solving_clone.solve(Some(&ctx), None);
+            let ctx = AllSolutionsContext::new_with_cache(shared_caches);
+            let _ = solving_clone.solve(Some(&ctx), None, None);
 
-            let solutions = ctx.wait_for_solutions();
+            let (solutions, new_good_cache, new_bad_cache) = ctx.wait_for_solutions();
+
+            //let badlen = new_bad_cache.len();
+            for bad_state in new_bad_cache {
+                bad_cache.insert(bad_state);
+            }
 
             if solutions != 1 {
                 if currents_left == 0 {
@@ -496,6 +607,19 @@ impl Sudoku {
                     currents_left -= 1;
                     continue;
                 }
+            }
+            /*
+            println!(
+                "Next step: {:?}, good cache size: {}, bad cache size: {}, new good: {} new bad: {}",
+                pretimer.elapsed(),
+                good_cache.len(),
+                bad_cache.len(),
+                new_good_cache.len(),
+                badlen
+            ); */
+
+            for good_state in new_good_cache {
+                good_cache.insert(good_state);
             }
 
             currents_left = ATTEMPT_COUNT;
@@ -526,6 +650,20 @@ impl Sudoku {
             return buffer;
         }
         return self.cells.clone();
+    }
+
+    fn state_hash(&self, state: &mut Vec<u16>) -> u64 {
+        state.clear();
+        for cell in &self.cells {
+            if cell.available.len() == 1 {
+                state.push(cell.available[0]);
+            } else {
+                state.push(0);
+            }
+        }
+        let mut hasher = DefaultHasher::new();
+        state.hash(&mut hasher);
+        hasher.finish()
     }
 }
 
@@ -608,7 +746,7 @@ impl Display for Sudoku {
     }
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Hash, PartialEq, Eq)]
 pub struct Cell {
     pub available: smallvec::SmallVec<[u16; 16]>,
     pub locked_in: bool,
@@ -669,7 +807,7 @@ fn solve_big_sudoku() {
     let mut sudoku: Sudoku = file_str.parse().unwrap();
 
     println!("{sudoku}");
-    sudoku.solve(None, None).unwrap();
+    sudoku.solve(None, None, None).unwrap();
     println!("{sudoku}");
 }
 
@@ -683,7 +821,7 @@ fn solve_4x4_xdiagonal_sudoku() {
     println!("{sudoku}");
 
     let cxt = AllSolutionsContext::new();
-    sudoku.solve(Some(&cxt), None).unwrap();
+    sudoku.solve(Some(&cxt), None, None).unwrap();
     println!("{sudoku}, {:?}", cxt.wait_for_solutions());
 }
 #[test]
@@ -711,7 +849,7 @@ fn generate_4x4_xdiagonal() {
     .unwrap();
 
     let cxt = AllSolutionsContext::new();
-    sudoku.solve(Some(&cxt), None).unwrap();
+    sudoku.solve(Some(&cxt), None, None).unwrap();
 }
 
 #[test]
@@ -732,7 +870,7 @@ fn solve_test() {
         if filename.contains("Løsning") {
             sudoku_name = filename.split_whitespace().next().unwrap().to_string();
         } else {
-            sudoku.solve(None, None).unwrap();
+            sudoku.solve(None, None, None).unwrap();
             sudoku_name = filename;
         }
 
@@ -753,7 +891,7 @@ fn solve_test() {
 #[test]
 fn random_gen() {
     let mut sudoku = Sudoku::new(9, vec![super::rules::square_rule::SquareRule::new()]);
-    sudoku.solve(None, None).unwrap();
+    sudoku.solve(None, None, None).unwrap();
     let pre = sudoku.to_string();
     println!("Pre:\n{}", pre);
 
@@ -770,7 +908,7 @@ fn random_gen() {
     let post = sudoku.to_string();
     println!("Post:\n{}", post);
 
-    sudoku.solve(None, None).unwrap();
+    sudoku.solve(None, None, None).unwrap();
 
     assert_eq!(pre, sudoku.to_string());
 
@@ -782,7 +920,7 @@ fn solve_16x_test() {
     let file_str = std::fs::read_to_string("./sudoku16x16").unwrap();
     let mut sudoku: Sudoku = file_str.parse().unwrap();
 
-    sudoku.solve(None, None).unwrap();
+    sudoku.solve(None, None, None).unwrap();
 
     println!("{sudoku}");
 }
@@ -792,7 +930,7 @@ fn solve_zipper_test() {
     let file_str = std::fs::read_to_string("./sudokuZipper").unwrap();
     let mut sudoku: Sudoku = file_str.parse().unwrap();
 
-    sudoku.solve(None, None).unwrap();
+    sudoku.solve(None, None, None).unwrap();
 
     println!("{sudoku}");
 }
@@ -802,7 +940,7 @@ fn solve_zipper9x9_test() {
     let file_str = std::fs::read_to_string("./sudokuZipper9x9").unwrap();
     let mut sudoku: Sudoku = file_str.parse().unwrap();
 
-    sudoku.solve(None, None).unwrap();
+    sudoku.solve(None, None, None).unwrap();
 
     println!("{sudoku}");
     assert_eq!(
@@ -821,7 +959,7 @@ fn solve_knights_move_sudoku() {
 
     println!("{sudoku}");
 
-    sudoku.solve(None, None).unwrap();
+    sudoku.solve(None, None, None).unwrap();
 
     println!("{sudoku}");
     assert_eq!(
@@ -840,7 +978,7 @@ fn find_all_solutions() {
 
     let ctx = AllSolutionsContext::new();
 
-    let _ = sudoku.solve(Some(&ctx), None);
+    let _ = sudoku.solve(Some(&ctx), None, None);
     let solutions = ctx.wait_for_solutions();
 
     println!("Found {:?} solutions", solutions);
@@ -936,7 +1074,12 @@ fn generate_sudoku_consecutive() {
         vec![
             super::rules::square_rule::SquareRule::new(),
             crate::rules::knight_rule::KnightRule::new(),
-            crate::rules::consecutive_rule::ConsecutiveRule::new(vec![(0, 1), (4, 5), (4, 8), (8, 9)]),
+            crate::rules::consecutive_rule::ConsecutiveRule::new(vec![
+                (0, 1),
+                (4, 5),
+                (4, 8),
+                (8, 9),
+            ]),
         ],
         None,
         Difficulty::Expert,
@@ -951,8 +1094,7 @@ fn knights_xsudoku() {
     let file_str = std::fs::read_to_string("./sudokuKnightsX").unwrap();
     let mut sudoku: Sudoku = file_str.parse().unwrap();
 
-    sudoku.solve(None, None).unwrap();
+    sudoku.solve(None, None, None).unwrap();
 
     println!("{sudoku}");
 }
-
