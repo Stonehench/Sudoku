@@ -179,6 +179,11 @@ impl Rule for SquareRule {
         //println!("LOCKED SQUARE!! FOUND NONE");
         None
     }
+
+    fn print_self(&self) -> bool {
+        print!("SquareRule");
+        true
+    }
 }
 
 //########################### TEST ###############################

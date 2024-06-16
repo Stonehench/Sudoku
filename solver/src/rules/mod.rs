@@ -109,6 +109,10 @@ pub trait Rule: Debug {
     fn finished_legal(&self, _sudoku: &Sudoku) -> bool {
         true
     }
+
+    fn print_self(&self) -> bool {
+        false
+    }
 }
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
 pub enum ExecutionPriority {
@@ -169,11 +173,15 @@ impl FromStr for DynRule {
                             })
                             .collect::<Result<_, _>>()?,
                     }))),
-                    Some("ThermometerRule") => {
-                        Ok(DynRule(Box::new(ThermometerRule {
-                            themometer_clue: vec![], // TODO!!!
-                        })))
-                    }
+                    Some("ThermometerRule") => Ok(DynRule(Box::new(ThermometerRule {
+                        themometer_clue: rule_params
+                            .map(|ther| {
+                                ther.split(',')
+                                    .map(|index| index.parse().map_err(|e| format!("{e:?}")))
+                                    .collect::<Result<Vec<_>, _>>()
+                            })
+                            .collect::<Result<Vec<Vec<usize>>, _>>()?,
+                    }))),
                     Some("ZipperRule") => Ok(DynRule(Box::new(ZipperRule {
                         zipper_clue: rule_params
                             .map(|s| {

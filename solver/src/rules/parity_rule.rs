@@ -184,6 +184,13 @@ impl Rule for ParityRule {
     fn no_of_clues(&self) -> usize {
         return self.parity_clue.len();
     }
+    fn print_self(&self) -> bool {
+        print!("ParityRule");
+        for (x,y) in &self.parity_clue {
+            print!(" ; {x},{y}")
+        }
+        true
+    }
 }
 
 //########################### TEST ###############################

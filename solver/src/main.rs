@@ -65,7 +65,7 @@ fn main() {
         }
     };
 
-    const N: u32 = 50;
+    const N: u32 = 0;
 
     let post_parse = pre_parse.elapsed();
 

@@ -225,6 +225,10 @@ impl Rule for DiagonalRule {
     fn priority(&self) -> super::ExecutionPriority {
         super::ExecutionPriority::High
     }
+    fn print_self(&self) -> bool {
+        print!("DiagonalRule");
+        true
+    }
 }
 
 //########################### TEST ###############################

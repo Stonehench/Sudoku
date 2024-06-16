@@ -144,6 +144,13 @@ impl Rule for ConsecutiveRule {
     fn no_of_clues(&self) -> usize {
         return self.consecutive_clue.len();
     }
+    fn print_self(&self) -> bool {
+        print!("ConsecutiveRule");
+        for (x, y) in &self.consecutive_clue {
+            print!(" ; {x},{y}")
+        }
+        true
+    }
 }
 
 //########################### TEST ###############################

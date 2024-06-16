@@ -431,7 +431,7 @@ impl Sudoku {
                                 let mut lock = ctx.write_cache.lock().unwrap();
                                 lock.0 = new_states;
 
-                                println!("Hit good solve cache");
+                                //println!("Hit good solve cache");
                                 Self::free_arena(arena);
                                 return Ok(());
                             } else if bad.contains(&hash) {
@@ -441,7 +441,7 @@ impl Sudoku {
                                     lock.1.insert(state);
                                 }
 
-                                println!("Hit bad solve cache");
+                                //println!("Hit bad solve cache");
                                 Self::free_arena(arena);
                                 return Err(SudokuSolveError::UnsolveableError);
                             } else {
@@ -565,10 +565,9 @@ impl Sudoku {
         let mut bad_cache = HashSet::<u64>::new();
 
         loop {
-            let pretimer = Instant::now();
             let shared_caches = Arc::new((good_cache.clone(), bad_cache.clone()));
             
-            if timer.elapsed().as_secs() > 20 {
+            if timer.elapsed().as_secs() > 30 {
                 println!("OUT OF GEN TIME!!");
                 break;
             }
@@ -596,7 +595,7 @@ impl Sudoku {
 
             let (solutions, new_good_cache, new_bad_cache) = ctx.wait_for_solutions();
 
-            let badlen = new_bad_cache.len();
+            //let badlen = new_bad_cache.len();
             for bad_state in new_bad_cache {
                 bad_cache.insert(bad_state);
             }
@@ -609,7 +608,7 @@ impl Sudoku {
                     continue;
                 }
             }
-
+            /*
             println!(
                 "Next step: {:?}, good cache size: {}, bad cache size: {}, new good: {} new bad: {}",
                 pretimer.elapsed(),
@@ -617,7 +616,7 @@ impl Sudoku {
                 bad_cache.len(),
                 new_good_cache.len(),
                 badlen
-            );
+            ); */
 
             for good_state in new_good_cache {
                 good_cache.insert(good_state);

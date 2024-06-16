@@ -41,18 +41,22 @@ impl Rule for XRule {
             if sudoku.cells[*left_index].locked_in && !sudoku.cells[*right_index].locked_in {
                 if let Some(value) = sudoku.cells[*left_index].available.get(0) {
                     //TODO: this is a try to fix the rules
-                    if sudoku.cells[*right_index].available.contains(&((sudoku.size + 1) as u16 - value)){
-                       return Some((((sudoku.size + 1) as u16 - value), *right_index)); 
+                    if sudoku.cells[*right_index]
+                        .available
+                        .contains(&((sudoku.size + 1) as u16 - value))
+                    {
+                        return Some((((sudoku.size + 1) as u16 - value), *right_index));
                     }
-                    
                 }
             }
             if sudoku.cells[*right_index].locked_in && !sudoku.cells[*left_index].locked_in {
                 if let Some(value) = sudoku.cells[*right_index].available.get(0) {
-                    
                     //TODO: this is a try to fix the rules
-                    if sudoku.cells[*left_index].available.contains(&((sudoku.size + 1) as u16 - value)){
-                        return Some((((sudoku.size + 1) as u16 - value), *left_index)); 
+                    if sudoku.cells[*left_index]
+                        .available
+                        .contains(&((sudoku.size + 1) as u16 - value))
+                    {
+                        return Some((((sudoku.size + 1) as u16 - value), *left_index));
                     }
                 }
             }
@@ -111,9 +115,7 @@ impl Rule for XRule {
                     continue;
                 }
                 if let Some(left) = cells[index + 1].available.get(0) {
-                    if current + left == size as u16 + 1
-                        && (index + 1) % size != 0
-                    {
+                    if current + left == size as u16 + 1 && (index + 1) % size != 0 {
                         // x rule should have (index , left)
                         self.x_clue.push((index, index + 1));
                     }
@@ -122,9 +124,7 @@ impl Rule for XRule {
                     continue;
                 }
                 if let Some(below) = cells[index + size].available.get(0) {
-                    if current + below == size as u16 + 1
-                        && index + size < cells.len()
-                    {
+                    if current + below == size as u16 + 1 && index + size < cells.len() {
                         // x rule should have (index , below)
                         self.x_clue.push((index, index + size));
                     }
@@ -133,12 +133,10 @@ impl Rule for XRule {
         }
         let count = self.x_clue.len();
         if count > size * 2 {
-            for i in 0..count - (size * 3)/2 {
-                self
-                    .x_clue
-                    .remove(random::<usize>() % (count - i));
+            for i in 0..count - (size * 3) / 2 {
+                self.x_clue.remove(random::<usize>() % (count - i));
             }
-    }
+        }
     }
 
     fn boxed_clone(&self) -> DynRule {
@@ -155,6 +153,14 @@ impl Rule for XRule {
 
     fn no_of_clues(&self) -> usize {
         return self.x_clue.len();
+    }
+
+    fn print_self(&self) -> bool {
+        print!("XRule");
+        for (x, y) in &self.x_clue {
+            print!(" ;{x},{y}");
+        }
+        true
     }
 }
 
