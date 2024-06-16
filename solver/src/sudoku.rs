@@ -3,6 +3,7 @@ use std::{
     fmt::{Display, Write},
     num::ParseIntError,
     ops::{Deref, Range},
+    ptr::copy_nonoverlapping,
     str::FromStr,
     sync::{atomic::AtomicUsize, Arc, Mutex},
     time::Instant,
@@ -273,7 +274,8 @@ impl Sudoku {
                     self.cells = cells;
                     pri_queue = new_pri_queue;
                 }
-                1 => self.update_cell( //naked singles
+                1 => self.update_cell(
+                    //naked singles
                     self.cells[index].available[0],
                     index,
                     &mut pri_queue,
@@ -369,11 +371,12 @@ impl Sudoku {
 
                     //Der er flere muligheder for hvad der kan vælges. Derfor pushes state på branch stacken og der vælges en mulighed
                     //Vælg random
+
                     let choice = random::<usize>() % entropy.0;
 
                     let n = self.cells[index].available[choice];
 
-                    let mut cloned_cells = self.cells.clone();
+                    let mut cloned_cells = self.cell_fastclone();
 
                     //Fjern n fra cloned_cells så den ikke kan blive valgt igen!
                     cloned_cells[index].available.remove(choice);
@@ -446,8 +449,7 @@ impl Sudoku {
             rule.create_clue(&sudoku.cells, size);
             extra_clues += rule.no_of_clues();
         }
-        #[cfg(debug_assertions)]
-        println!("{extra_clues}");
+        
         let remove_limit = difficulty.get_removes(size, extra_clues);
 
         const ATTEMPT_COUNT: usize = 25;
@@ -506,6 +508,24 @@ impl Sudoku {
         println!("Removed {count} in {:?}", timer.elapsed());
 
         Ok((sudoku, solved))
+    }
+
+    fn cell_fastclone(&self) -> Vec<Cell> {
+        if self.size <= 16 {
+            let data_slice = self.cells.as_slice();
+            let mut buffer = Vec::with_capacity(data_slice.len());
+
+            let src = data_slice.as_ptr();
+            let dst = buffer.as_mut_ptr();
+
+            unsafe {
+                copy_nonoverlapping(src, dst, data_slice.len());
+                buffer.set_len(data_slice.len());
+            }
+
+            return buffer;
+        }
+        return self.cells.clone();
     }
 }
 
@@ -624,8 +644,8 @@ impl Cell {
 impl Clone for Sudoku {
     fn clone(&self) -> Self {
         Self {
-            size: self.size.clone(),
-            cells: self.cells.clone(),
+            size: self.size,
+            cells: self.cell_fastclone(),
             rules: self.rules.iter().map(|r| r.boxed_clone()).collect(),
             has_square: self.has_square,
         }

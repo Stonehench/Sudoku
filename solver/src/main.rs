@@ -1,7 +1,5 @@
 use std::{
-    env::{self, args},
-    fs,
-    time::Instant,
+    env::{self, args}, fs, time::Instant
 };
 
 use rules::square_rule::SquareRule;
@@ -31,7 +29,7 @@ fn main() {
         };
 
         let (sudoku, _) =
-            Sudoku::generate_with_size(9, vec![SquareRule::new()], None, difficulty).unwrap();
+            Sudoku::generate_with_size(25, vec![SquareRule::new()], None, difficulty).unwrap();
 
         println!("SquareRule\n");
 
