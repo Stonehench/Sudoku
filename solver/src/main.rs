@@ -67,7 +67,7 @@ fn main() {
 
     let pre_solve = Instant::now();
 
-    sudoku.solve(None, None).unwrap();
+    sudoku.solve(None, None,None).unwrap();
 
     let solve_time = pre_solve.elapsed();
 
@@ -93,7 +93,7 @@ fn benchmark(also_generate: bool) {
 
     let timer = Instant::now();
     for mut sudoku in clones {
-        sudoku.solve(None, None).unwrap();
+        sudoku.solve(None, None,None).unwrap();
     }
     let avg_time = timer.elapsed() / COUNT;
     println!("Avg solve time for {COUNT} solves: {avg_time:?}");
