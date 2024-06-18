@@ -1,3 +1,6 @@
+// This file is all the logic and tests pertaining to the X rule
+// Author Katinka s224805
+
 use super::{DynRule, Rule};
 use crate::sudoku::Sudoku;
 use bumpalo::Bump;

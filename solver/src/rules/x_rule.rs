@@ -1,3 +1,6 @@
+// This file is all the logic and tests pertaining to the X rule
+// Author Katinka s224805
+
 use super::{DynRule, Rule};
 use bumpalo::Bump;
 use rand::random;
@@ -23,11 +26,8 @@ impl Rule for XRule {
         _index: usize,
         buffer: &'buf mut Vec<usize>,
     ) -> &'buf [usize] {
+        // Updates for domino rules do not affect other cells
         buffer.clear();
-
-        // Doesen't really affect stuff???
-        // otherwise we obviously already know what the other half should be. Which is handled by the hidden singles
-
         buffer
     }
 
@@ -38,9 +38,10 @@ impl Rule for XRule {
         // Or return the corrisponding index to the other half of X
 
         for (left_index, right_index) in &self.x_clue {
+            // if the left side of the domino it locked in, the other half is a hidden single
             if sudoku.cells[*left_index].locked_in && !sudoku.cells[*right_index].locked_in {
                 if let Some(value) = sudoku.cells[*left_index].available.get(0) {
-                    //TODO: this is a try to fix the rules
+
                     if sudoku.cells[*right_index]
                         .available
                         .contains(&((sudoku.size + 1) as u16 - value))
@@ -49,9 +50,10 @@ impl Rule for XRule {
                     }
                 }
             }
+            // if the right side of the domino it locked in, the other half is a hidden single
             if sudoku.cells[*right_index].locked_in && !sudoku.cells[*left_index].locked_in {
                 if let Some(value) = sudoku.cells[*right_index].available.get(0) {
-                    //TODO: this is a try to fix the rules
+
                     if sudoku.cells[*left_index]
                         .available
                         .contains(&((sudoku.size + 1) as u16 - value))
@@ -71,12 +73,11 @@ impl Rule for XRule {
         buffer: &'buf mut Vec<usize>,
         _arena: &mut Bump,
     ) -> Option<(u16, &'buf [usize])> {
-        //let mut found_candidate: Option<(u16, Vec<usize>)> = None;
-        //let mut found_positions: Vec<usize> = vec![];
-        // for all numbers in the sudoku
-        // for all pairs in the X-clue
+        // finds a locked candidate by checking all numbers and pairs in the x-clue
+        // order of:
+        // for all numbers in the sudoku 
+        //    for all pairs in the X-clue
         for i in 1..(sudoku.size + 1) as u16 {
-            //found_positions.clear();
             buffer.clear();
 
             for (left_index, right_index) in &self.x_clue {
@@ -108,21 +109,27 @@ impl Rule for XRule {
         None
     }
 
+    // The create clue function
     fn create_clue(&mut self, cells: &Vec<crate::sudoku::Cell>, size: usize) {
+
+        // first find all the places where the x-rule is satisfied:
         for index in 0..cells.len() {
             if let Some(current) = cells[index].available.get(0) {
                 if index + 1 >= cells.len() {
                     continue;
                 }
+                // check to the left 
                 if let Some(left) = cells[index + 1].available.get(0) {
                     if current + left == size as u16 + 1 && (index + 1) % size != 0 {
                         // x rule should have (index , left)
                         self.x_clue.push((index, index + 1));
                     }
                 }
+                // if the bottom of the sudoku has been reached, do not check out of bounds
                 if index + size >= cells.len() {
                     continue;
                 }
+                // check below
                 if let Some(below) = cells[index + size].available.get(0) {
                     if current + below == size as u16 + 1 && index + size < cells.len() {
                         // x rule should have (index , below)
@@ -131,6 +138,8 @@ impl Rule for XRule {
                 }
             }
         }
+
+        // randomly remove x-clues until only some remain
         let count = self.x_clue.len();
         if count > size * 2 {
             for i in 0..count - (size * 3) / 2 {
