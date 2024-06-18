@@ -151,7 +151,6 @@ class _ScoreboardEmbedState extends State<ScoreboardEmbed> {
       child: Center(
         child: switch (loadingState) {
           LoadingState.unstarted => () {
-              //Cringe, usejt, osv ..
               () async {
                 setState(() {
                   loadingState = LoadingState.loading;
