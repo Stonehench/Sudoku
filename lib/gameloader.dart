@@ -1,3 +1,5 @@
+// Author Thor s224817
+
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_spinkit/flutter_spinkit.dart';
@@ -5,6 +7,7 @@ import 'package:sudoku/game_state.dart';
 import 'package:sudoku/game_view.dart';
 import 'package:sudoku/src/rust/api/simple.dart';
 
+// This is the loading screen when loading the game.
 class GameLoader extends StatefulWidget {
   final Set<String> rules;
   final String difficulty;

@@ -1,3 +1,4 @@
+# Author Thor s224817
 from flask import Flask, request
 
 import mariadb
@@ -26,7 +27,7 @@ except mariadb.Error as e:
 
 app = Flask("Sudoku Scoreboard")
 
-
+# make a sudoku using the solver
 def mk_sudoku(diffculty: str):
     if diffculty == None:
         args = []
@@ -40,7 +41,7 @@ def mk_sudoku(diffculty: str):
 
     return output.stdout.decode()
 
-
+# get streak data
 @app.route("/streak", methods=["POST"])
 def streak():
     conn = pool.get_connection()
@@ -80,7 +81,7 @@ def streak():
 
     return {"streak": streak, "multiplier": 1.1**streak}
 
-
+# get daily sudoku
 @app.route("/daily", methods=["GET", "POST"])
 def get_daily():
     conn = pool.get_connection()
@@ -112,7 +113,7 @@ def get_daily():
 
     return {"puzzle": data, "solved": solved, "dato": str(date.today())}
 
-
+# get the scoreboard
 @app.route("/scoreboard")
 def scoreboard():
     conn = pool.get_connection()
@@ -140,7 +141,7 @@ def scoreboard():
     conn.close()
     return data
 
-
+# login with username and password. Returns userid if successfull
 @app.route("/login", methods=["POST"])
 def login():
     username = request.form["username"]
@@ -161,7 +162,7 @@ def login():
     else:
         return {}, 404
 
-
+# register a new account
 @app.route("/register", methods=["POST"])
 def register():
     user_id = str(uuid.uuid4())
@@ -184,7 +185,7 @@ def register():
         "user_id": user_id,
     }
 
-
+# add a score to self when completing a Sudoku
 @app.route("/add_score", methods=["POST"])
 def add_score():
     user_id = request.form["user_id"]
@@ -205,7 +206,7 @@ def add_score():
     conn.close()
     return {}
 
-
+# change own password
 @app.route("/change_passwd", methods=["POST"])
 def change_passw():
     user_id = request.form["user_id"]
@@ -222,7 +223,7 @@ def change_passw():
     conn.close()
     return {}
 
-
+# Maintenance stuff. Is called every minute by a cron job
 @app.route("/rebuild")
 def rebuild():
     missing = 20 - len(pool._connections_free)

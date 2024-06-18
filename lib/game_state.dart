@@ -1,3 +1,5 @@
+// Author Thor s224817
+
 import 'dart:math';
 
 import 'package:flutter/foundation.dart';
@@ -7,6 +9,8 @@ import 'package:sudoku/src/rust/api/hint.dart';
 import 'package:sudoku/src/rust/api/simple.dart';
 import 'package:http/http.dart' as http;
 
+// This class contains the current state of the game GUI. 
+// Therefore this is also responsible for communicating with the solver
 class GameState extends ChangeNotifier {
   static GameState? _instance;
 
@@ -58,13 +62,14 @@ class GameState extends ChangeNotifier {
   List<(int, List<(int, int)>)> zipperPositions;
   List<List<int>> thermometerPositions;
 
+  //Called when a user tries to place a digit
   Future<bool> updateDigit(int position) async {
     if (selectedDigit == 0) {
       board[position] = null;
       notifyListeners();
       return true;
     }
-
+    // Calls to the solver to check if placement is legal
     if (await checkLegality(position: position, value: selectedDigit)) {
       board[position] = selectedDigit;
       notifyListeners();
@@ -82,6 +87,7 @@ class GameState extends ChangeNotifier {
     notifyListeners();
   }
 
+  //Places or removes current digit as a draft
   void changeDraft(int position) {
     if (drafts[position].contains(selectedDigit)) {
       drafts[position].remove(selectedDigit);
@@ -90,7 +96,7 @@ class GameState extends ChangeNotifier {
     }
     notifyListeners();
   }
-
+  // Choosing what digit is selected
   void setSelected(int newSelected) {
     selectedDigit = newSelected;
     if (selectedDigit == 0) {
@@ -143,8 +149,8 @@ class GameState extends ChangeNotifier {
 
   int? serverErrorStatus;
 
-  // Vi laver det til en state machine type beat tænker jeg
-  //Denne funktion bliver kaldt ved hver notifyListeners()
+  // Submitting the score is moddeled as a state machine, as there are many ways it can go
+  // This is called whenever a digit is placed
   void _trySubmitScore() async {
     if (!_gameDone()) {
       return;
@@ -216,7 +222,7 @@ class GameState extends ChangeNotifier {
         }
     }
   }
-
+  
   void getHint() async {
     if (numberOfHint <= 0) {
       return;

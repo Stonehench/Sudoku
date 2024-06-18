@@ -1,6 +1,9 @@
+// Author Thor s224817
+
 import 'package:flutter/material.dart';
 import 'package:sudoku/api.dart';
 
+// Shows when user is not logged in, but wants to
 class LoginWidget extends StatefulWidget {
   const LoginWidget({super.key});
 

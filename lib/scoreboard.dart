@@ -1,3 +1,5 @@
+// Author Thor s224817
+
 import 'dart:convert';
 
 import 'package:flutter/material.dart';
@@ -149,7 +151,6 @@ class _ScoreboardEmbedState extends State<ScoreboardEmbed> {
       child: Center(
         child: switch (loadingState) {
           LoadingState.unstarted => () {
-              //Cringe, usejt, osv ..
               () async {
                 setState(() {
                   loadingState = LoadingState.loading;
@@ -255,7 +256,7 @@ Future<List<Score>?> getCurrentPlace() async {
         .toList();
   }
 }
-
+// Utility functions to extract value from touples.
 T1 fst<T1, T2>((T1, T2) t) {
   var (t1, _) = t;
   return t1;
