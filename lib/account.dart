@@ -1,8 +1,11 @@
+// Author Thor s224817
+
 import 'package:flutter/material.dart';
 import 'package:sudoku/api.dart';
 import 'package:sudoku/login_widget.dart';
 import 'package:sudoku/scoreboard.dart';
 
+// Page for account
 class AccountPage extends StatelessWidget {
   const AccountPage({super.key});
 
@@ -23,6 +26,7 @@ class AccountPage extends StatelessWidget {
   }
 }
 
+// Shows when user is logged in
 class LoggedInWidget extends StatefulWidget {
   const LoggedInWidget({super.key});
 

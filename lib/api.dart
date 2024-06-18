@@ -1,3 +1,5 @@
+// Author Thor s224817
+
 import 'dart:convert';
 
 import 'package:flutter/material.dart';
@@ -7,6 +9,8 @@ import 'package:shared_preferences/shared_preferences.dart';
 Uri serverAddress = Uri.http("jensogkarsten.site");
 //Uri serverAddress = Uri.http("localhost:5000");
 
+
+
 class Account {
   final String username;
   final String userID;
@@ -15,6 +19,8 @@ class Account {
   const Account(this.username, this.userID, {this.streak, this.multiplier});
 }
 
+
+//This class contains the currect state of being logged in.
 class AccountState extends ChangeNotifier {
   AccountState(this._prefs);
 
