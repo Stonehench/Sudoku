@@ -1,3 +1,6 @@
+// This file is all the logic and tests pertaining to the Row rule
+// Author Katinka s224805 and Kasper s224776
+
 use super::{DynRule, Rule};
 use allocator_api2::vec::Vec as AlloVec;
 use bumpalo::Bump;

@@ -1,5 +1,5 @@
 // This file is all the logic and tests pertaining to the X rule
-// Author Katinka s224805
+// Author Katinka s224805 and Kasper s224776
 
 use super::{DynRule, Rule};
 use bumpalo::Bump;

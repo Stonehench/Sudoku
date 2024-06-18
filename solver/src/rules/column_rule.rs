@@ -92,10 +92,8 @@ impl Rule for ColumnRule {
                             }
                         }
                     }
-
-                    //Tjek om alle er på samme column
-
-                    //verticalt. De har alle samme x koordinat
+                    // Make sure all values are indeed on the same column
+                    // Vertical. They have the same x-coordinate
                     if !locations.is_empty() && locations.iter().all(|l_x| *l_x == locations[0]) {
                         buffer.clear();
                         let x = locations[0] + sq_x * sub_s;
