@@ -23,7 +23,7 @@ use threadpool::ThreadPool;
 use crate::rules::{
     column_rule::ColumnRule, row_rule::RowRule, square_rule::SquareRule, DynRule, Rule,
 };
-
+// Author Thor s224817
 #[derive(Debug, Clone, Copy)]
 pub enum Difficulty {
     Easy,
@@ -31,7 +31,7 @@ pub enum Difficulty {
     Hard,
     Expert,
 }
-
+// Author Thor s224817
 impl FromStr for Difficulty {
     type Err = ();
 
@@ -45,7 +45,7 @@ impl FromStr for Difficulty {
         }
     }
 }
-
+// Author Thor s224817
 impl Difficulty {
     pub fn get_removes(&self, size: usize, clues: usize) -> usize {
         match self {
@@ -56,7 +56,7 @@ impl Difficulty {
         }
     }
 }
-
+// Author Thor s224817
 #[derive(Debug)]
 pub struct Sudoku {
     pub size: usize,
@@ -65,24 +65,25 @@ pub struct Sudoku {
     pub has_square: bool,
 }
 
-//Det her er ret fucked, men siden vi skal have den laveste entropy ud af vores priority queue skal den sammenligne omvendt
-// siden priority_queue tager den med størst priority lol
+// Author Thor s224817
+// Since the priority queue is a maxqueue, we use an entropy struct and reverse the implementation of Ord(ering)
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct Entropy(usize);
 
-//Sammenligning ift større / mindre men reversed
+// Author Thor s224817
 impl PartialOrd for Entropy {
     fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
         other.0.partial_cmp(&self.0)
         //self.0.partial_cmp(&other.0)
     }
 }
-
+// Author Thor s224817
 impl Ord for Entropy {
     fn cmp(&self, other: &Self) -> Ordering {
         self.partial_cmp(&other).unwrap()
     }
 }
+// Author Thor s224817
 #[derive(Debug, Clone, Copy)]
 pub enum SudokuSolveError {
     AlreadyManySolutions,
@@ -90,10 +91,13 @@ pub enum SudokuSolveError {
     RemovedLockedValue,
 }
 
+// Author Thor s224817
+//Global Theadpool pool. 
 lazy_static! {
     static ref GLOBAL_POOL: Mutex<Option<ThreadPool>> = Mutex::new(None);
 }
 
+// Author Thor s224817
 #[derive(Debug, Clone)]
 pub struct AllSolutionsContext {
     solutions: Arc<AtomicUsize>,
@@ -101,7 +105,7 @@ pub struct AllSolutionsContext {
     cache: Option<Arc<(HashSet<u64>, HashSet<u64>)>>,
     write_cache: Arc<Mutex<(HashSet<u64>, HashSet<u64>)>>,
 }
-
+// Author Thor s224817
 impl AllSolutionsContext {
     pub fn get_pool() -> ThreadPool {
         if let Some(pool) = GLOBAL_POOL.lock().unwrap().take() {
@@ -162,7 +166,7 @@ impl AllSolutionsContext {
         }
     }
 }
-
+// Author Thor s224817
 impl Display for SudokuSolveError {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
@@ -172,12 +176,15 @@ impl Display for SudokuSolveError {
         }
     }
 }
-
+// Author Thor s224817
+// Global bump allocator pool
 lazy_static! {
     static ref ARENA_POOL: Mutex<Vec<Bump>> = Mutex::new(vec![]);
 }
 
 impl Sudoku {
+    // Author Thor s224817 and Katinka s224805
+    //Create a new Sudoku with a size and list of rules
     pub fn new(size: usize, mut rules: Vec<DynRule>) -> Self {
         if !rules.iter().any(|r| r.get_name() == "ColumnRule") {
             rules.push(ColumnRule::new());
@@ -187,7 +194,7 @@ impl Sudoku {
         }
 
         rules.sort_by_key(|a| a.priority());
-        let temp: bool = rules
+        let has_square: bool = rules
             .iter()
             .any(|rule| rule.get_name() == SquareRule.get_name());
 
@@ -197,15 +204,17 @@ impl Sudoku {
                 .map(|_| Cell::new_with_range(1..(size as u16 + 1)))
                 .collect(),
             rules: rules.into(),
-            has_square: temp,
+            has_square,
         }
     }
+    // Author Thor s224817
     pub fn reset_locked(&mut self) {
         for cell in &mut self.cells {
             cell.locked_in = false;
         }
     }
-
+    // Author Thor s224817
+    // Setting a cell outside solving context.
     pub fn set_cell(&mut self, n: u16, index: usize) -> Result<(), SudokuSolveError> {
         let mut ret_buffer = vec![];
         self.cells[index] = Cell::single(n);
@@ -220,7 +229,8 @@ impl Sudoku {
         }
         Ok(())
     }
-
+    // Author Thor s224817
+    // Setting a cell inside solving context. Updates the entropy of all affected cells
     fn update_cell(
         &mut self,
         n: u16,
@@ -242,7 +252,8 @@ impl Sudoku {
         }
         Ok(())
     }
-
+    // Author Thor s224817
+    // Take an arena from the pool
     fn get_arena() -> Bump {
         if let Ok(mut lock) = ARENA_POOL.try_lock() {
             if let Some(bump) = lock.pop() {
@@ -251,12 +262,15 @@ impl Sudoku {
         }
         Bump::new()
     }
-
+    // Author Thor s224817
+    // Free arena into the pool
     fn free_arena(bump: Bump) {
         let mut lock = ARENA_POOL.lock().unwrap();
         lock.push(bump);
     }
 
+    // Author Thor s224817, Katinka s224805 and Peter
+    // Solve a Sudoku. AllsolutionsContext, priqueue and new_states are all only needed in generation.
     pub fn solve(
         &mut self,
         ctx: Option<&AllSolutionsContext>,
@@ -268,6 +282,8 @@ impl Sudoku {
             .iter()
             .any(|r| r.get_name() == SquareRule.get_name());
 
+        
+        //If not pri_queue is given, create a new and fill it.
         let mut pri_queue = if let Some(pri_queue) = pri_queue {
             pri_queue
         } else {
@@ -286,21 +302,17 @@ impl Sudoku {
         let mut arena = Self::get_arena();
         let mut state_buffer = Vec::with_capacity(self.cells.len());
 
+        //If no states are given, create new hashset.
         let mut new_states = if let Some(new_states) = new_states {
             new_states
         } else {
             HashSet::new()
         };
 
-        /*
-        if let Some(ctx) = ctx {
-            if let Some((good, bad)) = ctx.cache.as_deref() {
-                println!("Good: {}, Bad: {}", good.len(), bad.len());
-            }
-        }
-         */
 
+        //This is the main solver loop. Stats by getting the cell with lowest entropy.
         'main: while let Some((index, entropy)) = pri_queue.pop() {
+            // Assert entropy is always = available.len(). Otherwise crash as this is a bug.
             assert_eq!(
                 entropy.0,
                 self.cells[index].available.len(),
@@ -308,7 +320,7 @@ impl Sudoku {
             );
             match entropy.0 {
                 0 => {
-                    //Der er ingen løsning på den nuværende branch. Derfor popper vi en branch og løser den i stedet
+                    //No solution on current branch. Pop and solve other branch.
                     let Some((cells, new_pri_queue)) = branch_stack.pop() else {
                         if let Some(ctx) = ctx {
                             let mut lock = ctx.write_cache.lock().unwrap();
@@ -332,7 +344,7 @@ impl Sudoku {
                     &mut ret_buffer,
                 )?,
                 _ => {
-                    // Der er ikke flere naked singles, så der tjekkes for hidden singles
+                    // No more naked singles. Use more advances analysis functions.
 
                     for rule in &self.rules {
                         if let Some((n, hidden_index)) = rule.hidden_singles(self) {
@@ -450,8 +462,7 @@ impl Sudoku {
                         }
                     }
 
-                    //Der er flere muligheder for hvad der kan vælges. Derfor pushes state på branch stacken og der vælges en mulighed
-                    //Vælg random
+                    // Analysis failed. Branch instead by chossing random number from popped cell.
 
                     let choice = random::<usize>() % entropy.0;
 
@@ -459,12 +470,9 @@ impl Sudoku {
 
                     let mut cloned_cells = self.cell_fastclone();
 
-                    //Fjern n fra cloned_cells så den ikke kan blive valgt igen!
                     cloned_cells[index].available.remove(choice);
 
                     let mut cloned_queue = pri_queue.clone();
-                    //Siden den allerede er poppet i den nuværende queue skal den indsættes igen
-                    // i den cloned queue. Ellers vil clonen aldrig løse index cellen.
                     cloned_queue.push(index, Entropy(entropy.0 - 1));
 
                     if let Some(ctx) = ctx {
@@ -498,9 +506,9 @@ impl Sudoku {
             }
 
             if pri_queue.is_empty() {
-                //Check om alle regler bliver overholdt
+                //Check if all rules are kept
                 if !self.rules.iter().all(|r| r.finished_legal(&self)) {
-                    //Der er ingen løsning på den nuværende branch. Derfor popper vi en branch og løser den i stedet
+                    //No solution on current branch. Pop and solve.
                     let Some((cells, new_pri_queue)) = branch_stack.pop() else {
                         if let Some(ctx) = ctx {
                             let mut lock = ctx.write_cache.lock().unwrap();
@@ -522,6 +530,7 @@ impl Sudoku {
 
         Self::free_arena(arena);
 
+        // If in multisolve context, write relevant data.
         if let Some(ctx) = ctx {
             let mut lock = ctx.write_cache.lock().unwrap();
             lock.0 = new_states;
@@ -532,7 +541,7 @@ impl Sudoku {
 
         Ok(())
     }
-
+    // Author Thor s224817 and Peter s224759
     pub fn generate_with_size(
         size: usize,
         rules: Vec<DynRule>,
@@ -541,6 +550,7 @@ impl Sudoku {
     ) -> Result<(Self, Self), SudokuSolveError> {
         let mut sudoku = Sudoku::new(size, rules);
 
+        //Initial solve.
         sudoku.solve(None, None, None)?;
         sudoku.reset_locked();
         let solved = sudoku.clone();
@@ -564,6 +574,7 @@ impl Sudoku {
         let mut good_cache = HashSet::<u64>::new();
         let mut bad_cache = HashSet::<u64>::new();
 
+        //Remove clue loop.
         loop {
             let shared_caches = Arc::new((good_cache.clone(), bad_cache.clone()));
             
@@ -608,15 +619,6 @@ impl Sudoku {
                     continue;
                 }
             }
-            /*
-            println!(
-                "Next step: {:?}, good cache size: {}, bad cache size: {}, new good: {} new bad: {}",
-                pretimer.elapsed(),
-                good_cache.len(),
-                bad_cache.len(),
-                new_good_cache.len(),
-                badlen
-            ); */
 
             for good_state in new_good_cache {
                 good_cache.insert(good_state);
@@ -633,8 +635,9 @@ impl Sudoku {
 
         Ok((sudoku, solved))
     }
-
+    // Author Thor s224817
     fn cell_fastclone(&self) -> Vec<Cell> {
+        //If size is <= 16 then copy cells via memcpy. Otherwise do normal clone.
         if self.size <= 16 {
             let data_slice = self.cells.as_slice();
             let mut buffer = Vec::with_capacity(data_slice.len());
@@ -651,7 +654,7 @@ impl Sudoku {
         }
         return self.cells.clone();
     }
-
+    // Author Thor s224817
     fn state_hash(&self, state: &mut Vec<u16>) -> u64 {
         state.clear();
         for cell in &self.cells {
@@ -667,6 +670,7 @@ impl Sudoku {
     }
 }
 
+// Author Thor s224817
 #[derive(Debug, Clone)]
 pub enum ParseSudokuError {
     ParseIntError(ParseIntError),
@@ -674,20 +678,21 @@ pub enum ParseSudokuError {
     UnsolveableError,
     InvalidRuleName(String),
 }
-
+// Author Thor s224817
 impl Display for ParseSudokuError {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(f, "{self:?}")
     }
 }
-
+// Author Thor s224817 and Katinka s224805
+// PSF parser.
 impl FromStr for Sudoku {
     type Err = ParseSudokuError;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         let mut rules: Vec<DynRule> = vec![];
 
-        //WTFFF
+        //Windows sucks. Split on all double newlines. Use regex because windows is edgy.
         let sudoku_source = match regex!(r"(\r\n|\n)(\r\n|\n)")
             .split(s)
             .collect::<Vec<&str>>()
@@ -732,7 +737,7 @@ impl FromStr for Sudoku {
         Ok(sudoku)
     }
 }
-
+// Author Katinka s224805
 impl Display for Sudoku {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         for (index, cell) in self.cells.iter().enumerate() {
@@ -745,13 +750,13 @@ impl Display for Sudoku {
         Ok(())
     }
 }
-
+// Author Thor s224817 
 #[derive(Debug, Clone, Hash, PartialEq, Eq)]
 pub struct Cell {
     pub available: smallvec::SmallVec<[u16; 16]>,
     pub locked_in: bool,
 }
-
+// Author Thor s224817 
 impl Cell {
     pub fn single(n: u16) -> Self {
         Self {
@@ -778,7 +783,7 @@ impl Cell {
         self.available.deref() == &[n]
     }
 }
-
+// Author Thor s224817 
 impl Clone for Sudoku {
     fn clone(&self) -> Self {
         Self {
@@ -791,6 +796,7 @@ impl Clone for Sudoku {
 }
 
 //########################### TEST ###############################
+// Author Thor s224817 
 #[test]
 fn read_file_test() {
     let file_str = std::fs::read_to_string("./sudokuBenchmark").unwrap();
@@ -798,7 +804,7 @@ fn read_file_test() {
 
     println!("{sudoku}");
 }
-
+// Author Katinka s224805
 #[test]
 fn solve_big_sudoku() {
     // tests a 16x16 sudoku solve
@@ -811,6 +817,7 @@ fn solve_big_sudoku() {
     println!("{sudoku}");
 }
 
+// Author Katinka s224805
 #[test]
 fn solve_4x4_xdiagonal_sudoku() {
     // TODO This will calculate two different solutions at random!!!!!
@@ -824,6 +831,7 @@ fn solve_4x4_xdiagonal_sudoku() {
     sudoku.solve(Some(&cxt), None, None).unwrap();
     println!("{sudoku}, {:?}", cxt.wait_for_solutions());
 }
+// Author Katinka s224805
 #[test]
 fn generate_4x4_xdiagonal() {
     let x_clue = vec![/*
@@ -851,7 +859,7 @@ fn generate_4x4_xdiagonal() {
     let cxt = AllSolutionsContext::new();
     sudoku.solve(Some(&cxt), None, None).unwrap();
 }
-
+// Author Thor s224817
 #[test]
 fn solve_test() {
     use std::collections::HashMap;
@@ -887,7 +895,7 @@ fn solve_test() {
         println!("{key}: {value}");
     }
 }
-
+// Author Katinka s224805
 #[test]
 fn random_gen() {
     let mut sudoku = Sudoku::new(9, vec![super::rules::square_rule::SquareRule::new()]);
@@ -915,6 +923,7 @@ fn random_gen() {
     println!("PostPost:\n{sudoku}");
 }
 
+// Author Katinka s224805
 #[test]
 fn solve_16x_test() {
     let file_str = std::fs::read_to_string("./sudoku16x16").unwrap();
@@ -924,7 +933,7 @@ fn solve_16x_test() {
 
     println!("{sudoku}");
 }
-
+// Author Katinka s224805
 #[test]
 fn solve_zipper_test() {
     let file_str = std::fs::read_to_string("./sudokuZipper").unwrap();
@@ -934,7 +943,7 @@ fn solve_zipper_test() {
 
     println!("{sudoku}");
 }
-
+// Author Katinka s224805
 #[test]
 fn solve_zipper9x9_test() {
     let file_str = std::fs::read_to_string("./sudokuZipper9x9").unwrap();
@@ -951,7 +960,7 @@ fn solve_zipper9x9_test() {
             .trim()
     );
 }
-
+// Author Katinka s224805
 #[test]
 fn solve_knights_move_sudoku() {
     let file_str = std::fs::read_to_string("./sudokuKnightsMove").unwrap();
@@ -970,7 +979,7 @@ fn solve_knights_move_sudoku() {
             .trim()
     );
 }
-
+// Author Thor s224817
 #[test]
 fn find_all_solutions() {
     let file_str = std::fs::read_to_string("./sudokuManySolutions").unwrap();
@@ -983,7 +992,7 @@ fn find_all_solutions() {
 
     println!("Found {:?} solutions", solutions);
 }
-
+// Author Thor s224817
 #[test]
 fn generate_sudoku() {
     let timer = std::time::Instant::now();
@@ -997,7 +1006,7 @@ fn generate_sudoku() {
 
     println!("{sudoku} at {:?}", timer.elapsed());
 }
-
+// Author Katinka s224805
 #[test]
 fn generate_thermometer_sudoku() {
     let timer = std::time::Instant::now();
@@ -1014,7 +1023,7 @@ fn generate_thermometer_sudoku() {
 
     println!("{sudoku} at {:?}", timer.elapsed());
 }
-
+// Author Katinka s224805
 #[test]
 fn generate_sudoku_x() {
     let timer = std::time::Instant::now();
@@ -1032,7 +1041,7 @@ fn generate_sudoku_x() {
 
     println!("{sudoku} at {:?}", timer.elapsed());
 }
-
+// Author Katinka s224805
 #[test]
 fn generate_sudoku_zipper() {
     let (sudoku, _) = Sudoku::generate_with_size(
@@ -1047,7 +1056,7 @@ fn generate_sudoku_zipper() {
     .expect("Failed to generate sudoku");
     println!("{sudoku}");
 }
-
+// Author Katinka s224805
 #[test]
 fn generate_sudoku_parity() {
     let timer = std::time::Instant::now();
@@ -1065,7 +1074,7 @@ fn generate_sudoku_parity() {
 
     println!("{sudoku} at {:?}", timer.elapsed());
 }
-
+// Author Katinka s224805
 #[test]
 fn generate_sudoku_consecutive() {
     let timer = std::time::Instant::now();
@@ -1088,7 +1097,7 @@ fn generate_sudoku_consecutive() {
 
     println!("{sudoku} at {:?}", timer.elapsed());
 }
-
+// Author Katinka s224805
 #[test]
 fn knights_xsudoku() {
     let file_str = std::fs::read_to_string("./sudokuKnightsX").unwrap();
