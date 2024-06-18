@@ -92,7 +92,7 @@ pub enum SudokuSolveError {
 }
 
 // Author Thor s224817
-//Global Theadpool pool. 
+//Global Threadpool pool. 
 lazy_static! {
     static ref GLOBAL_POOL: Mutex<Option<ThreadPool>> = Mutex::new(None);
 }
