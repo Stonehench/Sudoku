@@ -1,3 +1,5 @@
+// This file is all the logic and tests pertaining to the Parity rule
+// Author Peter s224759
 use super::{DynRule, Rule};
 use crate::sudoku::Sudoku;
 use rand::random;

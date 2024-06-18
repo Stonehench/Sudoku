@@ -1,3 +1,6 @@
+// This file is all the logic and tests pertaining to the Zipper rule
+// Author Katinka s224805
+
 use super::{DynRule, Rule};
 use integer_sqrt::IntegerSquareRoot;
 use rand::random;
@@ -20,6 +23,9 @@ impl ZipperRule {
 }
 
 impl Rule for ZipperRule {
+    // This is the update function discussed in the report
+    // the input is an index where a digit has been placed, a buffer, and the size of the sudoku
+    // returns all the affected indices.
     fn updates<'buf>(
         &self,
         _size: usize,
@@ -69,7 +75,6 @@ impl Rule for ZipperRule {
                         if sudoku.cells[*center].available.contains(&value) {
                             return Some((value, *center));
                         }
-                        //println!("a mistake has happend");
                     }
                 }
             }
@@ -85,7 +90,6 @@ impl Rule for ZipperRule {
                                 return Some((value, *right));
                             }
                         }
-                        //println!("a mistake has happend");
                     }
                     // the right side is known, calculate the left
                     if sudoku.cells[*right].locked_in && !sudoku.cells[*left].locked_in {
@@ -96,7 +100,6 @@ impl Rule for ZipperRule {
                                 return Some((value, *left));
                             }
                         }
-                        //println!("a mistake has happend");
                     }
                 }
             }
@@ -418,7 +421,8 @@ impl Rule for ZipperRule {
     fn no_of_clues(&self) -> usize {
         return self.zipper_clue.len();
     }
-
+    
+    // Prints the zippers
     fn print_self(&self) -> bool {
         print!("ZipperRule");
         for (center, pairlist) in &self.zipper_clue {

@@ -1,3 +1,6 @@
+// This file is all the logic and tests pertaining to the Thermometer rule
+// Author Kasper s224776
+
 use rand::random;
 
 use super::{DynRule, Rule};

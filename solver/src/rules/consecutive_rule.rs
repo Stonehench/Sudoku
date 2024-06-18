@@ -1,3 +1,6 @@
+// This file is all the logic and tests pertaining to the X rule
+// Author Peter s224759
+
 use super::{DynRule, Rule};
 use rand::random;
 use std::fmt::Debug;
@@ -113,7 +116,7 @@ impl Rule for ConsecutiveRule {
                 if let Some(below) = cells[index + size].available.get(0) {
                     if current + 1 == *below || *current == below + 1 && index + size < cells.len()
                     {
-                        // x rule should have (index , below)
+                        // consecutive rule should have (index , below)
                         self.consecutive_clue.push((index, index + size));
                     }
                 }

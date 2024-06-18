@@ -1,3 +1,6 @@
+// This file is all the logic and tests pertaining to the column rule
+// Author Thor s224817
+
 use super::{DynRule, Rule};
 use allocator_api2::vec::Vec as AlloVec;
 use bumpalo::Bump;

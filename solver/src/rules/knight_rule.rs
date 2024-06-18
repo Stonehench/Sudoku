@@ -1,3 +1,6 @@
+// This file is all the logic and tests pertaining to the Knight rule
+// Author Katinka s224805
+
 use super::{DynRule, Rule};
 use std::fmt::Debug;
 

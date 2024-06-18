@@ -1,3 +1,6 @@
+// This file is all the logic and tests pertaining to the X rule
+// Author Thor s224817
+
 use super::{DynRule, Rule};
 use bumpalo::Bump;
 use integer_sqrt::IntegerSquareRoot;
