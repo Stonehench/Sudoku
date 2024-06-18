@@ -1,3 +1,5 @@
+// Author Thor s224817
+
 use std::{
     env::{self, args},
     fs,

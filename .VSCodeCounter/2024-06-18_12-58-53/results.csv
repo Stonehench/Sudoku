@@ -1,0 +1,17 @@
+"filename", "language", "Rust", "TOML", "comment", "blank", "total"
+"/home/thor/Insync/thor.f.skipper@gmail.com/Google_Drive/dev/skole/sudoku/solver/Cargo.toml", "TOML", 0, 22, 1, 5, 28
+"/home/thor/Insync/thor.f.skipper@gmail.com/Google_Drive/dev/skole/sudoku/solver/src/lib.rs", "Rust", 2, 0, 1, 0, 3
+"/home/thor/Insync/thor.f.skipper@gmail.com/Google_Drive/dev/skole/sudoku/solver/src/main.rs", "Rust", 110, 0, 1, 29, 140
+"/home/thor/Insync/thor.f.skipper@gmail.com/Google_Drive/dev/skole/sudoku/solver/src/rules/column_rule.rs", "Rust", 155, 0, 5, 34, 194
+"/home/thor/Insync/thor.f.skipper@gmail.com/Google_Drive/dev/skole/sudoku/solver/src/rules/consecutive_rule.rs", "Rust", 194, 0, 7, 35, 236
+"/home/thor/Insync/thor.f.skipper@gmail.com/Google_Drive/dev/skole/sudoku/solver/src/rules/diagonal_rule.rs", "Rust", 346, 0, 30, 47, 423
+"/home/thor/Insync/thor.f.skipper@gmail.com/Google_Drive/dev/skole/sudoku/solver/src/rules/knight_rule.rs", "Rust", 89, 0, 7, 30, 126
+"/home/thor/Insync/thor.f.skipper@gmail.com/Google_Drive/dev/skole/sudoku/solver/src/rules/mod.rs", "Rust", 205, 0, 4, 34, 243
+"/home/thor/Insync/thor.f.skipper@gmail.com/Google_Drive/dev/skole/sudoku/solver/src/rules/parity_rule.rs", "Rust", 225, 0, 36, 21, 282
+"/home/thor/Insync/thor.f.skipper@gmail.com/Google_Drive/dev/skole/sudoku/solver/src/rules/row_rule.rs", "Rust", 151, 0, 3, 34, 188
+"/home/thor/Insync/thor.f.skipper@gmail.com/Google_Drive/dev/skole/sudoku/solver/src/rules/square_rule.rs", "Rust", 274, 0, 6, 47, 327
+"/home/thor/Insync/thor.f.skipper@gmail.com/Google_Drive/dev/skole/sudoku/solver/src/rules/thermometer_rule.rs", "Rust", 335, 0, 22, 65, 422
+"/home/thor/Insync/thor.f.skipper@gmail.com/Google_Drive/dev/skole/sudoku/solver/src/rules/x_rule.rs", "Rust", 166, 0, 17, 29, 212
+"/home/thor/Insync/thor.f.skipper@gmail.com/Google_Drive/dev/skole/sudoku/solver/src/rules/zipper_rule.rs", "Rust", 463, 0, 58, 59, 580
+"/home/thor/Insync/thor.f.skipper@gmail.com/Google_Drive/dev/skole/sudoku/solver/src/sudoku.rs", "Rust", 875, 0, 90, 139, 1104
+"Total", "-", 3590, 22, 288, 608, 4508

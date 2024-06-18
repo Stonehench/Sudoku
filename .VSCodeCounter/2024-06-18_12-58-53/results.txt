@@ -1,0 +1,44 @@
+Date : 2024-06-18 12:58:53
+Directory : /home/thor/Insync/thor.f.skipper@gmail.com/Google_Drive/dev/skole/sudoku/solver
+Total : 15 files,  3612 codes, 288 comments, 608 blanks, all 4508 lines
+
+Languages
++----------+------------+------------+------------+------------+------------+
+| language | files      | code       | comment    | blank      | total      |
++----------+------------+------------+------------+------------+------------+
+| Rust     |         14 |      3,590 |        287 |        603 |      4,480 |
+| TOML     |          1 |         22 |          1 |          5 |         28 |
++----------+------------+------------+------------+------------+------------+
+
+Directories
++---------------------------------------------------------------------------------------------------------------+------------+------------+------------+------------+------------+
+| path                                                                                                          | files      | code       | comment    | blank      | total      |
++---------------------------------------------------------------------------------------------------------------+------------+------------+------------+------------+------------+
+| .                                                                                                             |         15 |      3,612 |        288 |        608 |      4,508 |
+| . (Files)                                                                                                     |          1 |         22 |          1 |          5 |         28 |
+| src                                                                                                           |         14 |      3,590 |        287 |        603 |      4,480 |
+| src (Files)                                                                                                   |          3 |        987 |         92 |        168 |      1,247 |
+| src/rules                                                                                                     |         11 |      2,603 |        195 |        435 |      3,233 |
++---------------------------------------------------------------------------------------------------------------+------------+------------+------------+------------+------------+
+
+Files
++---------------------------------------------------------------------------------------------------------------+----------+------------+------------+------------+------------+
+| filename                                                                                                      | language | code       | comment    | blank      | total      |
++---------------------------------------------------------------------------------------------------------------+----------+------------+------------+------------+------------+
+| /home/thor/Insync/thor.f.skipper@gmail.com/Google_Drive/dev/skole/sudoku/solver/Cargo.toml                    | TOML     |         22 |          1 |          5 |         28 |
+| /home/thor/Insync/thor.f.skipper@gmail.com/Google_Drive/dev/skole/sudoku/solver/src/lib.rs                    | Rust     |          2 |          1 |          0 |          3 |
+| /home/thor/Insync/thor.f.skipper@gmail.com/Google_Drive/dev/skole/sudoku/solver/src/main.rs                   | Rust     |        110 |          1 |         29 |        140 |
+| /home/thor/Insync/thor.f.skipper@gmail.com/Google_Drive/dev/skole/sudoku/solver/src/rules/column_rule.rs      | Rust     |        155 |          5 |         34 |        194 |
+| /home/thor/Insync/thor.f.skipper@gmail.com/Google_Drive/dev/skole/sudoku/solver/src/rules/consecutive_rule.rs | Rust     |        194 |          7 |         35 |        236 |
+| /home/thor/Insync/thor.f.skipper@gmail.com/Google_Drive/dev/skole/sudoku/solver/src/rules/diagonal_rule.rs    | Rust     |        346 |         30 |         47 |        423 |
+| /home/thor/Insync/thor.f.skipper@gmail.com/Google_Drive/dev/skole/sudoku/solver/src/rules/knight_rule.rs      | Rust     |         89 |          7 |         30 |        126 |
+| /home/thor/Insync/thor.f.skipper@gmail.com/Google_Drive/dev/skole/sudoku/solver/src/rules/mod.rs              | Rust     |        205 |          4 |         34 |        243 |
+| /home/thor/Insync/thor.f.skipper@gmail.com/Google_Drive/dev/skole/sudoku/solver/src/rules/parity_rule.rs      | Rust     |        225 |         36 |         21 |        282 |
+| /home/thor/Insync/thor.f.skipper@gmail.com/Google_Drive/dev/skole/sudoku/solver/src/rules/row_rule.rs         | Rust     |        151 |          3 |         34 |        188 |
+| /home/thor/Insync/thor.f.skipper@gmail.com/Google_Drive/dev/skole/sudoku/solver/src/rules/square_rule.rs      | Rust     |        274 |          6 |         47 |        327 |
+| /home/thor/Insync/thor.f.skipper@gmail.com/Google_Drive/dev/skole/sudoku/solver/src/rules/thermometer_rule.rs | Rust     |        335 |         22 |         65 |        422 |
+| /home/thor/Insync/thor.f.skipper@gmail.com/Google_Drive/dev/skole/sudoku/solver/src/rules/x_rule.rs           | Rust     |        166 |         17 |         29 |        212 |
+| /home/thor/Insync/thor.f.skipper@gmail.com/Google_Drive/dev/skole/sudoku/solver/src/rules/zipper_rule.rs      | Rust     |        463 |         58 |         59 |        580 |
+| /home/thor/Insync/thor.f.skipper@gmail.com/Google_Drive/dev/skole/sudoku/solver/src/sudoku.rs                 | Rust     |        875 |         90 |        139 |      1,104 |
+| Total                                                                                                         |          |      3,612 |        288 |        608 |      4,508 |
++---------------------------------------------------------------------------------------------------------------+----------+------------+------------+------------+------------+
