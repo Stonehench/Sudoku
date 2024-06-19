@@ -10,7 +10,7 @@ use crate::sudoku::Sudoku;
 
 #[derive(Debug, Clone)]
 pub struct ThermometerRule {
-    // vector of themometers contaning indexes in order
+    // Vector of themometers contaning indexes in rising order
     pub themometer_clue: Vec<Vec<usize>>,
 }
 
@@ -21,6 +21,9 @@ impl ThermometerRule {
 }
 
 impl Rule for ThermometerRule {
+    // Update function for thermometer rule
+    // The input consists of the index of the digit that is being placed, a buffer, and the size of the sudoku
+    // Returns all indices of cells on the thermometer.
     fn updates<'buf>(
         &self,
         _size: usize,
@@ -29,6 +32,8 @@ impl Rule for ThermometerRule {
     ) -> &'buf [usize] {
         buffer.clear();
 
+        // For each thermometer check if the index placed is on the thermometer
+        // If true add all indices belonging to the thermometer to the buffer
         for themometer in &self.themometer_clue {
             if themometer.into_iter().any(|e| e == &index) {
                 for element in themometer {
