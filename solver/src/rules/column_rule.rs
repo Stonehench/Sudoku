@@ -27,13 +27,14 @@ impl Rule for ColumnRule {
         buffer.clear();
         let column = index % size;
         let size = size;
-
+        //Returns all the indexes in the column
         for i in (0..size).map(|i| i * size + column) {
             buffer.push(i)
         }
         buffer
     }
-
+    //Finds if there is a value in the column, that while there are many posibilities in the cell
+    // There is a digit that only has that cell in the column.
     fn hidden_singles(&self, sudoku: &Sudoku) -> Option<(u16, usize)> {
         for column_number in 0..sudoku.size {
             'value: for value in 1..=sudoku.size as u16 {
@@ -62,6 +63,8 @@ impl Rule for ColumnRule {
         true
     }
 
+    //If all the possible locations of a number in a square is in the same column,
+    // then remove possibilities from all other squares in the same column.
     fn locked_candidate<'buf>(
         &self,
         sudoku: &Sudoku,
