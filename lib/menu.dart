@@ -54,8 +54,6 @@ class _MenuState extends State<Menu> {
     }
   }
 
-  //Set<String> gameModes = {};
-
   final List<(String, String, bool)> rules = [
     ("Square rule", "SquareRule", true),
     ("Knights move", "KnightsMove", false),
