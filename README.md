@@ -41,4 +41,4 @@ Run the app with ```flutter run``` for debug version or ```flutter run --release
 
 To run on a android phone enable developer mode on your phone, this step is different for every phone. Then plug a USB cable from the computer to the phone and run ```flutter run``` or ```flutter run --release```. 
 
-To run on an IPhone, well, good luck...
+To run on an IPhone, open the ios/Runner.xcodeproj in xcode on a macbook. Setup a appleID and create a organization identifier and run the program on the iPhone. The iPhone has to be in developer mode to be able to run the app. Then in flutter run ```flutter build ios``` and then ```flutter install``` to install release mode on the iPhone. The app has to be verified on the iPhone when downloaded to open. 
