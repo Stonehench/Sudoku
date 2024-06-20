@@ -30,7 +30,6 @@ class _GameLoaderState extends State<GameLoader> {
     () async {
       var source = await widget.sudokuSource;
       if (source == null) {
-        //I Dunno
         setState(() {
           Navigator.of(context)
               .pop("Failed to generate sudoku with these rules");

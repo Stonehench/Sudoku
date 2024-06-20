@@ -153,6 +153,7 @@ class GameView extends StatelessWidget {
   }
 }
 
+// Just as a funny easteregg
 String getLoseText() {
   List<String> loseText = [
     "You suck!",
