@@ -138,7 +138,7 @@ class _ScoreboardEmbedState extends State<ScoreboardEmbed> {
 
   @override
   Widget build(BuildContext context) {
-    return RefreshIndicator(
+    return RefreshIndicator( // Reload on refresh
       onRefresh: () async {
         var res = await getScoreBoard();
         setState(() {
@@ -192,6 +192,7 @@ class _ScoreboardEmbedState extends State<ScoreboardEmbed> {
   }
 }
 
+// Data class
 class Score {
   final String username;
   final int value;
