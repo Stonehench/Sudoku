@@ -181,7 +181,6 @@ class _ScoreboardEmbedState extends State<ScoreboardEmbed> {
                   "Failed to fetch scoreboard. Check your internet connection")),
           LoadingState.success => widget.onlyYou
               ? Column(
-                  //padding: const EdgeInsets.all(5),
                   children: scoreboard!.map(scoreItem).toList())
               : ListView(
                   padding: const EdgeInsets.all(5),
@@ -206,7 +205,7 @@ class Score {
     return "{username: $username, value: $value}";
   }
 }
-
+//Fetches the scoreboard from the server
 Future<List<Score>?> getScoreBoard() async {
   Account? account = AccountState.instance().get();
   try {
