@@ -17,6 +17,7 @@ impl SquareRule {
 }
 
 impl Rule for SquareRule {
+    //Returns all the locations in current square
     fn updates<'buf>(
         &self,
         size: usize,
@@ -43,6 +44,8 @@ impl Rule for SquareRule {
         buffer
     }
 
+    //Find if there is a digit that can only be one place in the sqaure,
+    // even if there techniqually are mulitple digits in the cell
     fn hidden_singles(&self, sudoku: &Sudoku) -> Option<(u16, usize)> {
         let sub_s = sudoku.size.integer_sqrt();
         for sq_y in 0..sub_s {
@@ -85,14 +88,14 @@ impl Rule for SquareRule {
     fn get_name(&self) -> &'static str {
         "SquareRule"
     }
-
+    // All digits must be in every cell. If there is a row or column where a number is
+    // missing and it an only be in a single square, then it must be in that row/ column.
     fn locked_candidate<'buf>(
         &self,
         sudoku: &Sudoku,
         buffer: &'buf mut Vec<usize>,
         arena: &mut Bump,
     ) -> Option<(u16, &'buf [usize])> {
-        //println!("Entering locked square");
         arena.reset();
         let sub_s = sudoku.size.integer_sqrt();
         for value in 1..sudoku.size as u16 {
@@ -130,7 +133,6 @@ impl Rule for SquareRule {
                             }
                         }
                     }
-                    //println!("square locked found in ROW");
                     if !buffer.is_empty() {
                         return Some((value, buffer));
                     }
@@ -172,14 +174,12 @@ impl Rule for SquareRule {
                             }
                         }
                     }
-                    //println!("square locked found in COLUMN");
                     if !buffer.is_empty() {
                         return Some((value, buffer));
                     }
                 }
             }
         }
-        //println!("LOCKED SQUARE!! FOUND NONE");
         None
     }
 

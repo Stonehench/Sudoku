@@ -18,6 +18,7 @@ impl RowRule {
     }
 }
 impl Rule for RowRule {
+    //Returns all the locations in the row
     fn updates<'buf>(
         &self,
         size: usize,
@@ -32,7 +33,8 @@ impl Rule for RowRule {
         }
         buffer
     }
-
+    //Finds if there is a value in the row, that while there are many posibilities in the cell
+    // There is a digit that only has that cell in the row.
     fn hidden_singles(&self, sudoku: &Sudoku) -> Option<(u16, usize)> {
         for row_number in 0..sudoku.size {
             'value: for value in 1..=sudoku.size as u16 {
@@ -59,7 +61,8 @@ impl Rule for RowRule {
     fn needs_square_for_locked(&self) -> bool {
         true
     }
-
+    //If all the possible locations of a number in a square is in the same row,
+    // then remove possibilities from all other squares in the same row.
     fn locked_candidate<'buf>(
         &self,
         sudoku: &Sudoku,
@@ -89,9 +92,9 @@ impl Rule for RowRule {
                         }
                     }
 
-                    //Tjek om alle er på samme row
+                    //Check if they're all on the same row
 
-                    //verticalt. De har alle samme x koordinat
+                    //Vertical, they all have the same x coordinate
                     if !locations.is_empty() && locations.iter().all(|l_y| *l_y == locations[0]) {
                         buffer.clear();
                         let y = locations[0] + sq_y * sub_s;
