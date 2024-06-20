@@ -3,6 +3,8 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:sudoku/game_state.dart';
 
+// This is the custom widget that handles all cell gui-logic
+// displaying color, font size and so on
 class Cell extends StatefulWidget {
   final int? digit;
   final int index;
