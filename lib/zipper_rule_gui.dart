@@ -29,6 +29,7 @@ class _ZipperState extends State<Zipper> {
             return Container(
               alignment: Alignment.center,
               child: state.zipperPositions.any((zipper) {
+                // the center dot, is size 200, aka bigger than all the other cirkels
                 if (zipper.$1 == index) {
                   dotWidth = 200;
                 }
@@ -51,6 +52,7 @@ class _ZipperState extends State<Zipper> {
         ),
 
         // Horizontal
+        // generate the horizonntal line pieces
         GridView.builder(
           padding: EdgeInsets.fromLTRB(
               (340 / (state.size)) / 2, 0, (340 / (state.size)) / 2, 0),
@@ -293,7 +295,6 @@ class _ZipperState extends State<Zipper> {
                     nextL = zipper.$2[j + 1].$1;
                     nextR = zipper.$2[j + 1].$2;
                   }
-                  // TODO: THIS MIGHT NOT BE CORRECT
                   if ((prevL != -1 && left - s - 1 == prevL && i == left) ||
                       (prevR != -1 && right - s - 1 == prevR && i == right) ||
                       (nextL != -1 && left - s - 1 == nextL && i == left) ||
@@ -345,7 +346,6 @@ class _ZipperState extends State<Zipper> {
                     nextL = zipper.$2[j + 1].$1;
                     nextR = zipper.$2[j + 1].$2;
                   }
-                  // TODO: THIS MIGHT NOT BE CORRECT
                   if ((prevL != -1 && left + s - 1 == prevL && i == left) ||
                       (prevR != -1 && right + s - 1 == prevR && i == right) ||
                       (nextL != -1 && left + s - 1 == nextL && i == left) ||
@@ -397,7 +397,6 @@ class _ZipperState extends State<Zipper> {
                     nextL = zipper.$2[j + 1].$1;
                     nextR = zipper.$2[j + 1].$2;
                   }
-                  // TODO: THIS MIGHT NOT BE CORRECT
                   if ((prevL != -1 && left - s + 1 == prevL && i == left) ||
                       (prevR != -1 && right - s + 1 == prevR && i == right) ||
                       (nextL != -1 && left - s + 1 == nextL && i == left) ||
