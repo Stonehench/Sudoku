@@ -10,7 +10,7 @@ use crate::sudoku::Sudoku;
 
 #[derive(Debug, Clone)]
 pub struct ThermometerRule {
-    // vector of themometers contaning indexes in order
+    // Vector of themometers contaning indexes in rising order
     pub themometer_clue: Vec<Vec<usize>>,
 }
 
@@ -21,6 +21,9 @@ impl ThermometerRule {
 }
 
 impl Rule for ThermometerRule {
+    // Update function for thermometer rule
+    // The input consists of the index of the digit that is being placed, a buffer, and the size of the Sudoku
+    // Returns all indices of cells on the thermometer.
     fn updates<'buf>(
         &self,
         _size: usize,
@@ -29,6 +32,8 @@ impl Rule for ThermometerRule {
     ) -> &'buf [usize] {
         buffer.clear();
 
+        // For each thermometer check if the index placed is on the thermometer
+        // If true add all indices belonging to the thermometer to the buffer
         for themometer in &self.themometer_clue {
             if themometer.into_iter().any(|e| e == &index) {
                 for element in themometer {
@@ -39,10 +44,16 @@ impl Rule for ThermometerRule {
         buffer
     }
 
+    // Finds hidden singles for the thermometer rule
+    // Takes the list of thermometers and the Sudoku
+    // Returns an option contaning the value and index of a hidden single
     fn hidden_singles(&self, sudoku: &Sudoku) -> Option<(u16, usize)> {
+        // Interrates through all cells in all sudoku
         for themometer in &self.themometer_clue {
             for (enumeration, index) in themometer.iter().enumerate() {
-                // if the next element on the zipper is 2 this element must be 1
+                // If the current index is the first cell in the thermometer and is not locked in
+                // And 1 is available while the next cell has locked in 2
+                // The current cell can only be 1
                 if !sudoku.cells[*index].locked_in
                     && enumeration + 1 < themometer.len()
                     && index == &themometer[0]
@@ -53,7 +64,9 @@ impl Rule for ThermometerRule {
                     return Some(((1), *index));
                 }
 
-                // if the previous element is one less than sudoku.size this element is sudoku.size
+                // If the current index is the last cell in the thermometer and is not locked in
+                // And the largest digit is avaliable while the previous cell has locked in the next largest digit
+                // The current cell can only be the largest digit
                 if !sudoku.cells[*index].locked_in
                     && enumeration > 0
                     && index == themometer.last().unwrap()
@@ -67,8 +80,9 @@ impl Rule for ThermometerRule {
                     return Some(((sudoku.size as u16), *index));
                 }
 
-                // if two indecies are surrounding one index are locked in with only one possible value left
-                // it is basically a naked single so yeah...
+                // If the current index is on the thermometer but neither at the start or the end
+                // And the next and privous cell are locked in and have a difference of 2
+                // The current cell can only the only number between those 2 numbers
                 if !sudoku.cells[*index].locked_in
                     && enumeration < themometer.len() - 1
                     && enumeration > 0
@@ -77,8 +91,6 @@ impl Rule for ThermometerRule {
                     let next_index = themometer[enumeration + 1];
                     if sudoku.cells[next_index].locked_in
                         && sudoku.cells[prev_index].locked_in
-                        && sudoku.cells[next_index].available[0]
-                            >= sudoku.cells[prev_index].available[0]
                         && sudoku.cells[next_index].available[0]
                             - sudoku.cells[prev_index].available[0]
                             == 2
@@ -95,10 +107,13 @@ impl Rule for ThermometerRule {
     }
 
     fn needs_square_for_locked(&self) -> bool {
-        // there are no locked, so false
+        // There are no locked, so false
         false
     }
 
+    // The multi remove function for the thermometer rule
+    // Takes the thermometer list, the Sudoku and a buffer
+    // Returns a list of all indencies with all the values that should be removed for all thermometers
     fn multi_remove<'buf>(
         &self,
         sudoku: &Sudoku,
@@ -106,9 +121,12 @@ impl Rule for ThermometerRule {
     ) -> &'buf [(u16, usize)] {
         big_buffer.clear();
 
+        // Iterate through all cells in all thermometers
         for themometer in &self.themometer_clue {
             for (enumeration, index) in themometer.into_iter().enumerate() {
+                // If the cell is not locked in
                 if !sudoku.cells[*index].locked_in {
+                    
                     for value in 1..(enumeration + 1) as u16 {
                         if sudoku.cells[*index].available.contains(&value) {
                             big_buffer.push((value, *index));
