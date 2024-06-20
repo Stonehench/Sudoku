@@ -116,7 +116,7 @@ impl Rule for DiagonalRule {
         // keep track of wether or not a possible candidate has been found in the box
         let mut candidate_found: bool;
 
-        // TODO this only works if the square rule is also a part of the ruleset
+        // this only works if the square rule is also a part of the ruleset
         for value in 1..=sudoku.size as u16 {
             // look in the first diagonal
             // for there to be a locked candidate in a diagonal
