@@ -113,7 +113,7 @@ class _MenuState extends State<Menu> {
     return list;
   }
 
-  // hide size box by default
+  // hide size selection box by default
   bool showSizeBox = false;
 
   // initial selection of size
@@ -147,7 +147,7 @@ class _MenuState extends State<Menu> {
       direction: Axis.horizontal,
       onPressed: (int index) {
         setState(() {
-          // Set size and control visibility of sizebox
+          // Set size and control visibility of size selection box
           if (index == 3) {
             showSizeBox = true;
             for (int i = 0; i < sizeValueStates.length; i++) {
@@ -231,12 +231,13 @@ class _MenuState extends State<Menu> {
   String? dailyDate;
   bool notLoggedIn = false;
 
-  // 
+  // Flutter build function
   @override
   Widget build(BuildContext context) {
     AccountState accState = AccountState.instance();
     accState.updateStreak();
 
+    // Handels daily sudoku and steak
     if (dailySolved == null &&
         notLoggedIn == false &&
         failedToFetchDaily == false) {
@@ -255,11 +256,13 @@ class _MenuState extends State<Menu> {
       });
     }
 
+    // Main menu view
     return Scaffold(
       body: Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
+            // Titel
             Text(
               "Sudoku",
               style: TextStyle(
@@ -267,11 +270,11 @@ class _MenuState extends State<Menu> {
                   color: Theme.of(context).buttonTheme.colorScheme!.primary),
             ),
             const SizedBox(height: 10),
+            // Show steak and multiplier
             ListenableBuilder(
               listenable: accState,
               builder: (context, _) {
                 Account? acc = accState.get();
-
                 const double h = 60;
                 if (acc == null) {
                   return const SizedBox(
@@ -295,12 +298,13 @@ class _MenuState extends State<Menu> {
                 );
               },
             ),
+            // Display size and size options
             Text(sizeText),
             const SizedBox(height: 10),
             sudokuSizeWidget(),
             const SizedBox(height: 10),
             Visibility(
-              //TODO set true to a variable
+              // Size selection box
               visible: showSizeBox,
               child: Column(
                 children: [
@@ -326,8 +330,10 @@ class _MenuState extends State<Menu> {
                 ],
               ),
             ),
+            // Display difficulty options
             difficulitiesWidgets(),
             const SizedBox(height: 10),
+            // Display rule options
             SizedBox(
               width: 300,
               child: Wrap(
@@ -337,9 +343,11 @@ class _MenuState extends State<Menu> {
               ),
             ),
             const SizedBox(height: 20),
+            // Next window buttons
             Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
+                // Create Sudoku button
                 OutlinedButton(
                   onPressed: () {
                     setState(() {
@@ -368,6 +376,7 @@ class _MenuState extends State<Menu> {
                 const SizedBox(
                   width: 10,
                 ),
+                // To scoreboard button
                 OutlinedButton(
                   onPressed: () async {
                     await Navigator.of(context).push(MaterialPageRoute(
@@ -383,6 +392,7 @@ class _MenuState extends State<Menu> {
             const SizedBox(
               height: 10,
             ),
+            // Daily Sudoku button and text
             Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
@@ -456,6 +466,7 @@ class _MenuState extends State<Menu> {
   }
 }
 
+// Get daily function
 Future<(String, bool?, String)?> getDaily() async {
   Account? acc = AccountState.instance().get();
   Map<String, String>? body;
