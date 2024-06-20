@@ -8,6 +8,8 @@ import 'package:sudoku/account.dart';
 import 'package:sudoku/api.dart';
 import 'package:http/http.dart' as http;
 
+//The scorboard page. 
+//Uses the scorboard embed which can be embedded other places if needed.
 class ScoreboardPage extends StatefulWidget {
   const ScoreboardPage({super.key});
 
@@ -136,7 +138,7 @@ class _ScoreboardEmbedState extends State<ScoreboardEmbed> {
 
   @override
   Widget build(BuildContext context) {
-    return RefreshIndicator(
+    return RefreshIndicator( // Reload on refresh
       onRefresh: () async {
         var res = await getScoreBoard();
         setState(() {
@@ -179,7 +181,6 @@ class _ScoreboardEmbedState extends State<ScoreboardEmbed> {
                   "Failed to fetch scoreboard. Check your internet connection")),
           LoadingState.success => widget.onlyYou
               ? Column(
-                  //padding: const EdgeInsets.all(5),
                   children: scoreboard!.map(scoreItem).toList())
               : ListView(
                   padding: const EdgeInsets.all(5),
@@ -191,6 +192,7 @@ class _ScoreboardEmbedState extends State<ScoreboardEmbed> {
   }
 }
 
+// Data class
 class Score {
   final String username;
   final int value;
@@ -204,7 +206,7 @@ class Score {
     return "{username: $username, value: $value}";
   }
 }
-
+//Fetches the scoreboard from the server
 Future<List<Score>?> getScoreBoard() async {
   Account? account = AccountState.instance().get();
   try {

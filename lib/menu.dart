@@ -284,7 +284,6 @@ class _MenuState extends State<Menu> {
             sudokuSizeWidget(),
             const SizedBox(height: 10),
             Visibility(
-              //TODO set true to a variable
               visible: showSizeBox,
               child: Column(
                 children: [
