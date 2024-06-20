@@ -10,6 +10,7 @@ import 'package:sudoku/scoreboard.dart';
 import 'package:sudoku/tool_bar.dart';
 import 'package:sudoku/game_state.dart';
 
+// This is the pane that contains all game widgets
 class GameView extends StatelessWidget {
   final Set<String> rules;
   const GameView(this.rules, {super.key});
@@ -25,6 +26,7 @@ class GameView extends StatelessWidget {
           Column(
             mainAxisAlignment: MainAxisAlignment.center,
             crossAxisAlignment: CrossAxisAlignment.center,
+            // This is all widgets that make up the game
             children: [
               GameHeader(rules),
               Board((rules.contains("SquareRule"))),
@@ -33,6 +35,8 @@ class GameView extends StatelessWidget {
               const ToolBar(),
             ],
           ),
+          // victory/lose pop-up widget handeling,
+          // listens to the state to activate when the game is over
           ListenableBuilder(
             listenable: state,
             builder: (context, _) {
@@ -50,6 +54,7 @@ class GameView extends StatelessWidget {
     );
   }
 
+  // victory widget builder
   Widget victoryWidget(BuildContext context, GameState state) {
     var buttonStyle = OutlinedButton.styleFrom(
       shape: const RoundedRectangleBorder(
@@ -115,6 +120,7 @@ class GameView extends StatelessWidget {
     );
   }
 
+  // defeat widget builder
   Widget defeatWidget(BuildContext context, GameState state) {
     var buttonStyle = OutlinedButton.styleFrom(
       shape: const RoundedRectangleBorder(
@@ -154,6 +160,7 @@ class GameView extends StatelessWidget {
 }
 
 // Just as a funny easteregg
+// these are loss text that has a chance to display
 String getLoseText() {
   List<String> loseText = [
     "You suck!",

@@ -12,8 +12,10 @@ class _NameHeaderState extends State<NameHeader> {
   @override
   Widget build(BuildContext context) {
     List<String> name = List.empty(growable: true);
-    // Find the name of the current Sudoku. Complex math for a complex problem.
-    // Might be able to do better. It is what it is.
+    // This is just a gui easter egg,
+    // that custom sudoku have different names depending on the rules.
+    // Find the name of the current Sudoku.
+
     widget.rules.containsAll({"ParityRule", "XRule"}) &&
             !widget.rules.contains("ConsecutiveRule")
         ? name.add("Tic Tac Toe")
@@ -37,7 +39,7 @@ class _NameHeaderState extends State<NameHeader> {
                 ? name.add("Thermometer")
                 : name = name;
 
-    // Just a regular sudou
+    // Just a regular sudoku
     widget.rules.length == 1 && widget.rules.contains("SquareRule")
         ? name.add("Classic")
         : name = name;
