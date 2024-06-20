@@ -8,6 +8,8 @@ import 'package:sudoku/account.dart';
 import 'package:sudoku/api.dart';
 import 'package:http/http.dart' as http;
 
+//The scorboard page. 
+//Uses the scorboard embed which can be embedded other places if needed.
 class ScoreboardPage extends StatefulWidget {
   const ScoreboardPage({super.key});
 
