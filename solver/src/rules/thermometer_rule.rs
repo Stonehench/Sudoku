@@ -126,15 +126,18 @@ impl Rule for ThermometerRule {
             for (enumeration, index) in themometer.into_iter().enumerate() {
                 // If the cell is not locked in
                 if !sudoku.cells[*index].locked_in {
-                    
+                    // Remove all values from 1 to the thermometer index(enumeration)
+                    // This due to if we are on enumeration 3, it cannot have value 1 or 2
+                    // because those will have to be before this enumeration.
                     for value in 1..(enumeration + 1) as u16 {
                         if sudoku.cells[*index].available.contains(&value) {
                             big_buffer.push((value, *index));
                         }
                     }
-
+                    // Removes all values from the current enumeration to the size of the Sudoku
+                    // Same logic as above just for the end of the thermometer
                     for value in (sudoku.size - (themometer.len() - enumeration) + 2) as u16
-                        ..(sudoku.size + 1) as u16
+                        ..(sudoku.size + 1) as u16 
                     {
                         if sudoku.cells[*index].available.contains(&value) {
                             big_buffer.push((value, *index));
@@ -142,20 +145,26 @@ impl Rule for ThermometerRule {
                     }
                 }
 
+                // If the current cell is locked in get the value
                 if sudoku.cells[*index].locked_in {
                     if let Some(value) = sudoku.cells[*index].available.get(0) {
+                        // Iterate through the same thermometer again
                         for (inner_enumeration, inner_index) in themometer.into_iter().enumerate() {
+                            // If the second index is before the currnet and the second is not locked in
                             if inner_enumeration > enumeration
                                 && !sudoku.cells[*inner_index].locked_in
                             {
+                                // Remove all values, lower than or equal to the current index, form the second index
                                 for i in 1..*value + 1 {
                                     if sudoku.cells[*inner_index].available.contains(&i) {
                                         big_buffer.push((i, *inner_index))
                                     }
                                 }
+                                // If the second index is after the currnet and the second is not locked in
                             } else if inner_enumeration < enumeration
                                 && !sudoku.cells[*inner_index].locked_in
                             {
+                                // Remove all values, higher than or equal to the current index, form the second index
                                 for i in *value..=sudoku.size as u16 {
                                     if sudoku.cells[*inner_index].available.contains(&i) {
                                         big_buffer.push((i, *inner_index))
@@ -171,16 +180,19 @@ impl Rule for ThermometerRule {
         big_buffer
     }
 
+    // The create clue function
     fn create_clue(&mut self, cells: &Vec<crate::sudoku::Cell>, size: usize) {
         let tries = size * 3;
         let mut seen = vec![];
 
+        // Choose a random index
+        // If the index has been seen before try again
         'themometers: for _ in 0..tries {
             let mut random_index = random::<usize>() % (size * size);
             while seen.contains(&random_index) && seen.len() < (size * size) {
                 random_index = random::<usize>() % (size * size);
             }
-
+            // Initialization of variables
             let mut current_themometer: Vec<usize> = vec![];
             let mut searching = true;
             let mut surrounding: Vec<usize> = vec![];
@@ -193,6 +205,7 @@ impl Rule for ThermometerRule {
                 continue 'themometers;
             }
 
+            // Add all surrouding indencies
             'searching: while searching {
                 surrounding.clear();
 
@@ -229,13 +242,18 @@ impl Rule for ThermometerRule {
                     surrounding.push(current_index + size + 1);
                 }
 
+                // Remove all indencies from surrouding with value higher than the current value
                 surrounding.retain(|e| cells[*e].available[0] > current_value);
+                // Sort for lowest value
                 surrounding.sort_by(|a, b| cells[*a].available[0].cmp(&cells[*b].available[0]));
 
+                // If there is a value in surrinding that has not been seen and i larger than current value
                 if !surrounding.is_empty()
                     && !seen.contains(&surrounding[0])
                     && cells[surrounding[0]].available[0] > current_value
                 {
+                    // Update seen and current thermometer to include the first value of surrounding
+                    // Then use the new index as current index and continue
                     seen.push(surrounding[0]);
                     current_themometer.push(surrounding[0]);
                     current_index = surrounding[0];
@@ -246,12 +264,14 @@ impl Rule for ThermometerRule {
 
                 searching = false;
             }
+            // If the thermomter has length greater than 1, add it as a clue
             if current_themometer.len() > 1 {
                 seen.push(random_index);
                 self.themometer_clue.push(current_themometer);
             }
         }
     }
+
     fn boxed_clone(&self) -> DynRule {
         DynRule(Box::new(self.clone()))
     }
@@ -267,6 +287,8 @@ impl Rule for ThermometerRule {
     fn no_of_clues(&self) -> usize {
         return self.themometer_clue.len();
     }
+
+    // Prints the PSF part of the thermometer (PSF is explained in the report)
     fn print_self(&self) -> bool {
         print!("ThermometerRule");
         for ther in &self.themometer_clue {
