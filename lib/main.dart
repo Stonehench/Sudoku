@@ -7,9 +7,14 @@ import 'package:sudoku/src/rust/api/simple.dart';
 import 'package:sudoku/src/rust/frb_generated.dart';
 
 Future<void> main() async {
+  //Initialize rust 
   await RustLib.init();
+
+  //Initialize localstorage
   WidgetsFlutterBinding.ensureInitialized();
   await AccountState.initialize();
+
+  //Prevents landscape mode on phones.
   SystemChrome.setPreferredOrientations([
     DeviceOrientation.portraitUp,
   ]);
@@ -27,7 +32,7 @@ class _SudokuAppState extends State<SudokuApp> {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      theme: ThemeData.dark(),
+      theme: ThemeData.dark(),  //Uses dark theme!!
       initialRoute: '/menu',
       routes: {
         '/menu': (context) => const Menu(),
