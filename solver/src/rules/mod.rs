@@ -49,7 +49,6 @@ pub trait Rule: Debug {
         None
     }
 
-    // TODO altså jeg er ikke helt sikker på at det her er 100% lovligt
     // return (Value to be removed, [list of indexes where the removel should happen])
     fn locked_candidate<'buf>(
         &self,

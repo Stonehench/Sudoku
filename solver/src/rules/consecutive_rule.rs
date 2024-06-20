@@ -20,6 +20,8 @@ impl ConsecutiveRule {
 }
 
 impl Rule for ConsecutiveRule {
+    // the updates function does not affect aything for domino rules 
+    // therefore it cleans and returns an empty buffer
     fn updates<'buf>(
         &self,
         _size: usize,
@@ -27,16 +29,15 @@ impl Rule for ConsecutiveRule {
         buffer: &'buf mut Vec<usize>,
     ) -> &'buf [usize] {
         buffer.clear();
-
-        // Might not need to affect stuff
-
         buffer
     }
 
     fn hidden_singles(&self, sudoku: &Sudoku) -> Option<(u16, usize)> {
         for (left_index, right_index) in &self.consecutive_clue {
+            // if the left side is known, and the right side is not known
             if sudoku.cells[*left_index].locked_in && !sudoku.cells[*right_index].locked_in {
-                // find the value of the locked candidate
+                // find the value of the hidden single
+                // if only one of the consecutive numbers is avalible return it.
                 if let Some(value) = sudoku.cells[*left_index].available.get(0) {
                     if sudoku.cells[*right_index].available.contains(&(value + 1))
                         && !(sudoku.cells[*right_index].available.contains(&(value - 1)))
@@ -50,8 +51,9 @@ impl Rule for ConsecutiveRule {
                     }
                 }
             }
+            // now the other half of the domino
             if sudoku.cells[*right_index].locked_in && !sudoku.cells[*left_index].locked_in {
-                // find the value of the locked candidate
+                // find the value of the hidden single
                 if let Some(value) = sudoku.cells[*right_index].available.get(0) {
                     if sudoku.cells[*left_index].available.contains(&(value + 1))
                         && !(sudoku.cells[*left_index].available.contains(&(value - 1)))
@@ -76,9 +78,12 @@ impl Rule for ConsecutiveRule {
         big_buffer: &'buf mut Vec<(u16, usize)>,
     ) -> &'buf [(u16, usize)] {
         big_buffer.clear();
-
+        // for all dominos in the clue
         for value in 1..(sudoku.size + 1) as u16 {
             for (left, right) in &self.consecutive_clue {
+                // in the case where the other half of the domino 
+                // does not contain either of the consecitive values for the current digit being check
+                // remove it, cuz it is not possible.
                 if !sudoku.cells[*left].locked_in
                     && sudoku.cells[*left].available.contains(&value)
                     && !(sudoku.cells[*right].available.contains(&(value + 1))
@@ -86,7 +91,7 @@ impl Rule for ConsecutiveRule {
                 {
                     big_buffer.push((value, *left));
                 }
-
+                // other half of the domino, same thing.
                 if !sudoku.cells[*right].locked_in
                     && sudoku.cells[*right].available.contains(&value)
                     && !(sudoku.cells[*left].available.contains(&(value + 1))
@@ -99,7 +104,9 @@ impl Rule for ConsecutiveRule {
         big_buffer
     }
 
+    // creates cules for the consecutive rule.
     fn create_clue(&mut self, cells: &Vec<Cell>, size: usize) {
+        // search the entire sudoku for all possible consecutive dominos
         for index in 0..cells.len() {
             if let Some(current) = cells[index].available.get(0) {
                 if index + 1 >= cells.len() {
@@ -218,7 +225,7 @@ fn consecutive_multi() {
     let res = consecutive_rule.multi_remove(&sudoku, &mut big_buffer);
 
     println!("{res:?}");
-    //assert_eq!(res, Some((2, 2)));
+    assert_eq!(res, vec![(3,2),(4,2)]);
 
     let mut sudoku = Sudoku::new(
         4,
@@ -235,4 +242,5 @@ fn consecutive_multi() {
 
     let res = consecutive_rule.multi_remove(&sudoku, &mut big_buffer);
     println!("{res:?}");
+    assert_eq!(res, vec![(1,2)]);
 }

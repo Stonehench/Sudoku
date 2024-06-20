@@ -14,6 +14,9 @@ In order to compile and run it yourself, rust, flutter and 'flutter-rust-bridge'
 ### Flutter
 https://docs.flutter.dev/get-started/install
 
+On macos run ```brew install flutter```
+
+
 ### Rust
 Windows:
 https://www.rust-lang.org/tools/install
@@ -34,7 +37,7 @@ cargo install 'flutter_rust_bridge_codegen@^2.0.0-dev.0' && \
 Note that the ``` ' ``` might need to be replaced on Windows. More info at https://github.com/fzyzcjy/flutter_rust_bridge
 
 ## Running
-Run the app with ```flutter run``` or ```flutter run --release``` for optimized build.
+Run the app with ```flutter run``` for debug version or ```flutter run --release``` for optimized build.
 
 To run on a android phone enable developer mode on your phone, this step is different for every phone. Then plug a USB cable from the computer to the phone and run ```flutter run``` or ```flutter run --release```. 
 

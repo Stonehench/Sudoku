@@ -11,8 +11,8 @@ class ToolBar extends StatefulWidget {
 class _ToolBarState extends State<ToolBar> {
   @override
   Widget build(BuildContext context) {
-    //double fontSize = 30;
-
+    // This toolbar is ths bar containing the buttons "Erase", "Draft" and "Hint"
+    // The specific widget is designed here to be called and used in other files.
     return SizedBox(
       height: 50,
       width: 340,
@@ -31,10 +31,7 @@ class _ToolBarState extends State<ToolBar> {
                 TextButton(
                   onPressed: inGame
                       ? () {
-                          //print("please erase the digit thanks:D");
                           GameState.getInstance().setSelected(0);
-
-                          // It kinda works might need a rework!
                         }
                       : null,
                   style: TextButton.styleFrom(
@@ -47,10 +44,7 @@ class _ToolBarState extends State<ToolBar> {
                 TextButton(
                   onPressed: inGame
                       ? () {
-                          //print("please erase the digit thanks:D");
                           GameState.getInstance().switchDrafting();
-
-                          // It kinda works might need a rework!
                         }
                       : null,
                   style: TextButton.styleFrom(
