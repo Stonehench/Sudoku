@@ -35,6 +35,13 @@ impl Rule for KnightRule {
         // fell free to change it
         // do remember that it migth give negative values out..
 
+        // . 1 . 2 .
+        // 3 . . . 4
+        // . . X . .
+        // 5 . . . 6
+        // . 7 . 8 .
+
+
         if temp_index >= 0 && max_index > temp_index && temp_index / isize + 3 != iindex / isize {
             // is it faster to cast to usize or just do the math? I have no idea...
             buffer.push(temp_index as usize);
