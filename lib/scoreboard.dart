@@ -53,6 +53,8 @@ class _ScoreboardPageState extends State<ScoreboardPage> {
 
 enum LoadingState { unstarted, loading, failed, success }
 
+//The scoreboard embed. OnlyYou specifies whether to display all the users or just
+// the current user and the one above and below.
 class ScoreboardEmbed extends StatefulWidget {
   final bool onlyYou;
 
@@ -64,7 +66,7 @@ class ScoreboardEmbed extends StatefulWidget {
 class _ScoreboardEmbedState extends State<ScoreboardEmbed> {
   LoadingState loadingState = LoadingState.unstarted;
   List<Score>? scoreboard;
-
+  //First, second and third places have different styles.
   TextStyle styleOfPlace(int place, BuildContext context) {
     if (place == 1) {
       return const TextStyle(
@@ -79,7 +81,7 @@ class _ScoreboardEmbedState extends State<ScoreboardEmbed> {
       return const TextStyle(fontSize: 18);
     }
   }
-
+  //Builds a single persons score widget.
   Widget scoreItem(Score score) {
     var topDecorator = BoxDecoration(
       borderRadius: const BorderRadius.only(
@@ -150,6 +152,9 @@ class _ScoreboardEmbedState extends State<ScoreboardEmbed> {
           }
         });
       },
+
+      // Uses a state machine to fetch the scoreboard.
+      // This correctly handels internet failure.
       child: Center(
         child: switch (loadingState) {
           LoadingState.unstarted => () {
@@ -206,7 +211,7 @@ class Score {
     return "{username: $username, value: $value}";
   }
 }
-//Fetches the scoreboard from the server
+//Tries to fetch the scoreboard from the server
 Future<List<Score>?> getScoreBoard() async {
   Account? account = AccountState.instance().get();
   try {
@@ -233,7 +238,7 @@ Future<List<Score>?> getScoreBoard() async {
     return null;
   }
 }
-
+//Given the scoreboard, get the current users location on it.
 Future<List<Score>?> getCurrentPlace() async {
   var allScores = await getScoreBoard();
   if (allScores == null) {
