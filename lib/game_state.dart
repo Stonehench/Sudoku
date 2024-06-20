@@ -9,7 +9,7 @@ import 'package:sudoku/src/rust/api/hint.dart';
 import 'package:sudoku/src/rust/api/simple.dart';
 import 'package:http/http.dart' as http;
 
-// This class contains the current state of the game GUI. 
+// This class contains the current state of the game GUI.
 // Therefore this is also responsible for communicating with the solver
 class GameState extends ChangeNotifier {
   static GameState? _instance;
@@ -64,8 +64,10 @@ class GameState extends ChangeNotifier {
 
   //Called when a user tries to place a digit
   Future<bool> updateDigit(int position) async {
+    // This means erase is activated
     if (selectedDigit == 0) {
       board[position] = null;
+      drafts[position].clear();
       notifyListeners();
       return true;
     }
@@ -96,6 +98,7 @@ class GameState extends ChangeNotifier {
     }
     notifyListeners();
   }
+
   // Choosing what digit is selected
   void setSelected(int newSelected) {
     selectedDigit = newSelected;
@@ -222,7 +225,7 @@ class GameState extends ChangeNotifier {
         }
     }
   }
-  
+
   void getHint() async {
     if (numberOfHint <= 0) {
       return;
