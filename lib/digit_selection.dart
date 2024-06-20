@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:sudoku/game_state.dart';
 import 'dart:math';
 
+// THis is the custom scrool widget
+// where the user chooses the digit they want to place in the sudoku
 class DigitSelect extends StatefulWidget {
   final Object? size;
   const DigitSelect(this.size, {super.key});
@@ -10,6 +12,7 @@ class DigitSelect extends StatefulWidget {
   State<DigitSelect> createState() => _DigitSelectState();
 }
 
+// Spacing between the digits
 spaceBetween(int number) {
   return 38.0 + 12 * (log(number) / ln10).floor();
 }

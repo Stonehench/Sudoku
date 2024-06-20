@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:sudoku/game_state.dart';
 
+// This widget call is responsible for all domino rules
 class Domino extends StatefulWidget {
   final String symbol;
   final List<(int, int)> positions;
@@ -11,6 +12,8 @@ class Domino extends StatefulWidget {
   State<StatefulWidget> createState() => _DominoState();
 }
 
+// an argument, that is the sign that has to be displayed, is passed in
+// along with all the coordinates from the domino clue, where the displaying should happen.
 class _DominoState extends State<Domino> {
   Color lineColor = const Color.fromARGB(255, 152, 118, 175);
 
@@ -27,6 +30,7 @@ class _DominoState extends State<Domino> {
       child: Stack(
         children: [
           // Horizontal
+          // create all the horizontal dominos
           GridView.builder(
             padding: EdgeInsets.fromLTRB(
                 (340 / (state.size)) / 2, 0, (340 / (state.size)) / 2, 0),
@@ -54,6 +58,7 @@ class _DominoState extends State<Domino> {
             },
           ),
           // Vertical
+          // create all the vertical dominos
           GridView.builder(
             padding: EdgeInsets.fromLTRB(
                 0, (340 / (state.size)) / 2, 0, (340 / (state.size)) / 2),
@@ -77,33 +82,5 @@ class _DominoState extends State<Domino> {
         ],
       ),
     );
-  }
-
-  Widget getHorizontal(GameState state) {
-    return SizedBox(
-        width: 340 / state.size,
-        height: 10,
-        child: Container(
-          color: lineColor,
-        ));
-  }
-
-  Widget getVertical(GameState state) {
-    return SizedBox(
-        height: 340 / state.size,
-        width: 10,
-        child: Container(
-          color: lineColor,
-        ));
-  }
-
-  Widget getDiagonal(GameState state, double angle) {
-    return Transform.rotate(
-        angle: angle,
-        child: Container(
-          width: 100,
-          height: 10,
-          color: lineColor,
-        ));
   }
 }

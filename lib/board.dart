@@ -7,6 +7,7 @@ import 'package:sudoku/domino_gui.dart';
 import 'package:sudoku/thermometer_rule_gui.dart';
 import 'package:sudoku/zipper_rule_gui.dart';
 
+// This is the GUI widget that dispalys the sudoku board
 class Board extends StatefulWidget {
   final bool hasSquare;
   const Board(this.hasSquare, {super.key});

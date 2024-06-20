@@ -5,6 +5,8 @@ import 'package:sudoku/name_header.dart';
 import 'rule_display.dart';
 import 'package:sudoku/game_state.dart';
 
+// this is the widget that handles everything above the sudoku in the game view.
+// lives, hints, info icon, sudokuname placement
 class GameHeader extends StatelessWidget {
   final Set<String> rules;
   const GameHeader(this.rules, {super.key});
@@ -41,7 +43,8 @@ class GameHeader extends StatelessWidget {
                             height: 300,
                             child: RawScrollbar(
                               thumbVisibility: true,
-                              thumbColor: const Color.fromARGB(99, 152, 152, 227),
+                              thumbColor:
+                                  const Color.fromARGB(99, 152, 152, 227),
                               child: SingleChildScrollView(
                                 child: Column(
                                     children: List.from(
@@ -126,6 +129,7 @@ class GameHeader extends StatelessWidget {
   }
 }
 
+// handles how many colored and how many black lives and hints there should be
 List<Widget> generateIcons(IconData primaryIcon, IconData secondaryIcon,
     Color color, int numberOfIcons, int numberLeft) {
   List<Widget> hearts = [];
