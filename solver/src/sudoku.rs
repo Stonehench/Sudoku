@@ -269,7 +269,7 @@ impl Sudoku {
         lock.push(bump);
     }
 
-    // Author Thor s224817, Katinka s224805 and Peter
+    // Author Thor s224817, Katinka s224805 and Peter s224759
     // Solve a Sudoku. AllsolutionsContext, priqueue and new_states are all only needed in generation.
     pub fn solve(
         &mut self,
@@ -820,8 +820,6 @@ fn solve_big_sudoku() {
 // Author Katinka s224805
 #[test]
 fn solve_4x4_xdiagonal_sudoku() {
-    // TODO This will calculate two different solutions at random!!!!!
-
     let file_str = std::fs::read_to_string("./sudokuXDiagonal4x4").unwrap();
     let mut sudoku: Sudoku = file_str.parse().unwrap();
 
