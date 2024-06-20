@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+
+// This is the widget in the info box that explains the rules.
 getRules(Set<String> rules) {
   return rules
       .map(
