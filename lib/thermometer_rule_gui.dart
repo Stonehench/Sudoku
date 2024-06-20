@@ -1,25 +1,23 @@
-
 import 'package:flutter/material.dart';
 import 'package:flutter/widgets.dart';
 import 'package:sudoku/game_state.dart';
 
 class Thermometer extends StatefulWidget {
   const Thermometer({super.key});
-
   @override
   State<StatefulWidget> createState() => _ThermometerState();
 }
 
+// This file is responsible for drawing thermometers
 class _ThermometerState extends State<Thermometer> {
   Color lineColor = const Color.fromARGB(255, 70, 112, 167);
 
   @override
   Widget build(BuildContext context) {
     GameState state = GameState.getInstance();
-
     return Stack(
       children: [
-        // circles in all cells
+        // Circles in all cells
         GridView.builder(
           padding: EdgeInsets.zero,
           itemCount: state.board.length,
@@ -30,6 +28,7 @@ class _ThermometerState extends State<Thermometer> {
             return Container(
               alignment: Alignment.center,
               child: state.thermometerPositions.any((thermometer) {
+                // Make the first circle bigger
                 if (thermometer.first == index) {
                   dotWidth = 100;
                 }
@@ -39,7 +38,6 @@ class _ThermometerState extends State<Thermometer> {
                   ? Container(
                       width: dotWidth / state.size,
                       height: dotWidth / state.size,
-                      //color: lineColor,
                       decoration: BoxDecoration(
                         shape: BoxShape.circle,
                         color: lineColor,
@@ -50,7 +48,7 @@ class _ThermometerState extends State<Thermometer> {
           },
         ),
 
-        // Horizontal
+        // Draw horizontal lines
         GridView.builder(
           padding: EdgeInsets.fromLTRB(
               (340 / (state.size)) / 2, 0, (340 / (state.size)) / 2, 0),
@@ -83,7 +81,7 @@ class _ThermometerState extends State<Thermometer> {
           },
         ),
 
-        // Vertical
+        // Draw vertical lines
         GridView.builder(
           padding: EdgeInsets.fromLTRB(
               0, (340 / (state.size)) / 2, 0, (340 / (state.size)) / 2),
@@ -115,7 +113,12 @@ class _ThermometerState extends State<Thermometer> {
           },
         ),
 
-        // diagonals from top left to bottom right
+        // The reasoning for why there are 3 functions per diagonal are explained in depth in the report.
+        // In short the first is the main diagonal drawing, the 2 right after are smaller drawings
+        // seamlessly connecting the main diagonal to the circles.
+
+        // The next three GridView.builder draws diagonals from top left to bottom right
+        // Center diagonal drawing
         GridView.builder(
           padding: EdgeInsets.fromLTRB(
               (340 / (state.size)) / 2,
@@ -152,6 +155,7 @@ class _ThermometerState extends State<Thermometer> {
           },
         ),
 
+        // First small diagonal drawing
         GridView.builder(
           padding: EdgeInsets.zero,
           itemCount: state.board.length,
@@ -183,6 +187,7 @@ class _ThermometerState extends State<Thermometer> {
           },
         ),
 
+        // Second small diagonal drawing
         GridView.builder(
           padding: EdgeInsets.zero,
           itemCount: state.board.length,
@@ -214,6 +219,8 @@ class _ThermometerState extends State<Thermometer> {
           },
         ),
 
+        // The next three GridView.builder draws diagonals from top right to bottom left
+        // Center diagonal drawing
         GridView.builder(
           padding: EdgeInsets.zero,
           itemCount: state.board.length,
@@ -245,6 +252,7 @@ class _ThermometerState extends State<Thermometer> {
           },
         ),
 
+        // First small diagonal drawing
         GridView.builder(
           padding: EdgeInsets.zero,
           itemCount: state.board.length,
@@ -276,7 +284,7 @@ class _ThermometerState extends State<Thermometer> {
           },
         ),
 
-        // diagonals from top right to bottom left
+        // Second small diagonal drawing
         GridView.builder(
           padding: EdgeInsets.fromLTRB(
               (340 / (state.size)) / 2,
@@ -317,6 +325,7 @@ class _ThermometerState extends State<Thermometer> {
     );
   }
 
+  // Returns horizontal rectagles
   Widget getHorizontal(GameState state) {
     return SizedBox(
         width: 340 / state.size,
@@ -326,6 +335,7 @@ class _ThermometerState extends State<Thermometer> {
         ));
   }
 
+  // Returns vertical rectagles
   Widget getVertical(GameState state) {
     return SizedBox(
         height: 340 / state.size,
@@ -335,6 +345,7 @@ class _ThermometerState extends State<Thermometer> {
         ));
   }
 
+  // Returns small connecting diagonals
   Widget getSmallDiagonal(GameState state, double angle, Alignment alignment) {
     return Align(
       alignment: alignment,
@@ -354,6 +365,7 @@ class _ThermometerState extends State<Thermometer> {
     );
   }
 
+  // Returns Center diagonals
   Widget getDiagonal(GameState state, double angle) {
     return SizedBox(
         height: 340 / state.size,
