@@ -17,6 +17,8 @@ impl ParityRule {
 }
 
 impl Rule for ParityRule {
+    // the updates function does not affect aything for domino rules 
+    // therefore it cleans and returns an empty buffer
     fn updates<'buf>(
         &self,
         _size: usize,
@@ -27,6 +29,7 @@ impl Rule for ParityRule {
         buffer
     }
 
+    // The multi remove function handles all the rules logic for the parity rule
     fn multi_remove<'buf>(
         &self,
         sudoku: &Sudoku,
@@ -35,13 +38,16 @@ impl Rule for ParityRule {
         big_buffer.clear();
         for (left_index, right_index) in &self.parity_clue {
             if sudoku.cells[*left_index].locked_in && !sudoku.cells[*right_index].locked_in {
+                // For all left indices, if the value is known
                 let value = sudoku.cells[*left_index].available[0];
+                // If even, remove the even numbers from the other half
                 if value & 1 == 0 {
                     for i in 1..=(sudoku.size as u16 / 2) {
                         if sudoku.cells[*right_index].available.contains(&(i * 2)) {
                             big_buffer.push((i * 2, *right_index));
                         }
                     }
+                // else if odd, remove all the odd numbers from the other half
                 } else {
                     for i in 0..=(sudoku.size as u16 / 2) {
                         if sudoku.cells[*right_index].available.contains(&(i * 2 + 1)) {
@@ -49,14 +55,17 @@ impl Rule for ParityRule {
                         }
                     }
                 }
+            // for right indices, if the value is known
             } else if sudoku.cells[*right_index].locked_in && !sudoku.cells[*left_index].locked_in {
                 let value = sudoku.cells[*right_index].available[0];
+                // If even, remove the even numbers from the other half
                 if value & 1 == 0 {
                     for i in 1..=(sudoku.size as u16 / 2) {
                         if sudoku.cells[*left_index].available.contains(&(i * 2)) {
                             big_buffer.push((i * 2, *left_index));
                         }
                     }
+                 // else if odd, remove all the odd numbers from the other half
                 } else if value & 1 == 1 {
                     for i in 0..=(sudoku.size as u16 / 2) {
                         if sudoku.cells[*left_index].available.contains(&(i * 2 + 1)) {
@@ -65,7 +74,10 @@ impl Rule for ParityRule {
                     }
                 }
             } else if !sudoku.cells[*left_index].locked_in && !sudoku.cells[*right_index].locked_in
+            // if the values is not known
             {
+                // test if all avalible values in a cell has the same parity
+                // if so the other half must only have the other parity
                 let mut same_parity_left = true;
                 if sudoku.cells[*left_index].available[0] & 1 == 0 && same_parity_left {
                     for i in sudoku.cells[*left_index].available.iter() {
@@ -165,7 +177,7 @@ impl Rule for ParityRule {
         }
         let count = self.parity_clue.len();
         if count > size * 2 {
-            for i in 0..count - size * 2 {
+            for i in 0..count - (size * 3)/2 {
                 self.parity_clue.remove(random::<usize>() % (count - i));
             }
         }
