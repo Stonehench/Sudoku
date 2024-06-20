@@ -7,9 +7,6 @@ import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 
 Uri serverAddress = Uri.http("jensogkarsten.site");
-//Uri serverAddress = Uri.http("localhost:5000");
-
-
 
 class Account {
   final String username;
@@ -18,7 +15,6 @@ class Account {
   final double? multiplier;
   const Account(this.username, this.userID, {this.streak, this.multiplier});
 }
-
 
 //This class contains the currect state of being logged in.
 class AccountState extends ChangeNotifier {
@@ -60,6 +56,7 @@ class AccountState extends ChangeNotifier {
     }
   }
 
+  // This function sends the users login information to the server and checks whether it exists
   Future<bool> login(String username, String password) async {
     try {
       var response = await http.post(serverAddress.resolve("/login"), body: {
@@ -90,6 +87,7 @@ class AccountState extends ChangeNotifier {
     }
   }
 
+  // This function creates a new user in the database if the username is unique
   Future<bool> register(String username, String password) async {
     try {
       var response = await http.post(serverAddress.resolve("/register"), body: {
@@ -115,6 +113,7 @@ class AccountState extends ChangeNotifier {
     }
   }
 
+  // This function adds points to the users existing score
   Future<void> addScore(Account account, int value) async {
     try {
       var response =
@@ -131,6 +130,7 @@ class AccountState extends ChangeNotifier {
     }
   }
 
+  // This function changes the users existing password
   Future<bool> changePasswd(Account account, String newPasswd) async {
     try {
       var response =
@@ -145,6 +145,7 @@ class AccountState extends ChangeNotifier {
     }
   }
 
+  // This function updates the streak of the user.
   Future<bool> updateStreak() async {
     Account? acc = get();
     if (acc == null) {
@@ -176,6 +177,7 @@ class AccountState extends ChangeNotifier {
     }
   }
 
+  // logs the user out
   Future<void> logout() async {
     _account = null;
     await _prefs.clear();

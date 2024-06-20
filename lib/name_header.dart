@@ -12,7 +12,8 @@ class _NameHeaderState extends State<NameHeader> {
   @override
   Widget build(BuildContext context) {
     List<String> name = List.empty(growable: true);
-    // is it a domino sudoku
+    // Find the name of the current Sudoku. Complex math for a complex problem.
+    // Might be able to do better. It is what it is.
     widget.rules.containsAll({"ParityRule", "XRule"}) &&
             !widget.rules.contains("ConsecutiveRule")
         ? name.add("Tic Tac Toe")

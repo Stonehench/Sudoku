@@ -16,7 +16,9 @@ use std::{
 
 use crate::sudoku::Sudoku;
 
-//use self::zipper_rule::ZipperRule;
+// This is the module file for all the rules files.
+
+// use self::zipper_rule::ZipperRule;
 
 pub mod column_rule;
 pub mod consecutive_rule;
