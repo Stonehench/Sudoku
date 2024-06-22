@@ -92,7 +92,7 @@ pub enum SudokuSolveError {
 }
 
 // Author Thor s224817
-//Global Threadpool pool. 
+//Global Threadpool pool.
 lazy_static! {
     static ref GLOBAL_POOL: Mutex<Option<ThreadPool>> = Mutex::new(None);
 }
@@ -282,7 +282,6 @@ impl Sudoku {
             .iter()
             .any(|r| r.get_name() == SquareRule.get_name());
 
-        
         //If not pri_queue is given, create a new and fill it.
         let mut pri_queue = if let Some(pri_queue) = pri_queue {
             pri_queue
@@ -308,7 +307,6 @@ impl Sudoku {
         } else {
             HashSet::new()
         };
-
 
         //This is the main solver loop. Stats by getting the cell with lowest entropy.
         'main: while let Some((index, entropy)) = pri_queue.pop() {
@@ -577,7 +575,7 @@ impl Sudoku {
         //Remove clue loop.
         loop {
             let shared_caches = Arc::new((good_cache.clone(), bad_cache.clone()));
-            
+
             if timer.elapsed().as_secs() > 30 {
                 println!("OUT OF GEN TIME!!");
                 break;
@@ -621,6 +619,7 @@ impl Sudoku {
             }
 
             for good_state in new_good_cache {
+                bad_cache.remove(&good_state); //Post release hotfix
                 good_cache.insert(good_state);
             }
 
@@ -750,13 +749,13 @@ impl Display for Sudoku {
         Ok(())
     }
 }
-// Author Thor s224817 
+// Author Thor s224817
 #[derive(Debug, Clone, Hash, PartialEq, Eq)]
 pub struct Cell {
     pub available: smallvec::SmallVec<[u16; 16]>,
     pub locked_in: bool,
 }
-// Author Thor s224817 
+// Author Thor s224817
 impl Cell {
     pub fn single(n: u16) -> Self {
         Self {
@@ -783,7 +782,7 @@ impl Cell {
         self.available.deref() == &[n]
     }
 }
-// Author Thor s224817 
+// Author Thor s224817
 impl Clone for Sudoku {
     fn clone(&self) -> Self {
         Self {
@@ -796,7 +795,7 @@ impl Clone for Sudoku {
 }
 
 //########################### TEST ###############################
-// Author Thor s224817 
+// Author Thor s224817
 #[test]
 fn read_file_test() {
     let file_str = std::fs::read_to_string("./sudokuBenchmark").unwrap();
