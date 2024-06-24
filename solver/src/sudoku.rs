@@ -102,7 +102,7 @@ lazy_static! {
 pub struct AllSolutionsContext {
     solutions: Arc<AtomicUsize>,
     pool: ThreadPool,
-    cache: Option<Arc<(HashSet<u64>, HashSet<u64>)>>,
+    _cache: Option<Arc<(HashSet<u64>, HashSet<u64>)>>,
     write_cache: Arc<Mutex<(HashSet<u64>, HashSet<u64>)>>,
 }
 // Author Thor s224817
@@ -151,7 +151,7 @@ impl AllSolutionsContext {
         Self {
             solutions: Arc::new(0.into()),
             pool: Self::get_pool(),
-            cache: Some(cache),
+            _cache: Some(cache),
             write_cache: Arc::new(Mutex::new((HashSet::new(), HashSet::new()))),
         }
     }
@@ -161,7 +161,7 @@ impl AllSolutionsContext {
         Self {
             solutions: Arc::new(0.into()),
             pool: Self::get_pool(),
-            cache: None,
+            _cache: None,
             write_cache: Arc::new(Mutex::new((HashSet::new(), HashSet::new()))),
         }
     }
@@ -299,10 +299,10 @@ impl Sudoku {
         let mut ret_buffer = vec![];
         let mut big_buffer = vec![];
         let mut arena = Self::get_arena();
-        let mut state_buffer = Vec::with_capacity(self.cells.len());
+        let mut _state_buffer: Vec<u64> = Vec::with_capacity(self.cells.len());
 
         //If no states are given, create new hashset.
-        let mut new_states = if let Some(new_states) = new_states {
+        let mut _new_states = if let Some(new_states) = new_states {
             new_states
         } else {
             HashSet::new()
@@ -323,7 +323,7 @@ impl Sudoku {
                         if let Some(ctx) = ctx {
                             let mut lock = ctx.write_cache.lock().unwrap();
 
-                            for state in new_states {
+                            for state in _new_states {
                                 lock.1.insert(state);
                             }
                         }
@@ -430,8 +430,10 @@ impl Sudoku {
                     }
 
                     //Check if current state is in cache, and exit if it is
+                    /*
                     if let Some(ctx) = ctx {
                         if let Some((good, bad)) = ctx.cache.as_deref() {
+
                             let hash = self.state_hash(&mut state_buffer);
 
                             if good.contains(&hash) {
@@ -457,9 +459,10 @@ impl Sudoku {
                             } else {
                                 new_states.insert(hash);
                             }
+
                         }
                     }
-
+                    */
                     // Analysis failed. Branch instead by chossing random number from popped cell.
 
                     let choice = random::<usize>() % entropy.0;
@@ -478,7 +481,7 @@ impl Sudoku {
                             return Err(SudokuSolveError::AlreadyManySolutions);
                         }
 
-                        ctx.add_branch(self, cloned_cells, cloned_queue, new_states.clone());
+                        ctx.add_branch(self, cloned_cells, cloned_queue, _new_states.clone());
                     } else {
                         branch_stack.push((cloned_cells, cloned_queue));
                     }
@@ -488,7 +491,7 @@ impl Sudoku {
                             if let Some(ctx) = ctx {
                                 let mut lock = ctx.write_cache.lock().unwrap();
 
-                                for state in new_states {
+                                for state in _new_states {
                                     lock.1.insert(state);
                                 }
                             }
@@ -511,7 +514,7 @@ impl Sudoku {
                         if let Some(ctx) = ctx {
                             let mut lock = ctx.write_cache.lock().unwrap();
 
-                            for state in new_states {
+                            for state in _new_states {
                                 lock.1.insert(state);
                             }
                         }
@@ -531,7 +534,7 @@ impl Sudoku {
         // If in multisolve context, write relevant data.
         if let Some(ctx) = ctx {
             let mut lock = ctx.write_cache.lock().unwrap();
-            lock.0 = new_states;
+            lock.0 = _new_states;
 
             ctx.solutions
                 .fetch_add(1, std::sync::atomic::Ordering::SeqCst);
