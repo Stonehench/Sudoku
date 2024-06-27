@@ -63,6 +63,7 @@ class AccountState extends ChangeNotifier {
         "username": username,
         "password": password,
       });
+      print("${response.body} // ${response.statusCode} // ${response.headers}");
       if (response.statusCode != 200) {
         _errorMsg = "Invalid username or password";
         notifyListeners();
@@ -94,7 +95,7 @@ class AccountState extends ChangeNotifier {
         "username": username,
         "password": password,
       });
-      print(response);
+      print("${response.body} // ${response.statusCode} // ${response.headers}");
       if (response.statusCode != 200) {
         _errorMsg = "Username taken"; //Probably
         notifyListeners();
