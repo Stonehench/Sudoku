@@ -656,6 +656,7 @@ impl Sudoku {
         }
         return self.cells.clone();
     }
+    /*
     // Author Thor s224817
     fn state_hash(&self, state: &mut Vec<u16>) -> u64 {
         state.clear();
@@ -669,7 +670,7 @@ impl Sudoku {
         let mut hasher = DefaultHasher::new();
         state.hash(&mut hasher);
         hasher.finish()
-    }
+    } */
 }
 
 // Author Thor s224817
