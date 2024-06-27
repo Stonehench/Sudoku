@@ -94,6 +94,7 @@ class AccountState extends ChangeNotifier {
         "username": username,
         "password": password,
       });
+      print(response);
       if (response.statusCode != 200) {
         _errorMsg = "Username taken"; //Probably
         notifyListeners();
