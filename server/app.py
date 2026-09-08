@@ -37,8 +37,13 @@ def mk_sudoku(diffculty: str):
     else:
         args = [diffculty]
 
+    # output = subprocess.run(
+    #     ["cargo", "run", "--bin", "solver", "--release", "--", "--generate", *args],
+    #     stdout=subprocess.PIPE,
+    # )
     output = subprocess.run(
-        ["cargo", "run", "--bin", "solver", "--release", "--", "--generate", *args],
+        ["/usr/local/bin/solver", "--generate", *args],
+        check=True,
         stdout=subprocess.PIPE,
     )
 
