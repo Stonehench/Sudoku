@@ -61,28 +61,35 @@ class RustLib extends BaseEntrypoint<RustLibApi, RustLibApiImpl, RustLibWire> {
 
   static const kDefaultExternalLibraryLoaderConfig =
       ExternalLibraryLoaderConfig(
-    stem: 'rust_lib_sudoku',
-    ioDirectory: 'rust/target/release/',
-    webPrefix: 'pkg/',
-  );
+        stem: 'rust_lib_sudoku',
+        ioDirectory: 'rust/target/release/',
+        webPrefix: 'pkg/',
+      );
 }
 
 abstract class RustLibApi extends BaseApi {
   Future<(int, int)> hint({required List<int> freeIndexes, dynamic hint});
 
-  Future<bool> checkLegality(
-      {required int position, required int value, dynamic hint});
+  Future<bool> checkLegality({
+    required int position,
+    required int value,
+    dynamic hint,
+  });
 
   Future<void> closeThreads({dynamic hint});
 
-  Future<int?> difficultyValues(
-      {required int size, required String difficulty, dynamic hint});
+  Future<int?> difficultyValues({
+    required int size,
+    required String difficulty,
+    dynamic hint,
+  });
 
-  Future<String?> generateWithSize(
-      {required int size,
-      required List<String> rulesSrc,
-      required String difficulty,
-      dynamic hint});
+  Future<String?> generateWithSize({
+    required int size,
+    required List<String> rulesSrc,
+    required String difficulty,
+    dynamic hint,
+  });
 
   Future<List<(int, int)>> getConsecutivePositions({dynamic hint});
 
@@ -111,337 +118,406 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
 
   @override
   Future<(int, int)> hint({required List<int> freeIndexes, dynamic hint}) {
-    return handler.executeNormal(NormalTask(
-      callFfi: (port_) {
-        final serializer = SseSerializer(generalizedFrbRustBinding);
-        sse_encode_list_prim_u_16_loose(freeIndexes, serializer);
-        pdeCallFfi(generalizedFrbRustBinding, serializer,
-            funcId: 1, port: port_);
-      },
-      codec: SseCodec(
-        decodeSuccessData: sse_decode_record_u_16_usize,
-        decodeErrorData: null,
+    return handler.executeNormal(
+      NormalTask(
+        callFfi: (port_) {
+          final serializer = SseSerializer(generalizedFrbRustBinding);
+          sse_encode_list_prim_u_16_loose(freeIndexes, serializer);
+          pdeCallFfi(
+            generalizedFrbRustBinding,
+            serializer,
+            funcId: 1,
+            port: port_,
+          );
+        },
+        codec: SseCodec(
+          decodeSuccessData: sse_decode_record_u_16_usize,
+          decodeErrorData: null,
+        ),
+        constMeta: kHintConstMeta,
+        argValues: [freeIndexes],
+        apiImpl: this,
+        hint: hint,
       ),
-      constMeta: kHintConstMeta,
-      argValues: [freeIndexes],
-      apiImpl: this,
-      hint: hint,
-    ));
+    );
   }
 
-  TaskConstMeta get kHintConstMeta => const TaskConstMeta(
-        debugName: "hint",
-        argNames: ["freeIndexes"],
-      );
+  TaskConstMeta get kHintConstMeta =>
+      const TaskConstMeta(debugName: "hint", argNames: ["freeIndexes"]);
 
   @override
-  Future<bool> checkLegality(
-      {required int position, required int value, dynamic hint}) {
-    return handler.executeNormal(NormalTask(
-      callFfi: (port_) {
-        final serializer = SseSerializer(generalizedFrbRustBinding);
-        sse_encode_usize(position, serializer);
-        sse_encode_u_16(value, serializer);
-        pdeCallFfi(generalizedFrbRustBinding, serializer,
-            funcId: 9, port: port_);
-      },
-      codec: SseCodec(
-        decodeSuccessData: sse_decode_bool,
-        decodeErrorData: null,
+  Future<bool> checkLegality({
+    required int position,
+    required int value,
+    dynamic hint,
+  }) {
+    return handler.executeNormal(
+      NormalTask(
+        callFfi: (port_) {
+          final serializer = SseSerializer(generalizedFrbRustBinding);
+          sse_encode_usize(position, serializer);
+          sse_encode_u_16(value, serializer);
+          pdeCallFfi(
+            generalizedFrbRustBinding,
+            serializer,
+            funcId: 9,
+            port: port_,
+          );
+        },
+        codec: SseCodec(
+          decodeSuccessData: sse_decode_bool,
+          decodeErrorData: null,
+        ),
+        constMeta: kCheckLegalityConstMeta,
+        argValues: [position, value],
+        apiImpl: this,
+        hint: hint,
       ),
-      constMeta: kCheckLegalityConstMeta,
-      argValues: [position, value],
-      apiImpl: this,
-      hint: hint,
-    ));
+    );
   }
 
   TaskConstMeta get kCheckLegalityConstMeta => const TaskConstMeta(
-        debugName: "check_legality",
-        argNames: ["position", "value"],
-      );
+    debugName: "check_legality",
+    argNames: ["position", "value"],
+  );
 
   @override
   Future<void> closeThreads({dynamic hint}) {
-    return handler.executeNormal(NormalTask(
-      callFfi: (port_) {
-        final serializer = SseSerializer(generalizedFrbRustBinding);
-        pdeCallFfi(generalizedFrbRustBinding, serializer,
-            funcId: 11, port: port_);
-      },
-      codec: SseCodec(
-        decodeSuccessData: sse_decode_unit,
-        decodeErrorData: null,
+    return handler.executeNormal(
+      NormalTask(
+        callFfi: (port_) {
+          final serializer = SseSerializer(generalizedFrbRustBinding);
+          pdeCallFfi(
+            generalizedFrbRustBinding,
+            serializer,
+            funcId: 11,
+            port: port_,
+          );
+        },
+        codec: SseCodec(
+          decodeSuccessData: sse_decode_unit,
+          decodeErrorData: null,
+        ),
+        constMeta: kCloseThreadsConstMeta,
+        argValues: [],
+        apiImpl: this,
+        hint: hint,
       ),
-      constMeta: kCloseThreadsConstMeta,
-      argValues: [],
-      apiImpl: this,
-      hint: hint,
-    ));
+    );
   }
 
-  TaskConstMeta get kCloseThreadsConstMeta => const TaskConstMeta(
-        debugName: "close_threads",
-        argNames: [],
-      );
+  TaskConstMeta get kCloseThreadsConstMeta =>
+      const TaskConstMeta(debugName: "close_threads", argNames: []);
 
   @override
-  Future<int?> difficultyValues(
-      {required int size, required String difficulty, dynamic hint}) {
-    return handler.executeNormal(NormalTask(
-      callFfi: (port_) {
-        final serializer = SseSerializer(generalizedFrbRustBinding);
-        sse_encode_usize(size, serializer);
-        sse_encode_String(difficulty, serializer);
-        pdeCallFfi(generalizedFrbRustBinding, serializer,
-            funcId: 12, port: port_);
-      },
-      codec: SseCodec(
-        decodeSuccessData: sse_decode_opt_box_autoadd_usize,
-        decodeErrorData: null,
+  Future<int?> difficultyValues({
+    required int size,
+    required String difficulty,
+    dynamic hint,
+  }) {
+    return handler.executeNormal(
+      NormalTask(
+        callFfi: (port_) {
+          final serializer = SseSerializer(generalizedFrbRustBinding);
+          sse_encode_usize(size, serializer);
+          sse_encode_String(difficulty, serializer);
+          pdeCallFfi(
+            generalizedFrbRustBinding,
+            serializer,
+            funcId: 12,
+            port: port_,
+          );
+        },
+        codec: SseCodec(
+          decodeSuccessData: sse_decode_opt_box_autoadd_usize,
+          decodeErrorData: null,
+        ),
+        constMeta: kDifficultyValuesConstMeta,
+        argValues: [size, difficulty],
+        apiImpl: this,
+        hint: hint,
       ),
-      constMeta: kDifficultyValuesConstMeta,
-      argValues: [size, difficulty],
-      apiImpl: this,
-      hint: hint,
-    ));
+    );
   }
 
   TaskConstMeta get kDifficultyValuesConstMeta => const TaskConstMeta(
-        debugName: "difficulty_values",
-        argNames: ["size", "difficulty"],
-      );
+    debugName: "difficulty_values",
+    argNames: ["size", "difficulty"],
+  );
 
   @override
-  Future<String?> generateWithSize(
-      {required int size,
-      required List<String> rulesSrc,
-      required String difficulty,
-      dynamic hint}) {
-    return handler.executeNormal(NormalTask(
-      callFfi: (port_) {
-        final serializer = SseSerializer(generalizedFrbRustBinding);
-        sse_encode_usize(size, serializer);
-        sse_encode_list_String(rulesSrc, serializer);
-        sse_encode_String(difficulty, serializer);
-        pdeCallFfi(generalizedFrbRustBinding, serializer,
-            funcId: 3, port: port_);
-      },
-      codec: SseCodec(
-        decodeSuccessData: sse_decode_opt_String,
-        decodeErrorData: null,
+  Future<String?> generateWithSize({
+    required int size,
+    required List<String> rulesSrc,
+    required String difficulty,
+    dynamic hint,
+  }) {
+    return handler.executeNormal(
+      NormalTask(
+        callFfi: (port_) {
+          final serializer = SseSerializer(generalizedFrbRustBinding);
+          sse_encode_usize(size, serializer);
+          sse_encode_list_String(rulesSrc, serializer);
+          sse_encode_String(difficulty, serializer);
+          pdeCallFfi(
+            generalizedFrbRustBinding,
+            serializer,
+            funcId: 3,
+            port: port_,
+          );
+        },
+        codec: SseCodec(
+          decodeSuccessData: sse_decode_opt_String,
+          decodeErrorData: null,
+        ),
+        constMeta: kGenerateWithSizeConstMeta,
+        argValues: [size, rulesSrc, difficulty],
+        apiImpl: this,
+        hint: hint,
       ),
-      constMeta: kGenerateWithSizeConstMeta,
-      argValues: [size, rulesSrc, difficulty],
-      apiImpl: this,
-      hint: hint,
-    ));
+    );
   }
 
   TaskConstMeta get kGenerateWithSizeConstMeta => const TaskConstMeta(
-        debugName: "generate_with_size",
-        argNames: ["size", "rulesSrc", "difficulty"],
-      );
+    debugName: "generate_with_size",
+    argNames: ["size", "rulesSrc", "difficulty"],
+  );
 
   @override
   Future<List<(int, int)>> getConsecutivePositions({dynamic hint}) {
-    return handler.executeNormal(NormalTask(
-      callFfi: (port_) {
-        final serializer = SseSerializer(generalizedFrbRustBinding);
-        pdeCallFfi(generalizedFrbRustBinding, serializer,
-            funcId: 5, port: port_);
-      },
-      codec: SseCodec(
-        decodeSuccessData: sse_decode_list_record_usize_usize,
-        decodeErrorData: null,
+    return handler.executeNormal(
+      NormalTask(
+        callFfi: (port_) {
+          final serializer = SseSerializer(generalizedFrbRustBinding);
+          pdeCallFfi(
+            generalizedFrbRustBinding,
+            serializer,
+            funcId: 5,
+            port: port_,
+          );
+        },
+        codec: SseCodec(
+          decodeSuccessData: sse_decode_list_record_usize_usize,
+          decodeErrorData: null,
+        ),
+        constMeta: kGetConsecutivePositionsConstMeta,
+        argValues: [],
+        apiImpl: this,
+        hint: hint,
       ),
-      constMeta: kGetConsecutivePositionsConstMeta,
-      argValues: [],
-      apiImpl: this,
-      hint: hint,
-    ));
+    );
   }
 
-  TaskConstMeta get kGetConsecutivePositionsConstMeta => const TaskConstMeta(
-        debugName: "get_consecutive_positions",
-        argNames: [],
-      );
+  TaskConstMeta get kGetConsecutivePositionsConstMeta =>
+      const TaskConstMeta(debugName: "get_consecutive_positions", argNames: []);
 
   @override
   Future<List<(int, int)>> getParityPositions({dynamic hint}) {
-    return handler.executeNormal(NormalTask(
-      callFfi: (port_) {
-        final serializer = SseSerializer(generalizedFrbRustBinding);
-        pdeCallFfi(generalizedFrbRustBinding, serializer,
-            funcId: 6, port: port_);
-      },
-      codec: SseCodec(
-        decodeSuccessData: sse_decode_list_record_usize_usize,
-        decodeErrorData: null,
+    return handler.executeNormal(
+      NormalTask(
+        callFfi: (port_) {
+          final serializer = SseSerializer(generalizedFrbRustBinding);
+          pdeCallFfi(
+            generalizedFrbRustBinding,
+            serializer,
+            funcId: 6,
+            port: port_,
+          );
+        },
+        codec: SseCodec(
+          decodeSuccessData: sse_decode_list_record_usize_usize,
+          decodeErrorData: null,
+        ),
+        constMeta: kGetParityPositionsConstMeta,
+        argValues: [],
+        apiImpl: this,
+        hint: hint,
       ),
-      constMeta: kGetParityPositionsConstMeta,
-      argValues: [],
-      apiImpl: this,
-      hint: hint,
-    ));
+    );
   }
 
-  TaskConstMeta get kGetParityPositionsConstMeta => const TaskConstMeta(
-        debugName: "get_parity_positions",
-        argNames: [],
-      );
+  TaskConstMeta get kGetParityPositionsConstMeta =>
+      const TaskConstMeta(debugName: "get_parity_positions", argNames: []);
 
   @override
   Future<List<Uint16List>> getThermometerPositions({dynamic hint}) {
-    return handler.executeNormal(NormalTask(
-      callFfi: (port_) {
-        final serializer = SseSerializer(generalizedFrbRustBinding);
-        pdeCallFfi(generalizedFrbRustBinding, serializer,
-            funcId: 8, port: port_);
-      },
-      codec: SseCodec(
-        decodeSuccessData: sse_decode_list_list_prim_u_16_strict,
-        decodeErrorData: null,
+    return handler.executeNormal(
+      NormalTask(
+        callFfi: (port_) {
+          final serializer = SseSerializer(generalizedFrbRustBinding);
+          pdeCallFfi(
+            generalizedFrbRustBinding,
+            serializer,
+            funcId: 8,
+            port: port_,
+          );
+        },
+        codec: SseCodec(
+          decodeSuccessData: sse_decode_list_list_prim_u_16_strict,
+          decodeErrorData: null,
+        ),
+        constMeta: kGetThermometerPositionsConstMeta,
+        argValues: [],
+        apiImpl: this,
+        hint: hint,
       ),
-      constMeta: kGetThermometerPositionsConstMeta,
-      argValues: [],
-      apiImpl: this,
-      hint: hint,
-    ));
+    );
   }
 
-  TaskConstMeta get kGetThermometerPositionsConstMeta => const TaskConstMeta(
-        debugName: "get_thermometer_positions",
-        argNames: [],
-      );
+  TaskConstMeta get kGetThermometerPositionsConstMeta =>
+      const TaskConstMeta(debugName: "get_thermometer_positions", argNames: []);
 
   @override
   Future<List<(int, int)>> getXPositions({dynamic hint}) {
-    return handler.executeNormal(NormalTask(
-      callFfi: (port_) {
-        final serializer = SseSerializer(generalizedFrbRustBinding);
-        pdeCallFfi(generalizedFrbRustBinding, serializer,
-            funcId: 4, port: port_);
-      },
-      codec: SseCodec(
-        decodeSuccessData: sse_decode_list_record_usize_usize,
-        decodeErrorData: null,
+    return handler.executeNormal(
+      NormalTask(
+        callFfi: (port_) {
+          final serializer = SseSerializer(generalizedFrbRustBinding);
+          pdeCallFfi(
+            generalizedFrbRustBinding,
+            serializer,
+            funcId: 4,
+            port: port_,
+          );
+        },
+        codec: SseCodec(
+          decodeSuccessData: sse_decode_list_record_usize_usize,
+          decodeErrorData: null,
+        ),
+        constMeta: kGetXPositionsConstMeta,
+        argValues: [],
+        apiImpl: this,
+        hint: hint,
       ),
-      constMeta: kGetXPositionsConstMeta,
-      argValues: [],
-      apiImpl: this,
-      hint: hint,
-    ));
+    );
   }
 
-  TaskConstMeta get kGetXPositionsConstMeta => const TaskConstMeta(
-        debugName: "get_x_positions",
-        argNames: [],
-      );
+  TaskConstMeta get kGetXPositionsConstMeta =>
+      const TaskConstMeta(debugName: "get_x_positions", argNames: []);
 
   @override
   Future<List<(int, List<(int, int)>)>> getZipperPositions({dynamic hint}) {
-    return handler.executeNormal(NormalTask(
-      callFfi: (port_) {
-        final serializer = SseSerializer(generalizedFrbRustBinding);
-        pdeCallFfi(generalizedFrbRustBinding, serializer,
-            funcId: 7, port: port_);
-      },
-      codec: SseCodec(
-        decodeSuccessData: sse_decode_list_record_usize_list_record_usize_usize,
-        decodeErrorData: null,
+    return handler.executeNormal(
+      NormalTask(
+        callFfi: (port_) {
+          final serializer = SseSerializer(generalizedFrbRustBinding);
+          pdeCallFfi(
+            generalizedFrbRustBinding,
+            serializer,
+            funcId: 7,
+            port: port_,
+          );
+        },
+        codec: SseCodec(
+          decodeSuccessData:
+              sse_decode_list_record_usize_list_record_usize_usize,
+          decodeErrorData: null,
+        ),
+        constMeta: kGetZipperPositionsConstMeta,
+        argValues: [],
+        apiImpl: this,
+        hint: hint,
       ),
-      constMeta: kGetZipperPositionsConstMeta,
-      argValues: [],
-      apiImpl: this,
-      hint: hint,
-    ));
+    );
   }
 
-  TaskConstMeta get kGetZipperPositionsConstMeta => const TaskConstMeta(
-        debugName: "get_zipper_positions",
-        argNames: [],
-      );
+  TaskConstMeta get kGetZipperPositionsConstMeta =>
+      const TaskConstMeta(debugName: "get_zipper_positions", argNames: []);
 
   @override
   Future<void> initApp({dynamic hint}) {
-    return handler.executeNormal(NormalTask(
-      callFfi: (port_) {
-        final serializer = SseSerializer(generalizedFrbRustBinding);
-        pdeCallFfi(generalizedFrbRustBinding, serializer,
-            funcId: 10, port: port_);
-      },
-      codec: SseCodec(
-        decodeSuccessData: sse_decode_unit,
-        decodeErrorData: null,
+    return handler.executeNormal(
+      NormalTask(
+        callFfi: (port_) {
+          final serializer = SseSerializer(generalizedFrbRustBinding);
+          pdeCallFfi(
+            generalizedFrbRustBinding,
+            serializer,
+            funcId: 10,
+            port: port_,
+          );
+        },
+        codec: SseCodec(
+          decodeSuccessData: sse_decode_unit,
+          decodeErrorData: null,
+        ),
+        constMeta: kInitAppConstMeta,
+        argValues: [],
+        apiImpl: this,
+        hint: hint,
       ),
-      constMeta: kInitAppConstMeta,
-      argValues: [],
-      apiImpl: this,
-      hint: hint,
-    ));
+    );
   }
 
-  TaskConstMeta get kInitAppConstMeta => const TaskConstMeta(
-        debugName: "init_app",
-        argNames: [],
-      );
+  TaskConstMeta get kInitAppConstMeta =>
+      const TaskConstMeta(debugName: "init_app", argNames: []);
 
   @override
   Stream<(int, int)> progress({dynamic hint}) {
     final sink = RustStreamSink<(int, int)>();
-    unawaited(handler.executeNormal(NormalTask(
-      callFfi: (port_) {
-        final serializer = SseSerializer(generalizedFrbRustBinding);
-        sse_encode_StreamSink_record_usize_usize_Sse(sink, serializer);
-        pdeCallFfi(generalizedFrbRustBinding, serializer,
-            funcId: 2, port: port_);
-      },
-      codec: SseCodec(
-        decodeSuccessData: sse_decode_unit,
-        decodeErrorData: null,
+    unawaited(
+      handler.executeNormal(
+        NormalTask(
+          callFfi: (port_) {
+            final serializer = SseSerializer(generalizedFrbRustBinding);
+            sse_encode_StreamSink_record_usize_usize_Sse(sink, serializer);
+            pdeCallFfi(
+              generalizedFrbRustBinding,
+              serializer,
+              funcId: 2,
+              port: port_,
+            );
+          },
+          codec: SseCodec(
+            decodeSuccessData: sse_decode_unit,
+            decodeErrorData: null,
+          ),
+          constMeta: kProgressConstMeta,
+          argValues: [sink],
+          apiImpl: this,
+          hint: hint,
+        ),
       ),
-      constMeta: kProgressConstMeta,
-      argValues: [sink],
-      apiImpl: this,
-      hint: hint,
-    )));
+    );
     return sink.stream;
   }
 
-  TaskConstMeta get kProgressConstMeta => const TaskConstMeta(
-        debugName: "progress",
-        argNames: ["sink"],
-      );
+  TaskConstMeta get kProgressConstMeta =>
+      const TaskConstMeta(debugName: "progress", argNames: ["sink"]);
 
   @override
   Future<void> setFromStr({required String sudoku, dynamic hint}) {
-    return handler.executeNormal(NormalTask(
-      callFfi: (port_) {
-        final serializer = SseSerializer(generalizedFrbRustBinding);
-        sse_encode_String(sudoku, serializer);
-        pdeCallFfi(generalizedFrbRustBinding, serializer,
-            funcId: 13, port: port_);
-      },
-      codec: SseCodec(
-        decodeSuccessData: sse_decode_unit,
-        decodeErrorData: null,
+    return handler.executeNormal(
+      NormalTask(
+        callFfi: (port_) {
+          final serializer = SseSerializer(generalizedFrbRustBinding);
+          sse_encode_String(sudoku, serializer);
+          pdeCallFfi(
+            generalizedFrbRustBinding,
+            serializer,
+            funcId: 13,
+            port: port_,
+          );
+        },
+        codec: SseCodec(
+          decodeSuccessData: sse_decode_unit,
+          decodeErrorData: null,
+        ),
+        constMeta: kSetFromStrConstMeta,
+        argValues: [sudoku],
+        apiImpl: this,
+        hint: hint,
       ),
-      constMeta: kSetFromStrConstMeta,
-      argValues: [sudoku],
-      apiImpl: this,
-      hint: hint,
-    ));
+    );
   }
 
-  TaskConstMeta get kSetFromStrConstMeta => const TaskConstMeta(
-        debugName: "set_from_str",
-        argNames: ["sudoku"],
-      );
+  TaskConstMeta get kSetFromStrConstMeta =>
+      const TaskConstMeta(debugName: "set_from_str", argNames: ["sudoku"]);
 
   @protected
   RustStreamSink<(int, int)> dco_decode_StreamSink_record_usize_usize_Sse(
-      dynamic raw) {
+    dynamic raw,
+  ) {
     // Codec=Dco (DartCObject based), see doc to use other codecs
     throw UnimplementedError();
   }
@@ -498,7 +574,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
 
   @protected
   List<(int, List<(int, int)>)>
-      dco_decode_list_record_usize_list_record_usize_usize(dynamic raw) {
+  dco_decode_list_record_usize_list_record_usize_usize(dynamic raw) {
     // Codec=Dco (DartCObject based), see doc to use other codecs
     return (raw as List<dynamic>)
         .map(dco_decode_record_usize_list_record_usize_usize)
@@ -530,15 +606,13 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
     if (arr.length != 2) {
       throw Exception('Expected 2 elements, got ${arr.length}');
     }
-    return (
-      dco_decode_u_16(arr[0]),
-      dco_decode_usize(arr[1]),
-    );
+    return (dco_decode_u_16(arr[0]), dco_decode_usize(arr[1]));
   }
 
   @protected
   (int, List<(int, int)>) dco_decode_record_usize_list_record_usize_usize(
-      dynamic raw) {
+    dynamic raw,
+  ) {
     // Codec=Dco (DartCObject based), see doc to use other codecs
     final arr = raw as List<dynamic>;
     if (arr.length != 2) {
@@ -557,10 +631,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
     if (arr.length != 2) {
       throw Exception('Expected 2 elements, got ${arr.length}');
     }
-    return (
-      dco_decode_usize(arr[0]),
-      dco_decode_usize(arr[1]),
-    );
+    return (dco_decode_usize(arr[0]), dco_decode_usize(arr[1]));
   }
 
   @protected
@@ -589,7 +660,8 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
 
   @protected
   RustStreamSink<(int, int)> sse_decode_StreamSink_record_usize_usize_Sse(
-      SseDeserializer deserializer) {
+    SseDeserializer deserializer,
+  ) {
     // Codec=Sse (Serialization based), see doc to use other codecs
     throw UnimplementedError('Unreachable ()');
   }
@@ -627,7 +699,8 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
 
   @protected
   List<Uint16List> sse_decode_list_list_prim_u_16_strict(
-      SseDeserializer deserializer) {
+    SseDeserializer deserializer,
+  ) {
     // Codec=Sse (Serialization based), see doc to use other codecs
 
     var len_ = sse_decode_i_32(deserializer);
@@ -661,8 +734,9 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
 
   @protected
   List<(int, List<(int, int)>)>
-      sse_decode_list_record_usize_list_record_usize_usize(
-          SseDeserializer deserializer) {
+  sse_decode_list_record_usize_list_record_usize_usize(
+    SseDeserializer deserializer,
+  ) {
     // Codec=Sse (Serialization based), see doc to use other codecs
 
     var len_ = sse_decode_i_32(deserializer);
@@ -675,7 +749,8 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
 
   @protected
   List<(int, int)> sse_decode_list_record_usize_usize(
-      SseDeserializer deserializer) {
+    SseDeserializer deserializer,
+  ) {
     // Codec=Sse (Serialization based), see doc to use other codecs
 
     var len_ = sse_decode_i_32(deserializer);
@@ -718,7 +793,8 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
 
   @protected
   (int, List<(int, int)>) sse_decode_record_usize_list_record_usize_usize(
-      SseDeserializer deserializer) {
+    SseDeserializer deserializer,
+  ) {
     // Codec=Sse (Serialization based), see doc to use other codecs
     var var_field0 = sse_decode_usize(deserializer);
     var var_field1 = sse_decode_list_record_usize_usize(deserializer);
@@ -764,14 +840,19 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
 
   @protected
   void sse_encode_StreamSink_record_usize_usize_Sse(
-      RustStreamSink<(int, int)> self, SseSerializer serializer) {
+    RustStreamSink<(int, int)> self,
+    SseSerializer serializer,
+  ) {
     // Codec=Sse (Serialization based), see doc to use other codecs
     sse_encode_String(
-        self.setupAndSerialize(
-            codec: SseCodec(
-                decodeSuccessData: sse_decode_record_usize_usize,
-                decodeErrorData: null)),
-        serializer);
+      self.setupAndSerialize(
+        codec: SseCodec(
+          decodeSuccessData: sse_decode_record_usize_usize,
+          decodeErrorData: null,
+        ),
+      ),
+      serializer,
+    );
   }
 
   @protected
@@ -803,7 +884,9 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
 
   @protected
   void sse_encode_list_list_prim_u_16_strict(
-      List<Uint16List> self, SseSerializer serializer) {
+    List<Uint16List> self,
+    SseSerializer serializer,
+  ) {
     // Codec=Sse (Serialization based), see doc to use other codecs
     sse_encode_i_32(self.length, serializer);
     for (final item in self) {
@@ -813,16 +896,21 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
 
   @protected
   void sse_encode_list_prim_u_16_loose(
-      List<int> self, SseSerializer serializer) {
+    List<int> self,
+    SseSerializer serializer,
+  ) {
     // Codec=Sse (Serialization based), see doc to use other codecs
     sse_encode_i_32(self.length, serializer);
-    serializer.buffer
-        .putUint16List(self is Uint16List ? self : Uint16List.fromList(self));
+    serializer.buffer.putUint16List(
+      self is Uint16List ? self : Uint16List.fromList(self),
+    );
   }
 
   @protected
   void sse_encode_list_prim_u_16_strict(
-      Uint16List self, SseSerializer serializer) {
+    Uint16List self,
+    SseSerializer serializer,
+  ) {
     // Codec=Sse (Serialization based), see doc to use other codecs
     sse_encode_i_32(self.length, serializer);
     serializer.buffer.putUint16List(self);
@@ -830,7 +918,9 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
 
   @protected
   void sse_encode_list_prim_u_8_strict(
-      Uint8List self, SseSerializer serializer) {
+    Uint8List self,
+    SseSerializer serializer,
+  ) {
     // Codec=Sse (Serialization based), see doc to use other codecs
     sse_encode_i_32(self.length, serializer);
     serializer.buffer.putUint8List(self);
@@ -838,7 +928,9 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
 
   @protected
   void sse_encode_list_record_usize_list_record_usize_usize(
-      List<(int, List<(int, int)>)> self, SseSerializer serializer) {
+    List<(int, List<(int, int)>)> self,
+    SseSerializer serializer,
+  ) {
     // Codec=Sse (Serialization based), see doc to use other codecs
     sse_encode_i_32(self.length, serializer);
     for (final item in self) {
@@ -848,7 +940,9 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
 
   @protected
   void sse_encode_list_record_usize_usize(
-      List<(int, int)> self, SseSerializer serializer) {
+    List<(int, int)> self,
+    SseSerializer serializer,
+  ) {
     // Codec=Sse (Serialization based), see doc to use other codecs
     sse_encode_i_32(self.length, serializer);
     for (final item in self) {
@@ -885,7 +979,9 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
 
   @protected
   void sse_encode_record_usize_list_record_usize_usize(
-      (int, List<(int, int)>) self, SseSerializer serializer) {
+    (int, List<(int, int)>) self,
+    SseSerializer serializer,
+  ) {
     // Codec=Sse (Serialization based), see doc to use other codecs
     sse_encode_usize(self.$1, serializer);
     sse_encode_list_record_usize_usize(self.$2, serializer);
@@ -893,7 +989,9 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
 
   @protected
   void sse_encode_record_usize_usize(
-      (int, int) self, SseSerializer serializer) {
+    (int, int) self,
+    SseSerializer serializer,
+  ) {
     // Codec=Sse (Serialization based), see doc to use other codecs
     sse_encode_usize(self.$1, serializer);
     sse_encode_usize(self.$2, serializer);
