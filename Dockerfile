@@ -35,9 +35,6 @@ COPY --from=rust-builder /solver/target/release/solver /usr/local/bin/solver
 
 RUN chmod +x /usr/local/bin/solver
 
-# Run as fshare
-USER 1001:1001
-
 EXPOSE 5000
 
 CMD ["flask", "run", "--host=0.0.0.0", "--port=5000"]
