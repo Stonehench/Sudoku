@@ -1,4 +1,6 @@
 # Author Thor s224817
+import os
+
 from flask import Flask, request
 
 import mariadb
@@ -9,9 +11,10 @@ import datetime
 from datetime import date
 
 # Connect to MariaDB Platform
+
 try:
     pool = mariadb.ConnectionPool(
-        host="jensogkarsten.site",
+        host=os.getenv("dbhost") or "jensogkarsten.site",
         port=3306,
         user="dtu",
         password="kage123",
