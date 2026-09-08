@@ -8,5 +8,5 @@ services:
     ports:
       - "5000:5000"
     environment:
-      - dbhost=localhost
+      - dbhost=jensogkarsten.site
       - SPRING_PROFILES_ACTIVE=prod
