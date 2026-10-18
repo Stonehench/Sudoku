@@ -18,6 +18,8 @@ class _LoginWidgetState extends State<LoginWidget> {
   TextEditingController username = TextEditingController();
   TextEditingController password = TextEditingController();
 
+  bool showPassword = false;
+
   @override
   Widget build(BuildContext context) {
     AccountState aState = AccountState.instance();
@@ -55,10 +57,23 @@ class _LoginWidgetState extends State<LoginWidget> {
                 margin: const EdgeInsets.all(5),
                 child: TextField(
                   controller: password,
-                  obscureText: true,
-                  decoration: const InputDecoration(
+                  obscureText: !showPassword,
+                  decoration: InputDecoration(
                     border: OutlineInputBorder(),
                     labelText: 'Password',
+                    suffixIcon: IconButton(
+                      onPressed: () {
+                        setState(() {
+                          showPassword = !showPassword;
+                        });
+                      },
+                      color: Theme.of(context).focusColor,
+                      icon: Icon(
+                        showPassword
+                            ? Icons.visibility_off_outlined
+                            : Icons.visibility_outlined,
+                      ),
+                    ),
                   ),
                 ),
               ),

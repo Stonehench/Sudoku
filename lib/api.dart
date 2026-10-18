@@ -3,6 +3,7 @@
 import 'dart:convert';
 
 import 'package:flutter/material.dart';
+import 'package:home_widget/home_widget.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -114,23 +115,6 @@ class AccountState extends ChangeNotifier {
       _errorMsg = "Failed to connect to server";
       notifyListeners();
       return false;
-    }
-  }
-
-  // This function adds points to the users existing score
-  Future<void> addScore(Account account, int value) async {
-    try {
-      var response =
-          await http.post(serverAddress.resolve("/add_score"), body: {
-        "user_id": account.userID,
-        "value": value,
-      });
-
-      if (response.statusCode != 200) {
-        throw "Failed with err ${response.statusCode}";
-      }
-    } catch (e) {
-      throw "Failed to connect to server";
     }
   }
 

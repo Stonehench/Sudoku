@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <string name="dev_streak_counter">5 Days</string>
+    <string name="dev_streak_multiplier">1.5x</string>
+    <string name="app_widget_description">Widget that shows the current Sudoku streak!</string>
+    <string name="emoji_description">Fire emoji</string>
+
+</resources>

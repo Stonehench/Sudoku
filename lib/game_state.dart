@@ -4,6 +4,7 @@ import 'dart:math';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:home_widget/home_widget.dart';
 import 'package:sudoku/api.dart';
 import 'package:sudoku/src/rust/api/hint.dart';
 import 'package:sudoku/src/rust/api/simple.dart';
@@ -216,6 +217,11 @@ class GameState extends ChangeNotifier {
           }
           _submittedScore = value;
           _scoreSubmitStatus = ScoreSubmissionStatus.submitted;
+          
+          var now = DateTime.now().millisecondsSinceEpoch;
+          await HomeWidget.saveWidgetData("acc_last_solved_ms", now);
+          await HomeWidget.updateWidget(name: "StreakWidget");
+          
           notifyListeners();
           return;
         } catch (e) {

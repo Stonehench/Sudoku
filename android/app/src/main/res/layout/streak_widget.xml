@@ -1,0 +1,56 @@
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/background"
+    style="@style/Widget.Android.AppWidget.Container"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/dark_background"
+    android:clickable="false"
+    android:theme="@style/Theme.Android.AppWidgetContainer">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:gravity="center"
+        android:orientation="horizontal">
+
+        <LinearLayout
+            android:id="@+id/linearLayout"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="vertical">
+
+            <TextView
+                android:id="@+id/streak_counter"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/dev_streak_counter"
+                android:textAlignment="textStart"
+                android:textColor="@color/purple_text" />
+
+            <TextView
+                android:id="@+id/multiplierText"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/dev_streak_multiplier"
+                android:textAlignment="textStart"
+                android:textColor="@color/purple_text" />
+
+        </LinearLayout>
+
+        <ImageView
+            android:id="@+id/streakEmoji"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_weight="0"
+            android:adjustViewBounds="false"
+            android:clickable="false"
+            android:contentDescription="@string/emoji_description"
+            android:cropToPadding="true"
+            android:duplicateParentState="false"
+            android:src="@drawable/fire_color" />
+
+    </LinearLayout>
+
+</RelativeLayout>
