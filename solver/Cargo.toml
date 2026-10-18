@@ -14,8 +14,8 @@ regex-macro = "*"
 threadpool = "*"
 num_cpus = "*"
 lazy_static = "*"
-bumpalo = {version = "*", features = ["allocator-api2"]}
-allocator-api2 ="*"
+bumpalo = {version = "*", features = ["collections"]}
+#allocator-api2 ="*"
 smallvec = "1.13"
 
 [profile.release]

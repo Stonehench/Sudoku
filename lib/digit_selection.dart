@@ -13,7 +13,7 @@ class DigitSelect extends StatefulWidget {
 }
 
 // Spacing between the digits
-spaceBetween(int number) {
+double spaceBetween(int number) {
   return 38.0 + 12 * (log(number) / ln10).floor();
 }
 

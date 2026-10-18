@@ -3,7 +3,7 @@
 
 use super::{DynRule, Rule};
 use bumpalo::Bump;
-use rand::random;
+use rand::RngExt;
 use std::fmt::Debug;
 
 use crate::sudoku::Sudoku;
@@ -143,7 +143,8 @@ impl Rule for XRule {
         let count = self.x_clue.len();
         if count > size * 2 {
             for i in 0..count - (size * 3) / 2 {
-                self.x_clue.remove(random::<usize>() % (count - i));
+                
+                self.x_clue.remove(rand::rng().random_range(0..(count - i)));
             }
         }
     }

@@ -3,7 +3,7 @@
 
 use super::{DynRule, Rule};
 use integer_sqrt::IntegerSquareRoot;
-use rand::random;
+use rand::RngExt;
 use std::fmt::Debug;
 
 use crate::sudoku::Sudoku;
@@ -261,10 +261,10 @@ impl Rule for ZipperRule {
         let mut seen = vec![];
 
         for _ in 0..tries {
-            let mut random_index = random::<usize>() % (size * size);
+            let mut random_index = rand::rng().random_range(0..(size * size));
             // if the randomly chosen zipper-center is already a seen index, find a new one
             while seen.contains(&random_index) && seen.len() < (size * size) {
-                random_index = random::<usize>() % (size * size);
+                random_index = rand::rng().random_range(0..(size * size));
             }
 
             // get the value at the random selected cell
@@ -421,7 +421,7 @@ impl Rule for ZipperRule {
     fn no_of_clues(&self) -> usize {
         return self.zipper_clue.len();
     }
-    
+
     // Prints the zippers
     fn print_self(&self) -> bool {
         print!("ZipperRule");
@@ -524,10 +524,40 @@ fn avalible_test() {
 
     let mut multi_remove_indecies = zipper_rule.multi_remove(&sudoku, &mut big_buffer);
     //println!("{multi_remove_indecies:?}");
-    assert_eq!(multi_remove_indecies,vec![(2, 40), (3, 40), (4, 40), (6, 34), (7, 39), 
-        (7, 41), (7, 48), (7, 32), (7, 47), (7, 34), (7, 35), (8, 39), (8, 41), (8, 48), 
-        (8, 32), (8, 47), (8, 46), (8, 34), (8, 45), (8, 35), (9, 39), (9, 41), (9, 48), 
-        (9, 32), (9, 47), (9, 46), (9, 34), (9, 45), (9, 35)] );
+    assert_eq!(
+        multi_remove_indecies,
+        vec![
+            (2, 40),
+            (3, 40),
+            (4, 40),
+            (6, 34),
+            (7, 39),
+            (7, 41),
+            (7, 48),
+            (7, 32),
+            (7, 47),
+            (7, 34),
+            (7, 35),
+            (8, 39),
+            (8, 41),
+            (8, 48),
+            (8, 32),
+            (8, 47),
+            (8, 46),
+            (8, 34),
+            (8, 45),
+            (8, 35),
+            (9, 39),
+            (9, 41),
+            (9, 48),
+            (9, 32),
+            (9, 47),
+            (9, 46),
+            (9, 34),
+            (9, 45),
+            (9, 35)
+        ]
+    );
 
     for (value, index) in multi_remove_indecies {
         sudoku.cells[*index].available.retain(|i| *i != *value);
@@ -546,11 +576,39 @@ fn avalible_test() {
 
     multi_remove_indecies = zipper_rule.multi_remove(&sudoku, &mut big_buffer);
     println!("{multi_remove_indecies:?}");
-    assert_eq!(multi_remove_indecies,vec![(3, 41), (3, 32), (5, 34), (6, 41), (6, 32), 
-        (6, 34), (6, 35), (7, 46), (7, 34), (7, 45), (7, 35), (8, 39), (8, 41), (8, 48),
-        (8, 32), (8, 46), (8, 34), (8, 45), (8, 35), (9, 39), (9, 41), (9, 48), (9, 32), 
-        (9, 46), (9, 34), (9, 45), (9, 35)]);
-        
+    assert_eq!(
+        multi_remove_indecies,
+        vec![
+            (3, 41),
+            (3, 32),
+            (5, 34),
+            (6, 41),
+            (6, 32),
+            (6, 34),
+            (6, 35),
+            (7, 46),
+            (7, 34),
+            (7, 45),
+            (7, 35),
+            (8, 39),
+            (8, 41),
+            (8, 48),
+            (8, 32),
+            (8, 46),
+            (8, 34),
+            (8, 45),
+            (8, 35),
+            (9, 39),
+            (9, 41),
+            (9, 48),
+            (9, 32),
+            (9, 46),
+            (9, 34),
+            (9, 45),
+            (9, 35)
+        ]
+    );
+
     for _ in 0..10 {
         if let Some((value, indecies)) =
             zipper_rule.locked_candidate(&sudoku, &mut buffer, &mut arena)
@@ -577,9 +635,33 @@ fn avalible_test() {
 
     multi_remove_indecies = zipper_rule.multi_remove(&sudoku, &mut big_buffer);
     println!("{multi_remove_indecies:?}");
-    assert_eq!(multi_remove_indecies,vec![(2, 40), (3, 40), (4, 40), (5, 40), (6, 40), 
-    (7, 48), (7, 49), (7, 40), (8, 39), (8, 41), (8, 48), (8, 32), (8, 49), (8, 31), 
-    (8, 40), (9, 39), (9, 41), (9, 48), (9, 32), (9, 49), (9, 31), (9, 30)]);
+    assert_eq!(
+        multi_remove_indecies,
+        vec![
+            (2, 40),
+            (3, 40),
+            (4, 40),
+            (5, 40),
+            (6, 40),
+            (7, 48),
+            (7, 49),
+            (7, 40),
+            (8, 39),
+            (8, 41),
+            (8, 48),
+            (8, 32),
+            (8, 49),
+            (8, 31),
+            (8, 40),
+            (9, 39),
+            (9, 41),
+            (9, 48),
+            (9, 32),
+            (9, 49),
+            (9, 31),
+            (9, 30)
+        ]
+    );
 
     for _ in 0..10 {
         if let Some((value, indecies)) =

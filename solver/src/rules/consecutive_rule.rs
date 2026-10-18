@@ -2,7 +2,7 @@
 // Author Peter s224759
 
 use super::{DynRule, Rule};
-use rand::random;
+use rand::RngExt;
 use std::fmt::Debug;
 
 use crate::sudoku::Cell;
@@ -20,7 +20,7 @@ impl ConsecutiveRule {
 }
 
 impl Rule for ConsecutiveRule {
-    // the updates function does not affect aything for domino rules 
+    // the updates function does not affect aything for domino rules
     // therefore it cleans and returns an empty buffer
     fn updates<'buf>(
         &self,
@@ -81,7 +81,7 @@ impl Rule for ConsecutiveRule {
         // for all dominos in the clue
         for value in 1..(sudoku.size + 1) as u16 {
             for (left, right) in &self.consecutive_clue {
-                // in the case where the other half of the domino 
+                // in the case where the other half of the domino
                 // does not contain either of the consecitive values for the current digit being check
                 // remove it, cuz it is not possible.
                 if !sudoku.cells[*left].locked_in
@@ -134,7 +134,7 @@ impl Rule for ConsecutiveRule {
         if count > size * 2 {
             for i in 0..count - size * 2 {
                 self.consecutive_clue
-                    .remove(random::<usize>() % (count - i));
+                    .remove(rand::rng().random_range(0..(count - i)));
             }
         }
     }
@@ -225,7 +225,7 @@ fn consecutive_multi() {
     let res = consecutive_rule.multi_remove(&sudoku, &mut big_buffer);
 
     println!("{res:?}");
-    assert_eq!(res, vec![(3,2),(4,2)]);
+    assert_eq!(res, vec![(3, 2), (4, 2)]);
 
     let mut sudoku = Sudoku::new(
         4,
@@ -242,5 +242,5 @@ fn consecutive_multi() {
 
     let res = consecutive_rule.multi_remove(&sudoku, &mut big_buffer);
     println!("{res:?}");
-    assert_eq!(res, vec![(1,2)]);
+    assert_eq!(res, vec![(1, 2)]);
 }
