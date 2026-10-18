@@ -1,7 +1,7 @@
 // This file is all the logic and tests pertaining to the Thermometer rule
 // Author Kasper s224776
 
-use rand::random;
+use rand::RngExt;
 
 use super::{DynRule, Rule};
 use std::fmt::Debug;
@@ -137,7 +137,7 @@ impl Rule for ThermometerRule {
                     // Removes all values from the current enumeration to the size of the Sudoku
                     // Same logic as above just for the end of the thermometer
                     for value in (sudoku.size - (themometer.len() - enumeration) + 2) as u16
-                        ..(sudoku.size + 1) as u16 
+                        ..(sudoku.size + 1) as u16
                     {
                         if sudoku.cells[*index].available.contains(&value) {
                             big_buffer.push((value, *index));
@@ -188,9 +188,9 @@ impl Rule for ThermometerRule {
         // Choose a random index
         // If the index has been seen before try again
         'themometers: for _ in 0..tries {
-            let mut random_index = random::<usize>() % (size * size);
+            let mut random_index = rand::rng().random_range(0..(size * size));
             while seen.contains(&random_index) && seen.len() < (size * size) {
-                random_index = random::<usize>() % (size * size);
+                random_index = rand::rng().random_range(0..(size * size));
             }
             // Initialization of variables
             let mut current_themometer: Vec<usize> = vec![];

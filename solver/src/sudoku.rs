@@ -15,7 +15,7 @@ use bumpalo::Bump;
 use integer_sqrt::IntegerSquareRoot;
 use lazy_static::lazy_static;
 use priority_queue::PriorityQueue;
-use rand::random;
+use rand::RngExt;
 use regex_macro::regex;
 use smallvec::{smallvec, SmallVec};
 use threadpool::ThreadPool;
@@ -247,7 +247,7 @@ impl Sudoku {
             {
                 let cell = &mut self.cells[*inner_index];
                 cell.remove(n)?;
-                queue.change_priority(&inner_index, Entropy(cell.available.len()));
+                queue.change_priority(inner_index, Entropy(cell.available.len()));
             }
         }
         Ok(())
@@ -465,7 +465,7 @@ impl Sudoku {
                     */
                     // Analysis failed. Branch instead by chossing random number from popped cell.
 
-                    let choice = random::<usize>() % entropy.0;
+                    let choice = rand::rng().random_range(0..entropy.0);
 
                     let n = self.cells[index].available[choice];
 
@@ -596,7 +596,7 @@ impl Sudoku {
                 break;
             }
             let removed_index =
-                available_to_remove.remove(random::<usize>() % available_to_remove.len());
+                available_to_remove.remove(rand::rng().random_range(0..available_to_remove.len()));
 
             let mut solving_clone = sudoku.clone();
 
@@ -907,7 +907,7 @@ fn random_gen() {
     let difficulty = 10;
 
     for _ in 0..difficulty {
-        let index = random::<usize>() % sudoku.cells.len();
+        let index = rand::rng().random_range(0..sudoku.cells.len());
         sudoku.cells[index] = Cell::new_with_range(1..(sudoku.size as u16 + 1))
     }
     for cell in sudoku.cells.iter_mut() {

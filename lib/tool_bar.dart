@@ -25,7 +25,7 @@ class _ToolBarState extends State<ToolBar> {
             ScoreSubmissionStatus status = state.scoreStatus();
             bool inGame = status == ScoreSubmissionStatus.gameNotDone &&
                 !(state.lives <= 0);
-            return ButtonBar(
+            return OverflowBar(
               alignment: MainAxisAlignment.center,
               children: [
                 TextButton(

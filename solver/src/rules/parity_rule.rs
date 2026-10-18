@@ -2,7 +2,7 @@
 // Author Peter s224759
 use super::{DynRule, Rule};
 use crate::sudoku::Sudoku;
-use rand::random;
+use rand::RngExt;
 use std::fmt::Debug;
 
 #[derive(Debug, Clone)]
@@ -17,7 +17,7 @@ impl ParityRule {
 }
 
 impl Rule for ParityRule {
-    // the updates function does not affect aything for domino rules 
+    // the updates function does not affect aything for domino rules
     // therefore it cleans and returns an empty buffer
     fn updates<'buf>(
         &self,
@@ -65,7 +65,7 @@ impl Rule for ParityRule {
                             big_buffer.push((i * 2, *left_index));
                         }
                     }
-                 // else if odd, remove all the odd numbers from the other half
+                    // else if odd, remove all the odd numbers from the other half
                 } else if value & 1 == 1 {
                     for i in 0..=(sudoku.size as u16 / 2) {
                         if sudoku.cells[*left_index].available.contains(&(i * 2 + 1)) {
@@ -177,8 +177,9 @@ impl Rule for ParityRule {
         }
         let count = self.parity_clue.len();
         if count > size * 2 {
-            for i in 0..count - (size * 3)/2 {
-                self.parity_clue.remove(random::<usize>() % (count - i));
+            for i in 0..count - (size * 3) / 2 {
+                self.parity_clue
+                    .remove(rand::rng().random_range(0..(count - i)));
             }
         }
     }
@@ -200,7 +201,7 @@ impl Rule for ParityRule {
     }
     fn print_self(&self) -> bool {
         print!("ParityRule");
-        for (x,y) in &self.parity_clue {
+        for (x, y) in &self.parity_clue {
             print!(" ; {x},{y}")
         }
         true

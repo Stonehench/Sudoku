@@ -133,7 +133,7 @@ class _MenuState extends State<Menu> {
   ];
 
   // Get size from text
-  getSizeFromText() {
+  int getSizeFromText() {
     if (inputTextController.text == "") {
       return 4;
     } else {

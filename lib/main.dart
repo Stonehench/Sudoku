@@ -1,3 +1,4 @@
+
 // Author Thor s224817
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -7,7 +8,7 @@ import 'package:sudoku/src/rust/api/simple.dart';
 import 'package:sudoku/src/rust/frb_generated.dart';
 
 Future<void> main() async {
-  //Initialize rust 
+  //Initialize rust
   await RustLib.init();
 
   //Initialize localstorage

@@ -2,7 +2,7 @@
 // Author Katinka s224805 and Kasper s224776
 
 use super::{DynRule, Rule};
-use allocator_api2::vec::Vec as AlloVec;
+use bumpalo::collections::Vec as AlloVec;
 use bumpalo::Bump;
 use integer_sqrt::IntegerSquareRoot;
 use std::fmt::Debug;
@@ -73,7 +73,7 @@ impl Rule for RowRule {
 
         let sub_s = sudoku.size.integer_sqrt();
 
-        let mut locations: AlloVec<usize, &Bump> = AlloVec::with_capacity_in(sudoku.size, &arena);
+        let mut locations: AlloVec<usize> = AlloVec::with_capacity_in(sudoku.size, &arena);
 
         for value in 1..=sudoku.size as u16 {
             for sq_y in 0..sub_s {

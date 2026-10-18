@@ -2,7 +2,7 @@
 name = "rust_lib_sudoku"
 version = "0.1.0"
 edition = "2021"
-# resolver = "2"
+resolver = "2"
 
 [lib]
 crate-type = ["cdylib", "staticlib"]
@@ -12,3 +12,10 @@ flutter_rust_bridge = "=2.13.0"
 solver = {path = "../solver"}
 lazy_static = "*"
 rand = "*"
+
+
+[target.aarch64-linux-android]
+rustflags = [
+    "-C", "link-arg=-Wl,-z,max-page-size=16384",
+    "-C", "link-arg=-Wl,-z,common-page-size=16384",
+]
