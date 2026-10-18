@@ -2,7 +2,7 @@ use std::{
     cmp::Ordering,
     collections::HashSet,
     fmt::{Display, Write},
-    hash::{DefaultHasher, Hash, Hasher},
+    hash::Hash,
     num::ParseIntError,
     ops::{Deref, Range},
     ptr::copy_nonoverlapping,
