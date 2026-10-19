@@ -3,11 +3,13 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:home_widget/home_widget.dart';
 import 'package:sudoku/api.dart';
+import 'package:sudoku/appversion.dart';
 import 'package:sudoku/menu.dart';
 import 'package:sudoku/src/rust/api/simple.dart';
 import 'package:sudoku/src/rust/frb_generated.dart';
 
 Future<void> main() async {
+  var outdatedFuture = checkIsOutdated();
   //Initialize rust
   await RustLib.init();
 
@@ -30,8 +32,12 @@ Future<void> main() async {
     }
   });
 
-  runApp(const SudokuApp());
+  isOutdated = await outdatedFuture;
+
+  runApp(SudokuApp());
 }
+
+var isOutdated = false;
 
 class SudokuApp extends StatefulWidget {
   const SudokuApp({super.key});
@@ -45,10 +51,7 @@ class _SudokuAppState extends State<SudokuApp> {
   Widget build(BuildContext context) {
     return MaterialApp(
       theme: ThemeData.dark(), //Uses dark theme!!
-      initialRoute: '/menu',
-      routes: {
-        '/menu': (context) => const Menu(),
-      },
+      home: const Menu(),
     );
   }
 

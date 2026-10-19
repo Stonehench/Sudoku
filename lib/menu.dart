@@ -9,8 +9,10 @@ import 'package:sudoku/api.dart';
 import 'package:sudoku/game_state.dart';
 import 'package:sudoku/game_view.dart';
 import 'package:sudoku/gameloader.dart';
+import 'package:sudoku/main.dart';
 import 'package:sudoku/scoreboard.dart';
 import 'package:sudoku/src/rust/api/simple.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 class Menu extends StatefulWidget {
   const Menu({super.key});
@@ -25,6 +27,8 @@ class _MenuState extends State<Menu> {
   String sizeText = "9x9";
   int size = 9;
   final inputTextController = TextEditingController();
+
+  bool hasDismissedUpdate = false;
 
   // Function for updating text and size base textfield further down
   void onTextChange(String newText) {
@@ -230,6 +234,18 @@ class _MenuState extends State<Menu> {
   String? dailyPuzzle;
   String? dailyDate;
   bool notLoggedIn = false;
+
+  @override
+  void initState() {
+    super.initState();
+    if (isOutdated) {
+      Future.delayed(Duration(milliseconds: 500)).then((_) {
+        if (mounted) {
+          showUpdateDialog(context);
+        }
+      });
+    }
+  }
 
   // Flutter build function
   @override
@@ -454,6 +470,40 @@ class _MenuState extends State<Menu> {
             )
           ],
         ),
+      ),
+    );
+  }
+
+  Future<void> showUpdateDialog(BuildContext context) {
+    return showDialog<void>(
+      context: context,
+      barrierDismissible: false, // Must choose a button
+      builder: (context) => AlertDialog(
+        icon: const Icon(Icons.system_update),
+        title: const Text('Update available'),
+        content: const Text(
+          'A new version is available. '
+          'Update now to get the latest features and bug fixes.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: const Text('Later'),
+          ),
+          FilledButton(
+            onPressed: () async {
+              final uri = Uri.parse('https://f-skipper.com/browse/apps/');
+
+              // if (await canLaunchUrl(uri)) {
+                await launchUrl(
+                  uri,
+                  mode: LaunchMode.externalApplication,
+                );
+              // }
+            },
+            child: const Text('Update now'),
+          ),
+        ],
       ),
     );
   }
