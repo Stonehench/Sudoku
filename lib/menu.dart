@@ -357,19 +357,12 @@ class _MenuState extends State<Menu> {
                         size: size,
                         rulesSrc: gameModes.toList(),
                         difficulty: gameDifficulty);
-                    () async {
-                      var res = await Navigator.of(context).push(
-                        MaterialPageRoute(
-                          builder: (context) => GameLoader(
-                              sudokuSource, gameModes, gameDifficulty, size),
-                        ),
-                      );
-                      setState(() {
-                        if (res != null) {
-                          sizeText = res.toString();
-                        }
-                      });
-                    }();
+                    Navigator.of(context).push(
+                      MaterialPageRoute(
+                        builder: (context) => GameLoader(
+                            sudokuSource, gameModes, gameDifficulty, size),
+                      ),
+                    );
                   },
                   child: const Text('Create Sudoku'),
                 ),

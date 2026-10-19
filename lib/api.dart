@@ -135,6 +135,7 @@ class AccountState extends ChangeNotifier {
 
   // This function updates the streak of the user.
   Future<bool> updateStreak() async {
+    print("Checking updateStreak!");
     Account? acc = get();
     if (acc == null) {
       return false;
@@ -154,8 +155,10 @@ class AccountState extends ChangeNotifier {
         multiplier: jsonMap["multiplier"] as double,
       );
 
+
       if (newAccount != _account) {
         _account = newAccount;
+        print("NEW STREAK NUMBER!");
         notifyListeners();
       }
 

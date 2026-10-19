@@ -215,6 +215,7 @@ class GameState extends ChangeNotifier {
             notifyListeners();
             return;
           }
+          await AccountState.instance().updateStreak();
           _submittedScore = value;
           _scoreSubmitStatus = ScoreSubmissionStatus.submitted;
           
