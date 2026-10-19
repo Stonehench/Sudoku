@@ -9,7 +9,7 @@ import 'package:sudoku/src/rust/api/simple.dart';
 import 'package:sudoku/src/rust/frb_generated.dart';
 
 Future<void> main() async {
-  var outdatedFuture = checkIsOutdated();
+  isOutdatedFuture = checkIsOutdated();
   //Initialize rust
   await RustLib.init();
 
@@ -32,12 +32,10 @@ Future<void> main() async {
     }
   });
 
-  isOutdated = await outdatedFuture;
-
   runApp(SudokuApp());
 }
 
-var isOutdated = false;
+Future<bool>? isOutdatedFuture;
 
 class SudokuApp extends StatefulWidget {
   const SudokuApp({super.key});

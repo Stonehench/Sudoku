@@ -238,13 +238,15 @@ class _MenuState extends State<Menu> {
   @override
   void initState() {
     super.initState();
-    if (isOutdated) {
-      Future.delayed(Duration(milliseconds: 500)).then((_) {
-        if (mounted) {
-          showUpdateDialog(context);
-        }
-      });
-    }
+    isOutdatedFuture?.then((isOutdated) {
+      if (isOutdated) {
+        Future.delayed(Duration(milliseconds: 500)).then((_) {
+          if (mounted) {
+            showUpdateDialog(context);
+          }
+        });
+      }
+    });
   }
 
   // Flutter build function
@@ -495,10 +497,10 @@ class _MenuState extends State<Menu> {
               final uri = Uri.parse('https://f-skipper.com/browse/apps/');
 
               // if (await canLaunchUrl(uri)) {
-                await launchUrl(
-                  uri,
-                  mode: LaunchMode.externalApplication,
-                );
+              await launchUrl(
+                uri,
+                mode: LaunchMode.externalApplication,
+              );
               // }
             },
             child: const Text('Update now'),

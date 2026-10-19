@@ -58,7 +58,7 @@ Future<bool> checkIsOutdated() async {
         int.parse(versionNums[1]), int.parse(versionNums[2]));
 
     int compareRes = Version.compare(newest, packageVersion);
-    return compareRes < 0;
+    return compareRes > 0;
   } catch (e) {
     return false;
   }

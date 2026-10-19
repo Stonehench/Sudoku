@@ -6,7 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 
-Uri serverAddress = Uri.http("jensogkarsten.site");
+Uri serverAddress = Uri.https("sudoku.f-skipper.com");
 
 class Account {
   final String username;
