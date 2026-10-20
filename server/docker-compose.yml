@@ -1,5 +1,7 @@
+name: sudoku-backend
+
 services:
-  sudoku-server:
+  api:
     build: 
       context: .
       target: development
