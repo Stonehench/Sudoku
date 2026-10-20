@@ -671,6 +671,41 @@ impl Sudoku {
         state.hash(&mut hasher);
         hasher.finish()
     } */
+
+    pub fn to_format(&self) -> String {
+        let mut str_buffer = String::new();
+
+        let printable_rules: Vec<_> = self
+            .rules
+            .iter()
+            .filter(|r| r.print_self())
+            .map(|r| r.get_name())
+            .collect();
+        for (i, name) in printable_rules.iter().enumerate() {
+            str_buffer.push_str(*name);
+            if i < printable_rules.len() - 1 {
+                str_buffer.push_str(" | ");
+            }
+        }
+        str_buffer.push_str("\n\n");
+
+        for cell in self.cells.iter() {
+            match cell.available.as_slice() {
+                [value] => str_buffer.push_str(&value.to_string()),
+                _ => str_buffer.push('0'),
+            }
+            str_buffer.push(',');
+        }
+
+        for (index, rule) in self.rules.iter().enumerate() {
+            if rule.print_self() {
+                if index != self.rules.len() - 1 {
+                    print!(" | ");
+                }
+            }
+        }
+        str_buffer
+    }
 }
 
 // Author Thor s224817
