@@ -1,13 +1,33 @@
-name: sudoku-server
-
 services:
   sudoku-server:
-    build: ..
-    container_name: sudoku-server
-    network_mode: "host"
-    restart: always
-    ports:
-      - "5000:5000"
+    build: 
+      context: .
+      target: development
+    volumes:
+    - .:/app
+    - ../solver:/solver
+    - ../migration:/migration
+    - cargo_target:/app/target
+    command: cargo watch -x run
     environment:
-      - dbhost=jensogkarsten.site
-      - SPRING_PROFILES_ACTIVE=prod
+      DATABASE_URL: mysql://root:supersecurepassword@db:3306/Scoreboard
+
+    ports:
+    - 0.0.0.0:8080:80
+
+    depends_on:
+    - db
+  db:
+    image: mariadb
+    environment:
+      MYSQL_ROOT_USER: root
+      MYSQL_ROOT_PASSWORD: supersecurepassword
+    ports:
+    - '3306:3306'
+    volumes:
+    - db_data:/var/lib/mysql
+    - ./init.sql:/docker-entrypoint-initdb.d/init.sql
+  
+volumes:
+  cargo_target:
+  db_data:
