@@ -99,7 +99,7 @@ async fn get_scoreboard(state: &AppState) -> anyhow::Result<Vec<InternalScoreboa
                 .unwrap_or_default()
                 .unwrap_or_default(),
             user_id: u.user_id,
-            username: u.username.unwrap(),
+            username: u.username,
         })
         .collect());
 }

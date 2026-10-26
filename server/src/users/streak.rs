@@ -44,7 +44,7 @@ pub async fn streak(
         .unwrap()
         .date_naive();
 
-    let submittet = latest.submittet.unwrap().date_naive();
+    let submittet = latest.submittet.date_naive();
 
     if submittet != today && submittet != yesterday {
         return Ok(Json(StreakInfo {
@@ -57,11 +57,11 @@ pub async fn streak(
     let mut lastdate = submittet;
 
     for sudoku in scores.iter().skip(1) {
-        match (lastdate - sudoku.submittet.unwrap().date_naive()).num_days() {
+        match (lastdate - sudoku.submittet.date_naive()).num_days() {
             0 => continue,
             1 => {
                 streak += 1;
-                lastdate = sudoku.submittet.unwrap().date_naive()
+                lastdate = sudoku.submittet.date_naive()
             }
             _ => break,
         }
