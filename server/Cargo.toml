@@ -8,6 +8,7 @@ edition = "2024"
 solver = {path = "../solver"}
 migration = {path = "../migration"}
 
+futures = "*"
 tokio = {version = "*", features = ["full"]}
 sea-orm = {version = "*", features = ["sqlx-mysql","runtime-tokio-native-tls","macros"]}
 anyhow = "*"

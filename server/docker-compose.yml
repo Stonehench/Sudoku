@@ -13,6 +13,7 @@ services:
     command: cargo watch -x run
     environment:
       DATABASE_URL: mysql://root:supersecurepassword@db:3306/Scoreboard
+      # DATABASE_URL: mysql://dtu:kage123@jensogkarsten.site:3306/Scoreboard
 
     ports:
     - 0.0.0.0:8080:80
