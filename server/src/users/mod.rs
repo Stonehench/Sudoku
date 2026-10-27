@@ -1,4 +1,5 @@
 pub mod streak;
+pub mod auth;
 
 #[derive(Debug,serde::Deserialize)]
 pub struct UserInfo {

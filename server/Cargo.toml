@@ -15,3 +15,8 @@ anyhow = "*"
 axum-anyhow = "*"
 axum = {version = "*"}
 serde = {version ="*", features = ["derive"]}
+tower-http = { version = "0.7.1", features = ["trace"] }
+
+tracing = "*"
+tracing-subscriber = "*"
+uuid = {version = "*", features = ["v4"]}

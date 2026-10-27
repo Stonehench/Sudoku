@@ -24,14 +24,7 @@ pub async fn scoreboard(
     State(state): State<AppState>,
     Query(userinfo): Query<OptionalUserInfo>,
 ) -> ApiResult<Json<Vec<ScoreboardEntry>>> {
-    let internal = match get_scoreboard(&state).await {
-        Ok(d) => d,
-        Err(err) => {
-
-            println!("ERR: {err:#?}");
-            return Err(err.into());
-        },
-    };
+    let internal = get_scoreboard(&state).await?;
 
     return Ok(Json(
         internal
@@ -85,7 +78,7 @@ async fn get_scoreboard(state: &AppState) -> anyhow::Result<Vec<InternalScoreboa
         .into_iter()
         .collect();
 
-    return Ok(users
+    let mut scoreboard: Vec<InternalScoreboardInfo> = users
         .into_iter()
         .map(|u| InternalScoreboardInfo {
             sum: total_scores
@@ -101,5 +94,9 @@ async fn get_scoreboard(state: &AppState) -> anyhow::Result<Vec<InternalScoreboa
             user_id: u.user_id,
             username: u.username,
         })
-        .collect());
+        .collect();
+
+    scoreboard.sort_by_key(|u| i32::MAX - u.sum);
+
+    return Ok(scoreboard);
 }

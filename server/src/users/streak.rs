@@ -1,4 +1,4 @@
-use axum::{Json, extract::State};
+use axum::{Form, Json, extract::State};
 use axum_anyhow::ApiResult;
 use migration::prelude::chrono::{self};
 use sea_orm::{ColumnTrait, EntityTrait, QueryFilter, QueryOrder};
@@ -13,7 +13,7 @@ pub struct StreakInfo {
 
 pub async fn streak(
     State(state): State<AppState>,
-    Json(userinfo): Json<UserInfo>,
+    Form(userinfo): Form<UserInfo>,
 ) -> ApiResult<Json<StreakInfo>> {
     let scores = match scores::Entity::find()
         .filter(scores::Column::UserId.eq(&userinfo.user_id))

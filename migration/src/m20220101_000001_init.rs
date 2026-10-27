@@ -41,7 +41,7 @@ impl MigrationTrait for Migration {
                 Table::create()
                     .table("scores")
                     .if_not_exists()
-                    .col(big_pk_auto("score_id"))
+                    .col(big_pk_auto("score_id").big_unsigned())
                     .col(char_len("user_id", 36).not_null())
                     .foreign_key(
                         ForeignKey::create()
@@ -49,8 +49,8 @@ impl MigrationTrait for Migration {
                             .to("users", "user_id"),
                     )
                     .col(integer("value"))
-                    .col(timestamp("submitted").default(Expr::current_timestamp()))
-                    .col(date("daily_dato").not_null())
+                    .col(timestamp("submittet").default(Expr::current_timestamp()).not_null())
+                    .col(date("daily_dato").null())
                     .foreign_key(
                         ForeignKey::create()
                             .from_col("daily_dato")
