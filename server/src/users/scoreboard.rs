@@ -15,7 +15,7 @@ use crate::{
 #[derive(Debug, serde::Serialize)]
 pub struct ScoreboardEntry {
     username: String,
-    sum: i32,
+    value: i32,
     you: bool,
     lasth: i32,
 }
@@ -31,7 +31,7 @@ pub async fn scoreboard(
             .into_iter()
             .map(|u| ScoreboardEntry {
                 username: u.username,
-                sum: u.sum,
+                value: u.sum,
                 you: userinfo
                     .user_id
                     .as_ref()

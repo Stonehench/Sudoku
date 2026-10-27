@@ -40,7 +40,10 @@ async fn main() {
 
     let app = Router::new()
         .route("/add_score", post(sudokus::scores::add_score))
-        .route("/daily", get(sudokus::daily::daily))
+        .route(
+            "/daily",
+            get(sudokus::daily::daily).post(sudokus::daily::daily),
+        )
         .route("/streak", post(users::streak::streak))
         .route("/scoreboard", get(users::scoreboard::scoreboard))
         .route("/change_passwd", post(users::auth::change_password))
