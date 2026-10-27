@@ -1,0 +1,22 @@
+[package]
+name = "server"
+version = "0.1.0"
+edition = "2024"
+
+
+[dependencies]
+solver = {path = "../solver"}
+migration = {path = "../migration"}
+
+futures = "*"
+tokio = {version = "*", features = ["full"]}
+sea-orm = {version = "*", features = ["sqlx-mysql","runtime-tokio-native-tls","macros"]}
+anyhow = "*"
+axum-anyhow = "*"
+axum = {version = "*"}
+serde = {version ="*", features = ["derive"]}
+tower-http = { version = "0.7.1", features = ["trace"] }
+
+tracing = "*"
+tracing-subscriber = "*"
+uuid = {version = "*", features = ["v4"]}

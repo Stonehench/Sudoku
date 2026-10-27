@@ -1,40 +1,25 @@
-# ---------- Rust build ----------
-FROM rust:1.89-bookworm AS rust-builder
+from rust:bookworm as development
 
-WORKDIR /solver
+workdir /app
 
-COPY solver/Cargo.toml Cargo.lock ./
-RUN mkdir src && echo 'fn main() {}' > src/main.rs
-RUN cargo build --release --bin solver
-
-COPY solver/ .
-RUN cargo build --release --bin solver
+run cargo install cargo-watch
 
 
-# ---------- Python application ----------
-FROM python:3.12-slim
+from rust:bookworm as builder
 
-WORKDIR /app
+workdir /app
 
-RUN apt-get update \
-    && apt-get install -y --no-install-recommends \
-        gcc \
-        libssl3 \
-        libmariadb-dev \
-    && rm -rf /var/lib/apt/lists/*
+copy server /app
+copy solver /solver
+copy migration /migration
 
-# Python dependencies
-COPY server/requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
+run cargo build --release
 
-# Application
-COPY server/ .
 
-# Compiled Rust solver
-COPY --from=rust-builder /solver/target/release/solver /usr/local/bin/solver
+from rust:bookworm as prod
 
-RUN chmod +x /usr/local/bin/solver
+workdir /app
 
-EXPOSE 5000
+copy --from=builder /app/target/release/server .
 
-CMD ["flask", "run", "--host=0.0.0.0", "--port=5000"]
+cmd ["/app/server"]
