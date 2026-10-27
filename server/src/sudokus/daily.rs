@@ -1,11 +1,14 @@
-use axum::{Json, extract::State};
+use axum::{Form, Json, extract::State};
 use axum_anyhow::ApiResult;
 use sea_orm::{
     ActiveModelTrait, ActiveValue::Set, ColumnTrait, EntityTrait, QueryFilter, sqlx::types::chrono,
 };
 use solver::rules::square_rule::SquareRule;
 
-use crate::{AppState, entities::daily_challenges};
+use crate::{
+    AppState,
+    entities::{daily_challenges, scores},
+};
 
 #[derive(serde::Serialize)]
 pub struct DailySudoku {
@@ -14,7 +17,17 @@ pub struct DailySudoku {
     solved: Option<bool>,
 }
 
-pub async fn daily(State(state): State<AppState>) -> ApiResult<Json<DailySudoku>> {
+#[derive(Debug, serde::Deserialize)]
+pub struct DailyUserId {
+    user_id: Option<String>,
+}
+
+pub async fn daily(
+    State(state): State<AppState>,
+    Form(form): Form<DailyUserId>,
+) -> ApiResult<Json<DailySudoku>> {
+    let DailyUserId { user_id } = form;
+
     let today = chrono::Local::now();
 
     let challenge = daily_challenges::Entity::find()
@@ -61,9 +74,24 @@ pub async fn daily(State(state): State<AppState>) -> ApiResult<Json<DailySudoku>
         }
     };
 
+    // If no user, then None. Else check db.
+    let solved = if let Some(user_id) = user_id {
+        // Check if already solved
+        Some(
+            scores::Entity::find()
+                .filter(scores::Column::DailyDato.eq(today.date_naive()))
+                .filter(scores::Column::UserId.eq(user_id))
+                .one(&state.db)
+                .await?
+                .is_some(),
+        )
+    } else {
+        None
+    };
+
     return Ok(Json(DailySudoku {
         dato: today.date_naive().to_string(),
         puzzle,
-        solved: None,
+        solved,
     }));
 }
