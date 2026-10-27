@@ -1,4 +1,7 @@
-use axum::{Form, Json, extract::State};
+use axum::{
+    Form, Json,
+    extract::{Multipart, State},
+};
 use axum_anyhow::ApiResult;
 use sea_orm::{
     ActiveModelTrait, ActiveValue::Set, ColumnTrait, EntityTrait, QueryFilter, sqlx::types::chrono,
@@ -17,16 +20,18 @@ pub struct DailySudoku {
     solved: Option<bool>,
 }
 
-#[derive(Debug, serde::Deserialize)]
-pub struct DailyUserId {
-    user_id: Option<String>,
-}
 
 pub async fn daily(
     State(state): State<AppState>,
-    Form(form): Form<DailyUserId>,
+    mut mp: Multipart,
 ) -> ApiResult<Json<DailySudoku>> {
-    let DailyUserId { user_id } = form;
+    let mut user_id = None;
+
+    while let Ok(Some(field)) = mp.next_field().await {
+        if field.name() == Some("user_id") {
+            user_id = Some(field.text().await?)
+        }
+    }
 
     let today = chrono::Local::now();
 
