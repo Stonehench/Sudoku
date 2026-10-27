@@ -8,7 +8,7 @@ on:
 
 env:
   REGISTRY: ghcr.io
-  IMAGE_NAME: sudoku-server
+  IMAGE_NAME: ${{github.repository_owner}}/sudoku-server
 
 jobs:
   build-and-push:
