@@ -696,6 +696,7 @@ impl Sudoku {
             }
             str_buffer.push(',');
         }
+        str_buffer.pop(); // Remove trailing comma
 
         for (index, rule) in self.rules.iter().enumerate() {
             if rule.print_self() {
